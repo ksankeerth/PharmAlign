@@ -1,0 +1,27 @@
+PharmAlign
+Copyright 2026 The PharmAlign authors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Scope of the license
+--------------------
+The Apache License covers the original work in this repository: the folder
+structure, file naming, the manifests (simulation/server/knowledge/Inputs.csv,
+simulation/server/knowledge/InputDocs/Inputs.md) and the metadata,
+classifications and descriptions written for this project.
+
+It does NOT cover the third-party documents listed in those manifests. Those
+documents (laws, regulations, guidelines, standards, product information and
+reports) are the property of their original publishers, including the UAE
+Government, the Emirates Drug Establishment, MOHAP, DoH Abu Dhabi, the Dubai
+Health Authority, the Gulf Health Council, WHO, ICH, PIC/S, EMA, the European
+Commission, US FDA, MHRA, Swissmedic, ITU, OECD and others. Each remains under
+its publisher's own copyright and terms of use. They are not stored in this
+repository, and nothing in it grants any right to them.
+
+The original source of every document is listed in the source_url column of
+simulation/server/knowledge/Inputs.csv. To use a document, obtain it from that
+source and follow the publisher's terms.
+
+If you are a rights holder and want a document removed, open an issue in this
+repository.

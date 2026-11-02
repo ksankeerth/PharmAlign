@@ -1,0 +1,14 @@
+# Third-party documents are not redistributed (see NOTICE).
+# Their sources are listed in simulation/server/knowledge/Inputs.csv.
+simulation/server/knowledge/InputDocs/*/*
+!simulation/server/knowledge/InputDocs/*/.gitkeep
+# our own use-case write-ups (ingested into kb_usecase) are committed
+!simulation/server/knowledge/InputDocs/AI_Use_Cases/*.md
+
+# Generated knowledge base (ChromaDB), shared separately
+simulation/data/chromadb/
+simulation/data/game.db
+
+.DS_Store
+__pycache__/
+.venv/

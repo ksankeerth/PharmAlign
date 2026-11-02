@@ -1,0 +1,4 @@
+# Ingestion only (same versions as ITU's simulation/requirements.txt)
+ollama>=0.4.0
+chromadb>=0.5.0
+PyMuPDF>=1.24.0
