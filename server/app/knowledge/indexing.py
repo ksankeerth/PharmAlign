@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..tables import ROW
 from .chunking import anchor_for, text_hash
 from .embedding import Embedder, vector_text
+from .keywords import tokens
 
 PREFIX_CHARS = 300  # room kept for the title and section that go in front of the text when it is embedded
 
@@ -45,8 +46,23 @@ async def insert_chunks(db: AsyncSession, version_id: str, language: str, chunks
     return done
 
 
+async def index_terms(db: AsyncSession, version_id: Optional[str] = None) -> int:
+    """Stores the stemmed words of chunks that have none yet."""
+    rows = (await db.execute(text(
+        "SELECT ch.id, ch.text FROM chunk ch WHERE (CAST(:v AS text) IS NULL OR ch.document_version_id = :v) "
+        "AND NOT EXISTS (SELECT 1 FROM chunk_terms t WHERE t.chunk_id = ch.id)"
+    ), {"v": version_id})).mappings().all()
+    if rows:
+        await db.execute(
+            text("INSERT INTO chunk_terms (id, chunk_id, tokens) VALUES (:id, :id, :tokens) ON CONFLICT DO NOTHING"),
+            [{"id": r["id"], "tokens": " ".join(tokens(r["text"]))} for r in rows],
+        )
+    return len(rows)
+
+
 async def embed_missing(db: AsyncSession, embedder: Embedder, version_id: Optional[str] = None, limit: Optional[int] = None) -> int:
-    """Embeds chunks that have no vector for this model yet. Returns how many it wrote."""
+    """Embeds chunks that have no vector for this model yet, and stores their keyword terms. Returns how many vectors it wrote."""
+    await index_terms(db, version_id)
     sql = """
         SELECT ch.id, ch.text, ch.section_path, d.doc ->> 'title' AS title
         FROM chunk ch JOIN document_version dv ON dv.id = ch.document_version_id JOIN document d ON d.id = dv.document_id

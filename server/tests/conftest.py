@@ -1,5 +1,6 @@
 """Tests run against the real Postgres from compose, in their own database."""
 import asyncio
+import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
@@ -21,16 +22,49 @@ from app.db import make_sessions
 from app.identity import Actor
 from app.main import create_app
 from app.pipeline.client import agent_urls
-from app.seed import seed_demo_people, truncate_all
+from app.seed import _ctx as seed_ctx, seed_demo_people, truncate_all
+from app.stores import STORES
 
 # Tests use the deterministic embedder, whether or not the bge-m3 extra is installed.
 os.environ.setdefault("PHARMALIGN_EMBEDDER", "hash")
 # Tests check each of the five views strictly. tests/test_two_roles.py turns the groups on.
 os.environ.setdefault("PHARMALIGN_TWO_ROLES", "false")
+os.environ.setdefault("PHARMALIGN_RERANKER", "off")
 TEST_URL = os.environ.get("PHARMALIGN_TEST_DATABASE_URL", "postgresql+asyncpg://pharmalign:pharmalign@localhost:5544/pharmalign_test")
 SERVICE_TOKEN = "test-service-token"
 START = datetime(2026, 11, 1, 10, 0, tzinfo=timezone.utc)
 TENANT = "ws-ae"
+
+
+PLACEHOLDER_CHUNKS = Path(__file__).parent / "fixtures" / "placeholder_chunks.json"
+LICENCE_PARAPHRASE = "A-01:v1:c0900"
+
+
+async def load_placeholder_chunks(db, document_version_ids=None, with_licence_paraphrase: bool = True) -> int:
+    """TEST-ONLY. The seed holds a few real excerpts. Tests that need a big library (ranking, snapshot scope, many documents) add
+    the old generated rows from tests/fixtures/placeholder_chunks.json. Their text is made up and never reaches the app outside a test database.
+    `document_version_ids` limits them to those versions. A row whose anchor the seed already holds is left out of the fixture, so the real excerpt stays.
+    A-01:v1:c0900 is the old paraphrase of the establishment-licence line, under an anchor of its own, because the readiness and assistant
+    questions about who may operate an establishment were written against wording that the real excerpt does not echo. No test quotes from it.
+    A test about the real text outranking the excerpt passes with_licence_paraphrase=False, so the paraphrase cannot compete with the text."""
+    rows = json.loads(PLACEHOLDER_CHUNKS.read_text())
+    added = 0
+    for row in rows:
+        if row["id"] == LICENCE_PARAPHRASE and not with_licence_paraphrase:
+            continue
+        if document_version_ids is None or row["doc"]["document_version_id"] in document_version_ids:
+            STORES["chunk"].add(seed_ctx(db, None), row["doc"], id=row["id"])
+            added += 1
+    await db.flush()
+    return added
+
+
+async def drop_placeholder_chunks(db) -> None:
+    """Removes what load_placeholder_chunks added. A chunk refuses deletes, as in production, so the guard is lifted for this one statement."""
+    ids = [r["id"] for r in json.loads(PLACEHOLDER_CHUNKS.read_text())]
+    await db.execute(text("ALTER TABLE chunk DISABLE TRIGGER USER"))
+    await db.execute(text("DELETE FROM chunk WHERE id = ANY(:ids)"), {"ids": ids})
+    await db.execute(text("ALTER TABLE chunk ENABLE TRIGGER USER"))
 
 
 def as_person(person_id: str) -> dict:

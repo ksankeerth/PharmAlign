@@ -16,7 +16,7 @@ from app.pipeline.replay import load_recorded_dossier
 from app.seed import load_files, truncate_all
 from pharmalign_contracts.server import models as m
 
-from ..conftest import START, TENANT, TEST_URL, as_person, client_for
+from ..conftest import START, TENANT, TEST_URL, as_person, client_for, load_placeholder_chunks
 
 pytestmark = pytest.mark.seeded
 EMBEDDER = get_embedder(Settings(env="simulation"))
@@ -27,6 +27,7 @@ async def seeded(engine):
     async with make_sessions(engine)() as db, db.begin():
         await truncate_all(db)
         await load_files(db, START)
+        await load_placeholder_chunks(db)  # the seed holds only a few real excerpts; these tests need a whole library
         await load_recorded_dossier(db, TENANT)
         await embed_missing(db, EMBEDDER)
 

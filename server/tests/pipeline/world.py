@@ -11,7 +11,7 @@ from app.seed import read
 from app.stores import STORES
 from app.tables import ROW
 
-from ..conftest import TENANT, system_ctx
+from ..conftest import TENANT, load_placeholder_chunks, system_ctx
 
 CASE = "CASE-1042"
 LAW_DOCS = {"E-S25", "E-S06", "A-01", "B-S09", "F-01"}
@@ -43,6 +43,7 @@ async def load_case(db: AsyncSession, now: datetime) -> None:
             extras = {k: v for k, v in row.items() if k not in ("tenant_id", "doc", "id")}
             STORES[name].add(_writer(db, row.get("tenant_id") or TENANT), row["doc"], id=row.get("id"), **extras)
         await db.flush()
+    await load_placeholder_chunks(db, version_ids)  # the runs cite short anchors that the seed no longer holds
     case = next(r for r in read("case", now) if r["doc"]["id"] == CASE)
     doc = {**case["doc"], "status": "intake", "current_pipeline_run_id": None, "current_recommendation_version": None, "blocking_checks_open": 0}
     STORES["case"].add(_writer(db), doc, assessors=case["assessors"])

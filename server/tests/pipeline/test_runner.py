@@ -61,7 +61,7 @@ def met_finding(*evidence, summary="The leaflet was read against the guidance.")
                         "evidence": [{"anchor": a, "quote": q} for a, q in evidence]}}
 
 
-KB_QUOTE = ("E-S06:v1:c0001", "Section 1 of GCC Guidance for Presenting the SPC, PIL and Label")
+KB_QUOTE = ("E-S06:v1:c0001", "The dosage should be clearly specified for each method/route of administration")
 FILE_QUOTE = ("d-1042-22:v1:p3", "one tablet of 500 mg twice daily")
 
 
@@ -342,7 +342,7 @@ async def test_a_met_with_only_dossier_quotes_goes_to_a_person(rt, clock, agents
 
 
 async def test_a_met_citing_the_wrong_law_goes_to_a_person(rt, clock, agents):
-    wrong = ("A-01:v1:c0117", "a pharmaceutical establishment may only operate under a licence issued by the competent authority")
+    wrong = ("A-01:v1:c0117", "Opening a Pharmaceutical Establishment or Biobank without a license")
     agents.answer(CASE, "LBL-02", met_finding(wrong, FILE_QUOTE))
     await start(rt)
     await drive(rt, clock)

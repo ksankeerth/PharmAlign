@@ -195,6 +195,7 @@ SPEC = [
     ("document_version", "gdoc", "document_id:t!>document file_hash:t! review_status:t! quality_status:t published_on:d effective_on:d added_at:ts!", {"ix": [("document_id",), ("file_hash",)]}),
     ("chunk", "gdoc", "document_version_id:t!>document_version position:i! chunk_type:t! page:i page_end:i article:t section_path:t language:t! text:t! text_hash:t!", {"uq": [("document_version_id", "position")]}),
     ("chunk_embedding", "plain", "chunk_id:t!>chunk model:t! dims:i! embedding:v! created_at:ts!=now", {"uq": [("chunk_id", "model")]}),
+    ("chunk_terms", "plain", "chunk_id:t!>chunk tokens:t!", {"uq": [("chunk_id",)]}),
     ("tenant_document_adoption", "doc", "document_version_id:t!>document_version adopted:b! legal_status:t! authority_level:i! decided_by:t! decided_at:ts!", {"uq": [("tenant_id", "document_version_id")]}),
     ("kb_snapshot", "doc", "content_hash:t! label:t! item_count:i! created_by:t! created_at:ts!", {}),
     ("kb_snapshot_item", "doc", "snapshot_id:t!>kb_snapshot document_version_id:t!>document_version legal_status:t! authority_level:i!", {"uq": [("snapshot_id", "document_version_id")], "ix": [("document_version_id",)]}),

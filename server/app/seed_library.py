@@ -24,6 +24,10 @@ from .stores import STORES
 TENANT = "ws-ae"
 UPLOADER, REVIEWER = "p-jordan", "p-sam"  # two distinct people: nobody approves what they added
 ALWAYS = ("A-01", "A-03", "A-12")
+ARABIC = ("E-S01", "E-S14", "E-S17", "E-S21", "B-06", "A-S06", "E-S08", "E-S09", "E-S18", "E-02", "B-S17", "B-S04", "C-11")
+ALSO = ("D-03", "C-19")
+# Seeded cases cite short excerpts of these documents, so their first version stays in force beside the full text.
+CITED_EXCERPTS = frozenset({"A-01", "A-11", "B-S09", "E-S06", "E-S25", "F-01"})
 LIBRARY_DIR = Path(os.environ.get("PHARMALIGN_LIBRARY_DIR") or Path(__file__).resolve().parents[2] / "knowledge" / "documents")
 PRESET_FOR = {"law": "law", "cabinet_resolution": "law", "executive_regulation": "law", "service_card": "web_page", "procedure": "web_page"}
 EXTENSIONS = (".pdf", ".html", ".txt")
@@ -46,7 +50,12 @@ def cited_documents(seed_dir: Path) -> list[str]:
     path = seed_dir / "pack_version.json"
     if path.exists():
         walk(json.loads(path.read_text()))
-    return sorted(found | set(ALWAYS))
+    return sorted(found | set(ALWAYS) | set(ARABIC) | set(ALSO))
+
+
+def all_documents(root: Path) -> list[str]:
+    """Every document with a file, for PHARMALIGN_LIBRARY_SCOPE=all. A full load takes hours, so it isn't the default."""
+    return sorted({p.name.split("__")[0] for p in root.glob("*/*__*") if p.suffix.lower() in EXTENSIONS})
 
 
 def find_files(root: Path, ids: list[str]) -> dict[str, Optional[Path]]:
@@ -78,7 +87,8 @@ async def load_library(settings: Settings, files: Optional[dict[str, Optional[Pa
     if files is None:
         from .seed import SEED_DIR
 
-        files = find_files(LIBRARY_DIR, cited_documents(SEED_DIR))
+        ids = all_documents(LIBRARY_DIR) if os.environ.get("PHARMALIGN_LIBRARY_SCOPE") == "all" else cited_documents(SEED_DIR)
+        files = find_files(LIBRARY_DIR, ids)
     app = create_app(settings=settings.model_copy(update={"worker_enabled": False}))
     result: dict = {"ingested": {}, "skipped": {}, "snapshot_id": None, "retrieval": None}
     transport = httpx.ASGITransport(app=app, raise_app_exceptions=False)
@@ -140,9 +150,9 @@ async def load_library(settings: Settings, files: Optional[dict[str, Optional[Pa
                     old = await STORES["tenant_document_adoption"].get(_ctx(db, TENANT), f"{TENANT}|{previous}")
                 level = old.authority_level if old else 1
                 put = await call("PUT", f"/api/v1/workspaces/{TENANT}/adoptions/{version}", REVIEWER,
-                                 json={"adopted": True, "legal_status": "in_force", "authority_level": level, "notes": "Official text."})
+                                 json={"adopted": True, "legal_status": old.legal_status if old else "in_force", "authority_level": level, "notes": "Official text."})
                 assert put.status_code == 200, put.text
-                if old:
+                if old and doc_id not in CITED_EXCERPTS and old.legal_status == "in_force":
                     await call("PUT", f"/api/v1/workspaces/{TENANT}/adoptions/{previous}", REVIEWER,
                                json={"adopted": True, "legal_status": "superseded", "authority_level": level, "notes": "Replaced by the official text."})
                 result["ingested"][doc_id] = job["chunks"]
@@ -160,6 +170,9 @@ async def load_library(settings: Settings, files: Optional[dict[str, Optional[Pa
                 ctx = _ctx(db, TENANT)
                 workspace = await STORES["workspace"].require(ctx, TENANT, "Workspace")
                 await STORES["workspace"].save(ctx, workspace.model_copy(update={"active_kb_snapshot_id": result["snapshot_id"]}))
+                # The demo cases read the real text. A case in real use stays pinned to the snapshot it started on.
+                for case in await STORES["case"].list(ctx):
+                    await STORES["case"].save(ctx, case.model_copy(update={"kb_snapshot_id": result["snapshot_id"]}))
             say(f"  library: snapshot {result['snapshot_id']} is now active")
             result["retrieval"] = await retrieval_check(app, result["snapshot_id"])
             say(f"  library: retrieval check on the new snapshot: {result['retrieval']['detail']} ({result['retrieval']['status']})")

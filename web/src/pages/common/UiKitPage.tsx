@@ -106,7 +106,7 @@ export default function UiKitPage() {
           <div className="stack-sm">
             <EvidenceQuote evidence={{ anchor: "d-1042-17:v1:p41", quote: "long-term conditions of 25 C / 60% RH" }} source="stability.pdf, page 41" onOpen={(a) => toast.info(`Open ${a}`)} />
             <EvidenceQuote evidence={{ anchor: "d-1042-23:v1:p3", quote: "1000 mg twice daily (English rendering of the Arabic leaflet)" }} tone="contradicts" />
-            <EvidenceQuote evidence={{ anchor: "E-S25:v1:c0412", quote: "long-term testing at 30 C / 65% RH for a minimum of 12 months" }} tone="reference" source="E-S25, clause 3.2.6.1" />
+            <EvidenceQuote evidence={{ anchor: "E-S25:v1:c0412", quote: "Long-term 30o C ± 2o C/ 65% RH ± 5% RH 12 months" }} tone="reference" source="E-S25, clause 3.2.6.1" />
           </div>
         </Panel>
         <Panel title="GuardList (from a 409)">

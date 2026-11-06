@@ -15,6 +15,8 @@ set -euo pipefail
 unset VIRTUAL_ENV
 cd "$(dirname "$0")/.."
 ROOT=$(pwd)
+# Arabic search: read Arabic PDFs from their text layer, and rerank Arabic questions. The reranker needs the bge-m3 extra.
+export PHARMALIGN_ARABIC_TEXT_LAYER="${PHARMALIGN_ARABIC_TEXT_LAYER:-true}" PHARMALIGN_RERANKER="${PHARMALIGN_RERANKER:-bge-reranker-v2-m3}"
 RUN_DIR="${PHARMALIGN_RUN_DIR:-$ROOT/.run}"
 SERVER_PORT=8000
 WEB_PORT=5180

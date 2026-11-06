@@ -9,6 +9,7 @@ the searches tried. A source that exists only outside the filter (superseded, sa
 """
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass, field
 from typing import Any, Optional, Sequence
 
@@ -17,7 +18,9 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .arabic import is_arabic
+from .rerank import Reranker
 from .embedding import Embedder, terms, vector_text
+from .keywords import bm25, fuse, tsquery
 
 APPROVED = ("approved", "approved_with_notes")
 
@@ -96,6 +99,30 @@ def _supported(query_terms: set[str], row: Any, query_arabic: bool = False) -> b
     return bool(query_terms & body)
 
 
+async def _keyword_rows(db: AsyncSession, scope: Scope, any_status: bool, question: str) -> list[Any]:
+    """The chunks inside the filter that hold any of the question's words."""
+    query = tsquery(question)
+    if not query:
+        return []
+    candidates, params = _filter_sql(scope, any_status)
+    sql = f"""
+        WITH cand AS MATERIALIZED ({candidates})
+        SELECT c.*, t.tokens FROM cand c JOIN chunk_terms t ON t.chunk_id = c.chunk_id
+        WHERE to_tsvector('simple', t.tokens) @@ to_tsquery('simple', :words)
+    """
+    return list((await db.execute(text(sql), {**params, "words": query})).mappings().all())
+
+
+async def _reranked(question: str, vector_rows: Sequence[Any], keyword_rows: Sequence[Any], total: int, reranker: Reranker, top_k: int) -> tuple[list[dict], Optional[float]]:
+    """The best of both searches, read by the reranker. Off the event loop, since it takes seconds. Returns the rows it kept and its best score."""
+    short = fuse(vector_rows, bm25(question, keyword_rows, total))[: reranker.candidates]
+    if not short:
+        return [], None
+    scores = await asyncio.to_thread(reranker.score, question, [r["text"] for r in short])
+    scored = sorted(zip(scores, short), key=lambda p: (-p[0], p[1]["chunk_id"]))
+    return [{**r, "score": s} for s, r in scored if s >= reranker.min_score][:top_k], scored[0][0]
+
+
 def _hit(row: Any, score: float) -> m.KbHit:
     return m.KbHit(
         anchor=row["chunk_id"], text=row["text"], score=round(float(score), 3), document_id=row["document_id"], title=row["title"], issuer=row["issuer"],
@@ -104,7 +131,7 @@ def _hit(row: Any, score: float) -> m.KbHit:
 
 
 async def search(db: AsyncSession, scope: Scope, query: str, embedder: Embedder, top_k: int = 10) -> Found:
-    qvec = embedder.embed([query])[0]
+    qvec = (await asyncio.to_thread(embedder.embed, [query]))[0]
     query_terms = set(terms(query))
     query_arabic = is_arabic(query)
     requirement = scope.purpose == "requirement"
@@ -115,6 +142,15 @@ async def search(db: AsyncSession, scope: Scope, query: str, embedder: Embedder,
         "applied_before_search": True, "embedder": embedder.name, "similarity_floor": embedder.min_score,
     }
     rows, searched = await _ranked(db, scope, not requirement, embedder, qvec, top_k + 25)
+    reranker = embedder.reranker if query_arabic else None
+    if reranker and rows:
+        filters.update(reranker=reranker.name, rerank_floor=reranker.min_score)
+        kept, top = await _reranked(query, rows, await _keyword_rows(db, scope, not requirement, query), searched, reranker, top_k)
+        if kept:
+            return Found([_hit(r, r["score"]) for r in kept], False, filters, searched)
+        tried = [{"search": "meaning and words, read by the reranker", "candidates": searched, "best_score": None if top is None else round(top, 3),
+                  "floor": reranker.min_score, "result": "no passage answered the question closely enough"}]
+        return Found([], True, filters, searched, tried)
     hits: list[m.KbHit] = []
     best = float(rows[0]["score"]) if rows else None
     for r in rows:
@@ -150,7 +186,7 @@ async def search(db: AsyncSession, scope: Scope, query: str, embedder: Embedder,
 async def agent_search(conn, query: str, embedder: Embedder, top_k: int = 10, requirement: bool = True) -> Found:
     """The same ranking for an agent, through the agent_read views only. The run's tenant and case are set on the connection by the tool server,
     and the views show nothing else: the pinned snapshot, approved versions that passed the gate."""
-    qvec = vector_text(embedder.embed([query])[0])
+    qvec = vector_text((await asyncio.to_thread(embedder.embed, [query]))[0])
     view = "agent_read.kb_requirement_chunk" if requirement else "agent_read.kb_chunk"
     sql = f"""
         WITH cand AS MATERIALIZED (SELECT * FROM {view})
@@ -166,6 +202,23 @@ async def agent_search(conn, query: str, embedder: Embedder, top_k: int = 10, re
     query_arabic = is_arabic(query)
     hits = [_hit({**r, "jurisdiction": r["jurisdiction"] or "-"}, r["score"]) for r in rows if float(r["score"]) >= embedder.min_score and _supported(query_terms, r, query_arabic)][:top_k]
     filters: dict[str, Any] = {"source": view, "similarity_floor": embedder.min_score, "applied_before_search": True}
+    reranker = embedder.reranker if query_arabic else None
+    if reranker and rows:
+        filters.update(reranker=reranker.name, rerank_floor=reranker.min_score)
+        words = tsquery(query)
+        found = (await conn.execute(text(f"""
+            WITH cand AS MATERIALIZED (SELECT * FROM {view})
+            SELECT c.anchor AS chunk_id, c.document_id, c.title, c.issuer, c.country AS jurisdiction, c.legal_status, c.authority_level, c.article, c.page, c.text,
+                   c.section_path, t.tokens
+            FROM cand c JOIN agent_read.kb_chunk_terms t ON t.anchor = c.anchor
+            WHERE to_tsvector('simple', t.tokens) @@ to_tsquery('simple', :words)
+        """), {"words": words})).mappings().all() if words else []
+        kept, top = await _reranked(query, rows, found, candidates, reranker, top_k)
+        if kept:
+            return Found([_hit({**r, "jurisdiction": r["jurisdiction"] or "-"}, r["score"]) for r in kept], False, filters, candidates)
+        tried = [{"search": "meaning and words, read by the reranker, inside the run's pinned snapshot", "candidates": candidates, "floor": reranker.min_score,
+                  "best_score": None if top is None else round(top, 3)}]
+        return Found([], True, filters, candidates, tried)
     if hits:
         return Found(hits, False, filters, candidates)
     tried = [{"search": "meaning and words, inside the run's pinned snapshot", "candidates": candidates, "floor": embedder.min_score,

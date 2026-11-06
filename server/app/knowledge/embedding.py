@@ -15,6 +15,7 @@ from ..config import Settings
 
 
 class Embedder(Protocol):
+    reranker: Optional["Reranker"]  # set by get_embedder, so every search path ranks the same way
     name: str  # stored with every vector
     dims: int
     max_chars: int  # longer text is split before it is embedded, never cut off
@@ -63,6 +64,8 @@ def terms(text: str) -> list[str]:
 class HashEmbedder:
     """Feature hashing of the text's terms into a fixed vector. Deterministic and offline. It matches words, not meaning."""
 
+    reranker = None
+
     def __init__(self, dims: int = 256, min_score: float = 0.2):
         self.name = f"hash-{dims}"
         self.dims = dims
@@ -86,6 +89,8 @@ class HashEmbedder:
 
 class BgeM3Embedder:
     """BAAI/bge-m3 through sentence-transformers. Optional extra: bge-m3."""
+
+    reranker = None
 
     name = "bge-m3"
     dims = 1024
@@ -127,7 +132,11 @@ def get_embedder(settings: Settings) -> Embedder:
             which = "hash"
         else:
             raise EmbedderUnavailable("No embedding model is installed. Install the bge-m3 extra, or run in simulation.")
-    return _build(which, settings.similarity_floor)
+    from .rerank import get_reranker
+
+    embedder = _build(which, settings.similarity_floor)
+    embedder.reranker = get_reranker(settings)
+    return embedder
 
 
 def vector_text(v: Sequence[float]) -> str:

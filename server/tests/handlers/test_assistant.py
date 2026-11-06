@@ -12,7 +12,7 @@ from app.knowledge.indexing import embed_missing
 from app.pipeline.assistant import AssistantUnavailable
 from app.tables import ROW
 
-from ..conftest import client_for
+from ..conftest import client_for, load_placeholder_chunks
 from .conftest import count_rows, headers, parse_sse
 
 pytestmark = pytest.mark.seeded
@@ -23,6 +23,7 @@ STABILITY = "What long-term stability conditions apply in a hot climate?"
 @pytest_asyncio.fixture(scope="module", autouse=True)
 async def embedded(engine, seeded):
     async with make_sessions(engine)() as db, db.begin():
+        await load_placeholder_chunks(db)  # the questions need a library of many documents
         await embed_missing(db, get_embedder(Settings(env="simulation")))
 
 

@@ -6,7 +6,7 @@ The library in the prototype is for showing how the platform works. To read, quo
 
 ## Using the real text
 
-The prototype runs without these files: its demo data has short stand-in text. To try it on the real text of the documents the demo cites:
+The prototype runs without these files, but its library then has only the document records and a few short excerpts. To use the real text:
 
 1. Download each document from its source, following the publisher's terms.
 2. Save it as `knowledge/documents/<folder>/<id>__<any-name>.<pdf, html or txt>`. For example, `A-01` in the `UAE_Federal_Laws` folder could be `knowledge/documents/UAE_Federal_Laws/A-01__medicines-law.pdf`. These files stay out of git.

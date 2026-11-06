@@ -22,7 +22,7 @@ from app.pipeline.replay import load_recorded_dossier
 from app.seed import load_files, truncate_all
 from app.stores import STORES
 
-from ..conftest import START, TENANT
+from ..conftest import START, TENANT, load_placeholder_chunks
 
 CASE, OTHER_CASE, SNAPSHOT = "CASE-1042", "CASE-1043", "snap-ae-14"
 SA_TENANT, SA_CASE, SA_SNAPSHOT = "ws-sa", "CASE-2001", "snap-sa-4"
@@ -34,6 +34,7 @@ async def seeded(engine):
     async with make_sessions(engine)() as db, db.begin():
         await truncate_all(db)
         await load_files(db, START)
+        await load_placeholder_chunks(db)  # the seed holds only a few real excerpts; the tools are tested against a whole library
         await load_recorded_dossier(db, TENANT)
         await embed_missing(db, EMBEDDER)
 

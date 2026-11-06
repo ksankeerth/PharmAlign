@@ -45,7 +45,7 @@ PHARMALIGN_ENV=simulation uv run uvicorn --factory app.main:create_app --port 80
 cd ../web && npm install && npm run dev   # http://localhost:5180, forwards /api to port 8000
 ```
 
-**Real law text.** The seed's law chunks are short paraphrases. No document is stored in this repository: [knowledge/SOURCES.md](knowledge/SOURCES.md) lists every one and where to download it. When the source files are in `knowledge/documents/`, seed with `--with-library` to ingest the real text of the core documents, so the Knowledge Assistant and the readiness check work on the law itself. A missing file is skipped and the seed still succeeds. Details are in `server/README.md`.
+**Real law text.** The library shows real documents only, and none is stored in this repository: [knowledge/SOURCES.md](knowledge/SOURCES.md) lists every one and where to download it. Without those files the seed holds the document records and a few short excerpts that the demo cases cite, so search has little to find. Put the files in `knowledge/documents/` and seed with `--with-library` to ingest the documents the demo uses, or set `PHARMALIGN_LIBRARY_SCOPE=all` for all of them, which takes hours. A missing file is skipped and the seed still succeeds. Details are in `server/README.md`.
 
 ```sh
 PHARMALIGN_ENV=simulation uv run python -m app.seed --reset --with-library

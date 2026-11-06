@@ -14,7 +14,7 @@ from app import seed
 from app.db import make_sessions
 from app.seed import SEED_DIR, SeedError, load_files, truncate_all
 from app.tables import ROW
-from tests.conftest import TEST_URL
+from tests.conftest import TEST_URL, drop_placeholder_chunks, load_placeholder_chunks
 
 pytestmark = pytest.mark.seeded
 NOW = datetime(2026, 11, 1, 10, 0, tzinfo=timezone.utc)
@@ -62,11 +62,11 @@ async def test_row_counts_match_the_exported_files(engine):
     async with engine.connect() as conn:
         for table, n in sorted(expected.items()):
             assert await conn.scalar(text(f'SELECT count(*) FROM "{table}"')) == n, table
-    assert expected["case"] == 20 and expected["chunk"] > 1000
+    assert expected["case"] == 20 and expected["chunk"] == 10
 
 
 def test_every_table_is_in_the_seed_or_empty_on_purpose():
-    empty_on_purpose = {"chunk_embedding", "assistant_exchange", "agent_tool_log", "model_registry", "agent_run_work", "watch_staged_item",
+    empty_on_purpose = {"chunk_embedding", "chunk_terms", "assistant_exchange", "agent_tool_log", "model_registry", "agent_run_work", "watch_staged_item",
                        "document_file", "quality_report", "ingest_output",
                        "reference_page"}  # made from reliance_basis when the seed loads
     missing = [t for t in ROW if t not in empty_on_purpose and not (SEED_DIR / f"{t}.json").exists()]
@@ -283,7 +283,17 @@ async def test_superseded_law_is_not_a_requirement(agent):
     assert required == {a for a, ok in anything.items() if ok}
 
 
-async def test_only_snapshot_content_is_visible(agent, engine):
+@pytest_asyncio.fixture
+async def big_library(engine):
+    """The seed holds only snapshot documents' excerpts, so this test adds the test-only library, which has unreviewed documents too."""
+    async with make_sessions(engine)() as db, db.begin():
+        await load_placeholder_chunks(db)
+    yield
+    async with make_sessions(engine)() as db, db.begin():
+        await drop_placeholder_chunks(db)
+
+
+async def test_only_snapshot_content_is_visible(agent, engine, big_library):
     async with engine.connect() as conn:
         outside = await values(conn, """
             SELECT ch.id FROM chunk ch WHERE NOT EXISTS (

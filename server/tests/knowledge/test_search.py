@@ -76,3 +76,57 @@ async def test_a_pinned_snapshot_is_unaffected_by_a_later_adoption(lib):
     assert then["hits"] and {h["legal_status"] for h in then["hits"]} == {"in_force"}
     detail = (await lib.http.get(f"/api/v1/kb-snapshots/{pinned}", headers=lib.as_("p-sam"))).json()
     assert [i["legal_status"] for i in detail["items"]] == ["in_force"]
+
+
+ARABIC_LAW = ("\n".join(
+    f"المادة {i}\nتحدد هذه المادة أحكام المستحضرات الدوائية وشروط تسجيلها لدى الجهة المختصة في الدولة بصورة واضحة ومفصلة تماما.\n"
+    + ("مدة صلاحية شهادة التسجيل خمس سنوات من تاريخ إصدارها وتجدد قبل انتهائها.\n" if i == 2 else "")
+    for i in range(1, 6)
+)).encode()
+
+
+class FakeReranker:
+    name = "fake"
+    candidates = 15
+
+    def __init__(self, min_score=0.5, known="خمس سنوات"):
+        self.min_score, self.known, self.calls = min_score, known, []
+
+    def score(self, question, passages):
+        self.calls.append(question)
+        return [0.9 if self.known in p else 0.1 for p in passages]
+
+
+async def _arabic_library(lib):
+    doc = await lib.register("Registration rules")
+    version = (await lib.upload(doc, ARABIC_LAW))["id"]
+    await lib.process(version)
+    await lib.adopt(version, "in_force")
+
+
+async def test_an_arabic_question_is_reranked_and_keeps_only_passages_that_answer(lib, monkeypatch):
+    fake = FakeReranker()
+    monkeypatch.setattr("app.knowledge.rerank.get_reranker", lambda settings: fake)
+    await _arabic_library(lib)
+    found = await lib.search("كم مدة صلاحية شهادة التسجيل؟")
+    assert fake.calls and found["hits"] and all("خمس سنوات" in h["text"] for h in found["hits"])
+    assert found["hits"][0]["score"] == 0.9 and found["filters_applied"]["reranker"] == "fake"
+
+
+async def test_when_the_reranker_trusts_nothing_the_answer_is_no_source(lib, monkeypatch):
+    monkeypatch.setattr("app.knowledge.rerank.get_reranker", lambda settings: FakeReranker(known="لا يوجد في النص"))
+    await _arabic_library(lib)
+    found = await lib.search("كم مدة صلاحية شهادة التسجيل؟")
+    assert found["no_source_found"] and found["hits"] == []
+    assert found["searches_tried"][0]["floor"] == 0.5
+
+
+async def test_an_english_question_is_not_reranked(lib, monkeypatch):
+    fake = FakeReranker()
+    monkeypatch.setattr("app.knowledge.rerank.get_reranker", lambda settings: fake)
+    doc = await lib.register("Operating licences")
+    version = (await lib.upload(doc, law("operating licences")))["id"]
+    await lib.process(version)
+    await lib.adopt(version, "in_force")
+    await lib.search("operating licences records")
+    assert fake.calls == []
