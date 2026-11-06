@@ -1,0 +1,149 @@
+{
+  "document_map": [
+    {
+      "doc_id": "d-4003-01",
+      "module": "1.2",
+      "basis": "Title: registration fee receipt"
+    },
+    {
+      "doc_id": "d-4003-02",
+      "module": "1.3",
+      "basis": "Title and section numbers: draft Summary of Product Characteristics"
+    },
+    {
+      "doc_id": "d-4003-03",
+      "module": "1.3",
+      "basis": "Title: package leaflet for the patient"
+    },
+    {
+      "doc_id": "d-4003-04",
+      "module": "2.3",
+      "basis": "Title: Quality Overall Summary"
+    },
+    {
+      "doc_id": "d-4003-05",
+      "module": "3.2.P.3",
+      "basis": "Title and section numbers: 3.2.P.3 Manufacture"
+    },
+    {
+      "doc_id": "d-4003-06",
+      "module": "3.2.P.8",
+      "basis": "Title and table of contents: stability report"
+    },
+    {
+      "doc_id": "d-4003-07",
+      "module": "3.2.P.8",
+      "basis": "Section 3.2.P.8.2: stability commitment and protocol"
+    },
+    {
+      "doc_id": "d-4003-08",
+      "module": "4.2",
+      "basis": "Title: nonclinical overview"
+    },
+    {
+      "doc_id": "d-4003-09",
+      "module": "5.3.1",
+      "basis": "Title: bioequivalence study report"
+    },
+    {
+      "doc_id": "d-4003-10",
+      "module": null,
+      "basis": "No text could be read from the page, so the file cannot be placed."
+    }
+  ],
+  "facts": [
+    {
+      "key": "shelf_life_months",
+      "status": "found",
+      "value": "24 months",
+      "number": 24,
+      "unit": "months",
+      "evidence": [
+        {
+          "anchor": "d-4003-06:v1:p2",
+          "quote": "a shelf life of 24 months is proposed when the product is stored below 30 C in the original package"
+        }
+      ]
+    },
+    {
+      "key": "strength",
+      "status": "found",
+      "value": "20 mg",
+      "number": null,
+      "unit": null,
+      "evidence": [
+        {
+          "anchor": "d-4003-02:v1:p1",
+          "quote": "Each film-coated tablet contains atorvastatin calcium equivalent to 20 mg of atorvastatin"
+        }
+      ]
+    },
+    {
+      "key": "manufacturing_site",
+      "status": "found",
+      "value": "Bluegate Pharmaceuticals, Plant 4",
+      "number": null,
+      "unit": null,
+      "evidence": [
+        {
+          "anchor": "d-4003-05:v1:p1",
+          "quote": "The finished product is manufactured, packaged, tested and released at Bluegate Pharmaceuticals, Plant 4, 8 Placeholder Avenue, Samplebury"
+        }
+      ]
+    },
+    {
+      "key": "long_term_temp_c",
+      "status": "found",
+      "value": "30",
+      "number": 30,
+      "unit": "C",
+      "evidence": [
+        {
+          "anchor": "d-4003-06:v1:p3",
+          "quote": "The long-term study was stored at 30 C / 65% RH"
+        }
+      ]
+    },
+    {
+      "key": "long_term_rh_pct",
+      "status": "found",
+      "value": "65",
+      "number": 65,
+      "unit": "%",
+      "evidence": [
+        {
+          "anchor": "d-4003-06:v1:p3",
+          "quote": "The long-term study was stored at 30 C / 65% RH"
+        }
+      ]
+    },
+    {
+      "key": "long_term_months",
+      "status": "found",
+      "value": "12",
+      "number": 12,
+      "unit": "months",
+      "evidence": [
+        {
+          "anchor": "d-4003-06:v1:p3",
+          "quote": "12 months of long-term data are available for all three batches"
+        }
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "doc_id": "d-4003-10",
+      "page": 1,
+      "kind": "unreadable",
+      "detail": "Page 1 has no text, so nothing could be read from it. It may be a scanned image."
+    },
+    {
+      "doc_id": "d-4003-04",
+      "page": 3,
+      "kind": "other",
+      "detail": "Page 3 is flagged for hidden text, and its visible text addresses the reviewing system with instructions. It was treated as data, and no value was taken from it."
+    }
+  ],
+  "searches_tried": []
+}

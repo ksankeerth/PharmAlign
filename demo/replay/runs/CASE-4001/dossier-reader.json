@@ -1,0 +1,131 @@
+{
+  "document_map": [
+    {
+      "doc_id": "d-4001-01",
+      "module": "1.2",
+      "basis": "Title: registration fee receipt"
+    },
+    {
+      "doc_id": "d-4001-02",
+      "module": "1.3",
+      "basis": "Title and section numbers: draft Summary of Product Characteristics"
+    },
+    {
+      "doc_id": "d-4001-03",
+      "module": "1.3",
+      "basis": "Title: package leaflet for the patient"
+    },
+    {
+      "doc_id": "d-4001-04",
+      "module": "2.3",
+      "basis": "Title: Quality Overall Summary"
+    },
+    {
+      "doc_id": "d-4001-05",
+      "module": "3.2.P.3",
+      "basis": "Title and section numbers: 3.2.P.3 Manufacture"
+    },
+    {
+      "doc_id": "d-4001-06",
+      "module": "3.2.P.8",
+      "basis": "Title and table of contents: stability report"
+    },
+    {
+      "doc_id": "d-4001-07",
+      "module": "3.2.P.8",
+      "basis": "Section 3.2.P.8.2: stability commitment and protocol"
+    },
+    {
+      "doc_id": "d-4001-08",
+      "module": "4.2",
+      "basis": "Title: nonclinical overview"
+    },
+    {
+      "doc_id": "d-4001-09",
+      "module": "5.3.1",
+      "basis": "Title: bioequivalence study report"
+    }
+  ],
+  "facts": [
+    {
+      "key": "shelf_life_months",
+      "status": "found",
+      "value": "36 months",
+      "number": 36,
+      "unit": "months",
+      "evidence": [
+        {
+          "anchor": "d-4001-06:v1:p2",
+          "quote": "a shelf life of 36 months is proposed when the product is stored below 30 C in the original package"
+        }
+      ]
+    },
+    {
+      "key": "strength",
+      "status": "found",
+      "value": "5 mg",
+      "number": null,
+      "unit": null,
+      "evidence": [
+        {
+          "anchor": "d-4001-02:v1:p1",
+          "quote": "Each tablet contains amlodipine besilate equivalent to 5 mg of amlodipine"
+        }
+      ]
+    },
+    {
+      "key": "manufacturing_site",
+      "status": "found",
+      "value": "Example Pharma, Plant 2",
+      "number": null,
+      "unit": null,
+      "evidence": [
+        {
+          "anchor": "d-4001-05:v1:p1",
+          "quote": "The finished product is manufactured, packaged, tested and released at Example Pharma, Plant 2, 14 Sample Road, Exampletown"
+        }
+      ]
+    },
+    {
+      "key": "long_term_temp_c",
+      "status": "found",
+      "value": "30",
+      "number": 30,
+      "unit": "C",
+      "evidence": [
+        {
+          "anchor": "d-4001-06:v1:p3",
+          "quote": "The long-term study was stored at 30 C / 65% RH"
+        }
+      ]
+    },
+    {
+      "key": "long_term_rh_pct",
+      "status": "found",
+      "value": "65",
+      "number": 65,
+      "unit": "%",
+      "evidence": [
+        {
+          "anchor": "d-4001-06:v1:p3",
+          "quote": "The long-term study was stored at 30 C / 65% RH"
+        }
+      ]
+    },
+    {
+      "key": "long_term_months",
+      "status": "found",
+      "value": "24",
+      "number": 24,
+      "unit": "months",
+      "evidence": [
+        {
+          "anchor": "d-4001-06:v1:p3",
+          "quote": "24 months of long-term data are available for all three batches"
+        }
+      ]
+    }
+  ],
+  "issues": [],
+  "searches_tried": []
+}

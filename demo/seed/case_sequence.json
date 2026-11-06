@@ -1,4 +1,7 @@
 [
 {"tenant_id":"ws-ae","id":"CASE-1042:1","doc":{"case_id":"CASE-1042","number":1,"received_at":{"$t":-1569600},"document_ids":["d-1042-01","d-1042-02","d-1042-03","d-1042-05","d-1042-17","d-1042-19","d-1042-22","d-1042-23","d-1042-25","d-1042-27","d-1042-30"],"changed_check_ids":[]}},
-{"tenant_id":"ws-ae","id":"CASE-1042:2","doc":{"case_id":"CASE-1042","number":2,"received_at":{"$t":-97200},"document_ids":["d-1042-18"],"changed_check_ids":["QUAL-07","SAME-01"]}}
+{"tenant_id":"ws-ae","id":"CASE-1042:2","doc":{"case_id":"CASE-1042","number":2,"received_at":{"$t":-97200},"document_ids":["d-1042-18"],"changed_check_ids":["QUAL-07","SAME-01"]}},
+{"tenant_id":"ws-ae","id":"CASE-4001:1","doc":{"case_id":"CASE-4001","number":1,"received_at":{"$t":-12600},"document_ids":["d-4001-01","d-4001-02","d-4001-03","d-4001-04","d-4001-05","d-4001-06","d-4001-07","d-4001-08","d-4001-09"],"changed_check_ids":[]}},
+{"tenant_id":"ws-ae","id":"CASE-4002:1","doc":{"case_id":"CASE-4002","number":1,"received_at":{"$t":-12600},"document_ids":["d-4002-01","d-4002-02","d-4002-03","d-4002-04","d-4002-05","d-4002-06","d-4002-07","d-4002-08","d-4002-09"],"changed_check_ids":[]}},
+{"tenant_id":"ws-ae","id":"CASE-4003:1","doc":{"case_id":"CASE-4003","number":1,"received_at":{"$t":-12600},"document_ids":["d-4003-01","d-4003-02","d-4003-03","d-4003-04","d-4003-05","d-4003-06","d-4003-07","d-4003-08","d-4003-09","d-4003-10"],"changed_check_ids":[]}}
 ]

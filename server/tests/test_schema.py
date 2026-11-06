@@ -62,7 +62,7 @@ async def test_row_counts_match_the_exported_files(engine):
     async with engine.connect() as conn:
         for table, n in sorted(expected.items()):
             assert await conn.scalar(text(f'SELECT count(*) FROM "{table}"')) == n, table
-    assert expected["case"] == 17 and expected["chunk"] > 1000
+    assert expected["case"] == 20 and expected["chunk"] > 1000
 
 
 def test_every_table_is_in_the_seed_or_empty_on_purpose():
