@@ -7,9 +7,20 @@ test.beforeAll(async ({ request }) => {
   await resetDemo(request);
 });
 
+const ARABIC_RULES = Array.from({ length: 5 }, (_, i) =>
+  `المادة ${i + 1}\nتحدد هذه المادة قواعد تسعير المستحضرات الدوائية لدى الجهة المختصة في الدولة بصورة واضحة ومفصلة، وتراجع الأسعار بصورة دورية وفق الإجراءات المعتمدة.`,
+).join("\n\n");
+
 test.describe("ingestion", () => {
   test("a full run is refused until the version is approved, then it runs", async ({ page }) => {
-    await open(page, "/admin/library/versions/B-S01-v1/ingest", PEOPLE.jordan);
+    // A document's text comes from a file, so the test uploads one, as a person would.
+    const upload = await page.request.post("/api/v1/documents/B-S01/versions", {
+      headers: { Authorization: `Bearer ${PEOPLE.jordan}` },
+      multipart: { file: { name: "pricing-rules.txt", mimeType: "text/plain", buffer: Buffer.from(ARABIC_RULES) }, version_label: "uploaded for the test" },
+    });
+    expect(upload.status(), await upload.text()).toBe(201);
+    const version = (await upload.json()).id;
+    await open(page, `/admin/library/versions/${version}/ingest`, PEOPLE.jordan);
     await expect(main(page).getByText("A full run is refused for now")).toBeVisible();
     await main(page).getByRole("button", { name: "Run full ingest" }).click();
     await expect(main(page).getByText("Refused", { exact: true })).toBeVisible();
@@ -23,13 +34,13 @@ test.describe("ingestion", () => {
 
     // A second person approves the document version, then the full run is allowed.
     await open(page, "/owner/documents", PEOPLE.sam);
-    await main(page).getByRole("row").filter({ hasText: "B-S01" }).click();
+    await main(page).getByRole("row").filter({ hasText: "B-S01" }).last().click();
     await dialog(page).getByLabel(/^Notes/).fill("The Arabic edition is an official copy and the text layer reads well.");
     await dialog(page).getByRole("radio", { name: /Approve with notes/ }).check();
     await dialog(page).getByRole("button", { name: /^Submit: / }).click();
     await expect(page.getByText("B-S01 approved with notes").first()).toBeVisible();
 
-    await open(page, "/admin/library/versions/B-S01-v1/ingest", PEOPLE.jordan);
+    await open(page, `/admin/library/versions/${version}/ingest`, PEOPLE.jordan);
     await expect(main(page).getByText("A full run is allowed")).toBeVisible();
     await main(page).getByRole("button", { name: "Run full ingest" }).click();
     await expect(main(page).getByText("Full run", { exact: true })).toBeVisible();
