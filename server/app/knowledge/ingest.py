@@ -24,7 +24,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from ..jobs import task
 from ..stores import STORES
 from ..tables import ROW
-from . import indexing, parsers, quality
+from . import arabic, indexing, parsers, quality
 from .chunking import ChunkRules, apply_table_mode, chunk_blocks, chunk_language, split_long
 from .embedding import EmbedderUnavailable, get_embedder
 from .layout import ArabicNotSupported, Hidden, Options, Raw, stitch
@@ -116,10 +116,13 @@ async def _parse(ctx, job: m.IngestJob) -> None:
     version = await STORES["document_version"].require(ctx, job.document_version_id, "Document version")
     document = await STORES["document"].require(ctx, version.document_id, "Document")
     source, stored = await _source(ctx, version, document)
-    parser = parsers.choose_parser(job.profile.parser, source, stored)
+    text_layer = ctx.rt.settings.arabic_text_layer
+    parser = parsers.choose_parser(job.profile.parser, source, stored, text_layer)
     opts = options_for(job.profile)
     raw = await asyncio.to_thread(parser.parse, source, opts)  # off the loop, so the lease keeps being renewed
     raw = parsers.apply_profile_pages(raw, job.profile.page_range)
+    if text_layer:
+        raw = arabic.clean_raw(raw)
     out = ROW["ingest_output"]
     await ctx.db.execute(pg_insert(out).values(
         id=f"{job.id}:out", ingest_job_id=job.id, document_version_id=version.id, stage="parse", raw=raw_to_json(raw),

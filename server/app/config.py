@@ -61,6 +61,8 @@ class Settings(BaseSettings):
     mcp_enabled: Optional[bool] = None
     # The five views act as two roles (see authz.ROLE_GROUPS). On in simulation, off elsewhere.
     two_roles: Optional[bool] = None
+    # Read Arabic PDFs from their text layer, with app/knowledge/arabic.py repairing it. The quality gate still applies.
+    arabic_text_layer: bool = False
     # The pharmalign_agent login. Unset uses the database URL with the development password, in simulation only.
     agent_database_url: Optional[str] = None
     mcp_max_rows: int = 50  # rows in one result

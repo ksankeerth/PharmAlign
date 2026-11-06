@@ -16,6 +16,7 @@ from pharmalign_contracts.server import models as m
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .arabic import is_arabic
 from .embedding import Embedder, terms, vector_text
 
 APPROVED = ("approved", "approved_with_notes")
@@ -86,8 +87,11 @@ async def _ranked(db: AsyncSession, scope: Scope, any_status: bool, embedder: Em
     return list(rows), searched
 
 
-def _supported(query_terms: set[str], row: Any) -> bool:
-    """A chunk in the query's own language must share at least one meaningful word with it. Similarity alone can't tell a near miss from an answer."""
+def _supported(query_terms: set[str], row: Any, query_arabic: bool = False) -> bool:
+    """A chunk in the query's own language must share at least one meaningful word with it. Similarity alone can't tell a near miss from an
+    answer. A chunk in the other language can't share words, so its similarity stands alone."""
+    if is_arabic(row["text"]) != query_arabic:
+        return True
     body = set(terms(f"{row['title']} {row['section_path'] or ''} {row['text']}"))
     return bool(query_terms & body)
 
@@ -102,6 +106,7 @@ def _hit(row: Any, score: float) -> m.KbHit:
 async def search(db: AsyncSession, scope: Scope, query: str, embedder: Embedder, top_k: int = 10) -> Found:
     qvec = embedder.embed([query])[0]
     query_terms = set(terms(query))
+    query_arabic = is_arabic(query)
     requirement = scope.purpose == "requirement"
     filters = {
         "workspace_id": scope.tenant_id, "snapshot_id": scope.snapshot_id, "adopted": True,
@@ -115,7 +120,7 @@ async def search(db: AsyncSession, scope: Scope, query: str, embedder: Embedder,
     for r in rows:
         if float(r["score"]) < embedder.min_score:
             break
-        if not _supported(query_terms, r):
+        if not _supported(query_terms, r, query_arabic):
             continue
         hits.append(_hit(r, r["score"] + (0.0 if requirement or r["legal_status"] == "in_force" else -0.02)))
         if len(hits) == top_k:
@@ -127,12 +132,12 @@ async def search(db: AsyncSession, scope: Scope, query: str, embedder: Embedder,
     tried = [{
         "search": "meaning and words, inside the filter", "candidates": searched, "best_score": None if best is None else round(best, 3),
         "floor": embedder.min_score,
-        "result": "nothing is in the filter" if not searched else "no chunk in the filter was similar enough" if best is not None else "no chunk in the filter has been indexed",
+        "result": "nothing is in the filter" if not searched else "similar chunks shared no words with the question" if best is not None and best >= embedder.min_score else "no chunk in the filter was similar enough" if best is not None else "no chunk in the filter has been indexed",
     }]
     if requirement:
         # Look once outside the legal-status filter, so a person can see why. Never returned as a hit.
         outside, n = await _ranked(db, scope, True, embedder, qvec, 5)
-        near = next((r for r in outside if float(r["score"]) >= embedder.min_score and _supported(query_terms, r) and r["legal_status"] != "in_force"), None)
+        near = next((r for r in outside if float(r["score"]) >= embedder.min_score and _supported(query_terms, r, query_arabic) and r["legal_status"] != "in_force"), None)
         tried.append({
             "search": "same question, any legal status", "candidates": n,
             "result": f"closest is {near['title']} ({near['legal_status'].replace('_', ' ')}). Not a source for a requirement." if near else "nothing similar either",
@@ -158,7 +163,8 @@ async def agent_search(conn, query: str, embedder: Embedder, top_k: int = 10, re
     rows = (await conn.execute(text(sql), {"q": qvec, "model": embedder.name, "limit": top_k + 25})).mappings().all()
     candidates = (await conn.execute(text(f"SELECT count(*) FROM {view}"))).scalar_one()
     query_terms = set(terms(query))
-    hits = [_hit({**r, "jurisdiction": r["jurisdiction"] or "-"}, r["score"]) for r in rows if float(r["score"]) >= embedder.min_score and _supported(query_terms, r)][:top_k]
+    query_arabic = is_arabic(query)
+    hits = [_hit({**r, "jurisdiction": r["jurisdiction"] or "-"}, r["score"]) for r in rows if float(r["score"]) >= embedder.min_score and _supported(query_terms, r, query_arabic)][:top_k]
     filters: dict[str, Any] = {"source": view, "similarity_floor": embedder.min_score, "applied_before_search": True}
     if hits:
         return Found(hits, False, filters, candidates)

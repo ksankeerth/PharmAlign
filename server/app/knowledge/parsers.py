@@ -119,7 +119,7 @@ class StoredTextParser:
         return Raw(blocks, [], max(pages, default=1))
 
 
-def choose_parser(profile_parser: str, source: Source, stored: Optional[list[dict]] = None) -> Parser:
+def choose_parser(profile_parser: str, source: Source, stored: Optional[list[dict]] = None, arabic_text_layer: bool = False) -> Parser:
     """The file decides what can read it; the profile decides which reader for a PDF."""
     if not source.data:
         if stored:
@@ -129,6 +129,8 @@ def choose_parser(profile_parser: str, source: Source, stored: Optional[list[dic
         return HtmlParser()
     if not _is_pdf(source):
         return TextParser()
+    if arabic_text_layer and not layout.docling_available():
+        return FastPdfParser(allow_arabic=True)
     return FastPdfParser() if profile_parser == "fast_text" else DoclingParser()
 
 
