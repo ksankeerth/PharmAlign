@@ -1,0 +1,6 @@
+[
+{"tenant_id":"ws-ae","doc":{"id":"rb-1042","target_type":"case","target_id":"CASE-1042","regulator":"Reference Agency A (synthetic)","approval_ref":"RAA-MA-55120","approved_on":{"$d":-400},"document_refs":["ref-doc-3"],"verified":true,"declared_same_by":"Applicant declaration, Module 1.10"}},
+{"tenant_id":"ws-ae","doc":{"id":"rb-1048","target_type":"case","target_id":"CASE-1048","regulator":"Reference Agency A (synthetic)","approval_ref":"RAA-MA-57311","approved_on":{"$d":-300},"document_refs":["ref-doc-8"],"verified":true,"declared_same_by":"Applicant declaration, Module 1.10"}},
+{"tenant_id":"ws-ae","doc":{"id":"rb-lic-0007","target_type":"licence","target_id":"lic-0007","regulator":"Reference Agency A (synthetic)","approval_ref":"RAA-MA-49002","approved_on":{"$d":-800},"document_refs":["ref-doc-11"],"verified":true,"declared_same_by":"Applicant declaration at registration"}},
+{"tenant_id":"ws-ae","doc":{"id":"rb-lic-0012","target_type":"licence","target_id":"lic-0012","regulator":"Reference Agency B (synthetic)","approval_ref":"RAB-2024-1187","approved_on":{"$d":-600},"document_refs":[],"verified":false,"declared_same_by":null}}
+]

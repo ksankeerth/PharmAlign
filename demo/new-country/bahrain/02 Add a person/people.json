@@ -1,0 +1,9 @@
+[
+  { "display_name": "Hana Mirza", "email": "hana.mirza@example.org", "view": "case_officer", "title": "Case Officer, quality" },
+  { "display_name": "Idris Kamal", "email": "idris.kamal@example.org", "view": "case_officer", "title": "Case Officer, labelling" },
+  { "display_name": "Yusuf Bakr", "email": "yusuf.bakr@example.org", "view": "decision_maker", "title": "Decision Maker" },
+  { "display_name": "Salma Rahim", "email": "salma.rahim@example.org", "view": "decision_maker", "title": "Decision Maker" },
+  { "display_name": "Maryam Ghosh", "email": "maryam.ghosh@example.org", "view": "process_owner", "title": "Process Owner" },
+  { "display_name": "Karim Odell", "email": "karim.odell@example.org", "view": "process_owner", "title": "Process Owner" },
+  { "display_name": "Tariq Vance", "email": "tariq.vance@example.org", "view": "auditor", "title": "Auditor" }
+]

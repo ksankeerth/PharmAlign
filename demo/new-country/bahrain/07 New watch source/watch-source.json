@@ -1,0 +1,8 @@
+{
+  "regulator": "Reference Agency B (synthetic)",
+  "url": null,
+  "kind": "staged",
+  "check_every_minutes": 120,
+  "severity_floor": "review",
+  "notes": "Staged feed for Bahrain's simulation. Synthetic notices only."
+}

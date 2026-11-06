@@ -1,0 +1,15 @@
+# Read by docker build -f agents/checklist-assessor/Dockerfile (repository root as context)
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/.env
+**/tests
+**/.git
+agents/dossier-reader/samples
+.git
+server
+web
+demo
+infra
+knowledge

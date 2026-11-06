@@ -1,0 +1,12 @@
+{
+  "input_fingerprint": "$request.input_fingerprint",
+  "recommendation": {
+    "choice": "proceed",
+    "reason": "Every blocking check is clear.",
+    "reason_evidence": [
+      "$request.results.0.check_id"
+    ]
+  },
+  "summary": "Every blocking check is clear. A person may promote the file to the Decision Maker.",
+  "draft_questions": []
+}

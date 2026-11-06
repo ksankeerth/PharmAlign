@@ -1,0 +1,35 @@
+[project]
+name = "checklist-assessor"
+version = "0.1.0"
+description = "The PharmAlign checklist-assessor agent, on Google ADK"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "google-adk[gcp,otel-gcp]>=2.12.0,<3.0.0",
+    "opentelemetry-resourcedetector-gcp<=1.12.0a0",
+    "pharmalign-agent-common",
+    "pharmalign-contracts",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2,<10.0.0",
+    "pytest-asyncio>=1.0.0,<2.0.0",
+    "httpx>=0.27",
+]
+
+[tool.uv.sources]
+pharmalign-agent-common = { path = "../common", editable = true }
+pharmalign-contracts = { path = "../../contracts", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+pythonpath = "."
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = ["ignore::DeprecationWarning", "ignore::UserWarning"]

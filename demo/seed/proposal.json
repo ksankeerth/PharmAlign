@@ -1,0 +1,5 @@
+[
+{"tenant_id":"ws-ae","doc":{"id":"prop-1039","decision_id":"dec-1039","action":"grant_licence","state":"acknowledged","idempotency_key":"idem-dec-1039","based_on_gov_version":null,"attempts":1,"gov_ref":"GOV-MA-2026-08817","last_error":null,"created_at":{"$t":-1040400},"updated_at":{"$t":-1040280}}},
+{"tenant_id":"ws-ae","doc":{"id":"prop-1037","decision_id":"dec-1037","action":"grant_licence","state":"unknown","idempotency_key":"idem-dec-1037","based_on_gov_version":null,"attempts":3,"gov_ref":null,"last_error":"Timed out after 30 s waiting for acknowledgement. Read back the government record before retrying.","created_at":{"$t":-252000},"updated_at":{"$t":-251640}}},
+{"tenant_id":"ws-ae","doc":{"id":"prop-1036","decision_id":"dec-1036","action":"grant_licence","state":"queued","idempotency_key":"idem-dec-1036","based_on_gov_version":null,"attempts":0,"gov_ref":null,"last_error":null,"created_at":{"$t":-4320},"updated_at":{"$t":-4320}}}
+]

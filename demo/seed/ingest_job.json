@@ -1,0 +1,3 @@
+[
+{"tenant_id":"ws-ae","doc":{"id":"ij-1","document_version_id":"E-S25-v1","mode":"full","status":"completed","profile":{"preset":"guideline","parser":"best_layout","page_range":null,"include_annexes":true,"images":"ignore_and_flag","ocr_languages":[],"tables":"keep","remove_headers_footers":true,"remove_page_numbers":true,"remove_contents_pages":true,"split_by":"heading","words_per_chunk":320,"overlap_words":40,"min_chunk_words":8},"progress_pct":100,"pages_done":46,"chunks":131,"warnings":[],"error":null,"started_at":{"$t":-3808800},"finished_at":{"$t":-3808560}}}
+]

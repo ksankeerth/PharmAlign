@@ -1,0 +1,6 @@
+[
+{"tenant_id":"ws-ae","doc":{"id":"src-raa-notices","regulator":"Reference Agency A (synthetic)","url":null,"kind":"staged","check_every_minutes":60,"severity_floor":null,"notes":"Staged feed for the simulation. Synthetic notices only.","health":"healthy","last_success_at":{"$t":-540},"last_error":null,"items_last_30_days":14}},
+{"tenant_id":"ws-ae","doc":{"id":"src-raa-recalls","regulator":"Reference Agency A (synthetic)","url":"https://reference-agency-a.example/recalls.xml","kind":"feed","check_every_minutes":120,"severity_floor":"review","notes":null,"health":"healthy","last_success_at":{"$t":-2220},"last_error":null,"items_last_30_days":6}},
+{"tenant_id":"ws-ae","doc":{"id":"src-rab-safety","regulator":"Reference Agency B (synthetic)","url":"https://reference-agency-b.example/safety-notices","kind":"web_page","check_every_minutes":240,"severity_floor":null,"notes":null,"health":"layout_changed","last_success_at":{"$t":-280800},"last_error":"Page layout changed: the notice list selector matched 0 items.","items_last_30_days":2}},
+{"tenant_id":"ws-ae","doc":{"id":"src-rab-gmp","regulator":"Reference Agency B (synthetic)","url":null,"kind":"manual","check_every_minutes":10080,"severity_floor":null,"notes":"GMP statements are entered by hand each week.","health":"manual","last_success_at":{"$t":-356400},"last_error":null,"items_last_30_days":3}}
+]

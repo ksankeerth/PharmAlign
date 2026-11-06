@@ -1,0 +1,6 @@
+{
+  "name": "Mock regulator for Bahrain (built in)",
+  "kind": "mock",
+  "base_url": "/mock",
+  "spec_version": "1.0.0"
+}

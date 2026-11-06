@@ -1,0 +1,110 @@
+/* Audit screens: small layout helpers on top of the shared tokens. */
+.audit-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  gap: var(--sp-3);
+  align-items: start;
+}
+.audit-filters > .row {
+  margin-top: 22px;
+}
+@media (max-width: 1100px) {
+  .audit-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.actor-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.actor-chip .actor-kind {
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+}
+.hash {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--sp-3);
+}
+.stat {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  padding: var(--sp-3) var(--sp-4);
+}
+.stat-value {
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.stat-label {
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+}
+.recon-details {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.recon-details > summary {
+  cursor: pointer;
+  padding: var(--sp-3) var(--sp-4);
+  display: flex;
+  gap: var(--sp-3);
+  align-items: center;
+  flex-wrap: wrap;
+  list-style: none;
+}
+.recon-details > summary::-webkit-details-marker {
+  display: none;
+}
+.recon-details > summary::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid var(--ink-3);
+  border-bottom: 2px solid var(--ink-3);
+  transform: rotate(-45deg);
+  transition: transform 0.12s;
+  flex: none;
+}
+.recon-details[open] > summary::before {
+  transform: rotate(45deg);
+}
+.recon-details-body {
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.recon-details pre {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  background: var(--sunken);
+  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-3);
+}
+.gate-allowed {
+  color: var(--pass-ink);
+}
+.gate-refused {
+  color: var(--held-ink);
+  font-weight: 600;
+}
+.verify-result {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+}

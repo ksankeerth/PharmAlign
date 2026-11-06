@@ -1,0 +1,20 @@
+{
+  "outcome": {
+    "kind": "finding",
+    "status": "met",
+    "summary": "The holder is a licensed establishment under the law in force.",
+    "reasoning": "The licence in the file names the holder, and the law requires one.",
+    "evidence": [
+      {
+        "anchor": "A-01:v1:c0117",
+        "quote": "a pharmaceutical establishment may only operate under a licence issued by the competent authority"
+      },
+      {
+        "anchor": "d-1042-27:v1:p1",
+        "quote": "Establishment licence number EST-11042, valid until 2028"
+      }
+    ],
+    "no_source": null,
+    "question_for_company": null
+  }
+}

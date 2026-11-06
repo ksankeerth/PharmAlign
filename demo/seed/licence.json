@@ -1,0 +1,7 @@
+[
+{"tenant_id":"ws-ae","doc":{"id":"lic-0007","medicine_id":"med-clopidogrel","holder_party_id":"pt-northwind","gov_ref":"GOV-MA-2024-00418","gov_status":"licensed","gov_version":"GOV-MA-2024-00418-v3","gov_as_of":{"$t":-194400},"valid_to":{"$d":1415}}},
+{"tenant_id":"ws-ae","doc":{"id":"lic-0012","medicine_id":"med-rosuva","holder_party_id":"pt-kestrel","gov_ref":"GOV-MA-2025-00102","gov_status":"licensed","gov_version":"GOV-MA-2025-00102-v1","gov_as_of":{"$t":-194400},"valid_to":{"$d":1565}}},
+{"tenant_id":"ws-ae","doc":{"id":"lic-0021","medicine_id":"med-paracetamol","holder_party_id":"pt-kestrel","gov_ref":"GOV-MA-2026-08817","gov_status":"licensed","gov_version":"GOV-MA-2026-08817-v1","gov_as_of":{"$t":-194400},"valid_to":{"$d":1813}}},
+{"tenant_id":"ws-ae","doc":{"id":"lic-0030","medicine_id":"med-sitagliptin","holder_party_id":"pt-bluegate","gov_ref":"GOV-MA-2023-00977","gov_status":"licensed","gov_version":"GOV-MA-2023-00977-v1","gov_as_of":{"$t":-194400},"valid_to":{"$d":1125}}},
+{"tenant_id":"ws-ae","doc":{"id":"lic-0031","medicine_id":"med-amoxiclav","holder_party_id":"pt-bluegate","gov_ref":"GOV-MA-2022-00415","gov_status":"suspended","gov_version":"GOV-MA-2022-00415-v1","gov_as_of":{"$t":-194400},"valid_to":{"$d":725}}}
+]

@@ -1,0 +1,21 @@
+{
+  "documents": [],
+  "chunks": [
+    {
+      "id": "d-1050-17:v1:p41",
+      "case_id": "CASE-1050",
+      "document_id": "d-1050-17",
+      "position": 41,
+      "page": 41,
+      "text": "Stability data. The long-term conditions of 30 C / 65% RH were used, with 18 months of long-term data."
+    },
+    {
+      "id": "d-1050-22:v1:p3",
+      "case_id": "CASE-1050",
+      "document_id": "d-1050-22",
+      "position": 3,
+      "page": 3,
+      "text": "Dose. Take one tablet of 500 mg twice daily with food."
+    }
+  ]
+}

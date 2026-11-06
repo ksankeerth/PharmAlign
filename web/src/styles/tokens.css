@@ -1,0 +1,171 @@
+/* Design tokens. Every colour in the app comes from here.
+   Neutral cool greys, one deep teal accent, and semantic colours for pass, look,
+   held and error only. Light by default; dark follows the system unless the person
+   picks a theme (data-theme on <html>). */
+:root {
+  --bg: #f3f5f7;
+  --surface: #ffffff;
+  --surface-2: #f8f9fb;
+  --sunken: #eceff3;
+  --line: #dfe3e8;
+  --line-strong: #c9d0d8;
+  --ink: #141a21;
+  --ink-2: #47525e;
+  --ink-3: #5f6b78;
+  --ink-inverse: #ffffff;
+
+  --accent: #0b5f58;
+  --accent-hover: #084d47;
+  --on-accent: #ffffff;
+  --accent-soft: #e2f0ee;
+  --accent-line: #b5d8d3;
+  --accent-ink: #094a44;
+  --focus: #0b6e66;
+
+  --pass: #1d7547;
+  --pass-soft: #e5f3eb;
+  --pass-line: #bcdcc9;
+  --pass-ink: #165a37;
+  --look: #9a5b0c;
+  --look-soft: #fbf0df;
+  --look-line: #ecd2a3;
+  --look-ink: #774507;
+  --held: #b02a2a;
+  --held-soft: #fbe9e9;
+  --held-line: #edc2c2;
+  --held-ink: #8a1e1e;
+  --error: #5d4aa6;
+  --error-soft: #eeebf8;
+  --error-line: #d2cbee;
+  --error-ink: #46378a;
+  --neutral-soft: #eef1f4;
+  --neutral-line: #d5dbe2;
+  --neutral-ink: #4a5561;
+
+  --hover: rgba(20, 26, 33, 0.045);
+  --active: rgba(20, 26, 33, 0.08);
+  --overlay: rgba(14, 19, 25, 0.48);
+  --shadow-sm: 0 1px 2px rgba(20, 26, 33, 0.06);
+  --shadow-pop: 0 8px 28px rgba(20, 26, 33, 0.14), 0 1px 3px rgba(20, 26, 33, 0.08);
+
+  --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --fs-xs: 11.5px;
+  --fs-sm: 12.5px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 20px;
+  --fs-2xl: 24px;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --r-pill: 999px;
+
+  --topbar-h: 52px;
+  --sidenav-w: 236px;
+  --d-fast: 120ms;
+  --d-base: 180ms;
+  --ease: cubic-bezier(0.2, 0.6, 0.2, 1);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1215;
+    --surface: #151a1f;
+    --surface-2: #1a2026;
+    --sunken: #11161a;
+    --line: #262e36;
+    --line-strong: #344049;
+    --ink: #e5e9ed;
+    --ink-2: #aab4be;
+    --ink-3: #8c97a2;
+    --ink-inverse: #0e1215;
+    --accent: #3aa99c;
+    --accent-hover: #4dbcaf;
+    --on-accent: #04201c;
+    --accent-soft: rgba(58, 169, 156, 0.14);
+    --accent-line: rgba(58, 169, 156, 0.4);
+    --accent-ink: #7fd2c7;
+    --focus: #6fd0c4;
+    --pass: #45b37a;
+    --pass-soft: rgba(69, 179, 122, 0.13);
+    --pass-line: rgba(69, 179, 122, 0.38);
+    --pass-ink: #8fd8b0;
+    --look: #d99a3d;
+    --look-soft: rgba(217, 154, 61, 0.13);
+    --look-line: rgba(217, 154, 61, 0.38);
+    --look-ink: #f0c67e;
+    --held: #e06464;
+    --held-soft: rgba(224, 100, 100, 0.13);
+    --held-line: rgba(224, 100, 100, 0.4);
+    --held-ink: #f4a6a6;
+    --error: #9b89e6;
+    --error-soft: rgba(155, 137, 230, 0.14);
+    --error-line: rgba(155, 137, 230, 0.4);
+    --error-ink: #c5baf5;
+    --neutral-soft: rgba(170, 180, 190, 0.1);
+    --neutral-line: rgba(170, 180, 190, 0.28);
+    --neutral-ink: #b4bdc6;
+    --hover: rgba(255, 255, 255, 0.045);
+    --active: rgba(255, 255, 255, 0.08);
+    --overlay: rgba(0, 0, 0, 0.62);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-pop: 0 10px 30px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0e1215;
+  --surface: #151a1f;
+  --surface-2: #1a2026;
+  --sunken: #11161a;
+  --line: #262e36;
+  --line-strong: #344049;
+  --ink: #e5e9ed;
+  --ink-2: #aab4be;
+  --ink-3: #8c97a2;
+  --ink-inverse: #0e1215;
+  --accent: #3aa99c;
+  --accent-hover: #4dbcaf;
+  --on-accent: #04201c;
+  --accent-soft: rgba(58, 169, 156, 0.14);
+  --accent-line: rgba(58, 169, 156, 0.4);
+  --accent-ink: #7fd2c7;
+  --focus: #6fd0c4;
+  --pass: #45b37a;
+  --pass-soft: rgba(69, 179, 122, 0.13);
+  --pass-line: rgba(69, 179, 122, 0.38);
+  --pass-ink: #8fd8b0;
+  --look: #d99a3d;
+  --look-soft: rgba(217, 154, 61, 0.13);
+  --look-line: rgba(217, 154, 61, 0.38);
+  --look-ink: #f0c67e;
+  --held: #e06464;
+  --held-soft: rgba(224, 100, 100, 0.13);
+  --held-line: rgba(224, 100, 100, 0.4);
+  --held-ink: #f4a6a6;
+  --error: #9b89e6;
+  --error-soft: rgba(155, 137, 230, 0.14);
+  --error-line: rgba(155, 137, 230, 0.4);
+  --error-ink: #c5baf5;
+  --neutral-soft: rgba(170, 180, 190, 0.1);
+  --neutral-line: rgba(170, 180, 190, 0.28);
+  --neutral-ink: #b4bdc6;
+  --hover: rgba(255, 255, 255, 0.045);
+  --active: rgba(255, 255, 255, 0.08);
+  --overlay: rgba(0, 0, 0, 0.62);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-pop: 0 10px 30px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}

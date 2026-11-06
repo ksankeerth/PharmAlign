@@ -1,0 +1,10 @@
+[
+{"tenant_id":"ws-ae","doc":{"id":"pt-example","name":"Example Pharma (synthetic)","kind":"applicant","country":"Example Country","gov_ref":"EST-10021"}},
+{"tenant_id":"ws-ae","doc":{"id":"pt-northwind","name":"Northwind Generics (synthetic)","kind":"applicant","country":"Example Country","gov_ref":"EST-10458"}},
+{"tenant_id":"ws-ae","doc":{"id":"pt-bluegate","name":"Bluegate Pharmaceuticals (synthetic)","kind":"applicant","country":"Example Country","gov_ref":"EST-10377"}},
+{"tenant_id":"ws-ae","doc":{"id":"pt-harbor","name":"Harbor Lane Labs (synthetic)","kind":"applicant","country":"Example Country","gov_ref":"EST-10690"}},
+{"tenant_id":"ws-ae","doc":{"id":"pt-kestrel","name":"Kestrel Generics (synthetic)","kind":"applicant","country":"Example Country","gov_ref":"EST-10112"}},
+{"tenant_id":"ws-ae","doc":{"id":"pt-tallis","name":"Tallis Healthcare (synthetic)","kind":"applicant","country":"Example Country","gov_ref":"EST-10803"}},
+{"tenant_id":"ws-ae","doc":{"id":"pt-meridian","name":"Meridian Biologics (synthetic)","kind":"applicant","country":"Example Country","gov_ref":"EST-10955"}},
+{"tenant_id":"ws-ae","doc":{"id":"pt-plant2","name":"Example Pharma, Plant 2 (synthetic)","kind":"manufacturer","country":"Example Country","gov_ref":"SITE-2207"}}
+]

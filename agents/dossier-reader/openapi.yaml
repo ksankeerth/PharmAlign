@@ -1,4 +1,4 @@
-# The Dossier Reader's API contract (version 1.0.0). Copied unchanged from the PharmAlign
+# The Dossier Reader's API contract (version 1.5.0). Copied unchanged from the PharmAlign
 # contracts package, which generates it. Don't edit this file: a change to the contract is made
 # there and copied here again.
 openapi: 3.1.0
@@ -12,12 +12,14 @@ info:
     its status, and the result once finished. `DELETE` cancels it.
 
 
-    **Idempotency.** The same `run_id` and body returns the existing run with `200`. The same `run_id` with a different
-    body returns `409`. An unknown `run_id` returns `404`: the caller treats the run as lost and sends it again.
-    Runs are kept for 24 hours, and the caller stores each result on first fetch.
+    **Idempotency.** The same `run_id` and body returns the same run in its current state: `200` once it has finished,
+    `202` while it is still running. The same `run_id` with a different body returns `409`. An unknown `run_id`
+    returns `404`: the caller treats the run as lost and sends it again. Runs are kept for 24 hours, and the caller
+    stores each result on first fetch.
 
 
-    **Honest failures.** A cut-off answer (`length`) or invalid output is `failed`, never a result. Tool failures
+    **Honest failures.** A cut-off answer (`length`) or invalid output is `failed`, never a result. A failed run''s
+    `error.code` is one of `invalid_output`, `output_truncated`, `internal_error` or `budget_exceeded`. Tool failures
     are listed in `tool_errors`.
 
 
@@ -33,7 +35,7 @@ info:
     - Accepts only the fact keys it asked for.
 
     '
-  version: 1.0.0
+  version: 1.5.0
 paths:
   /dossier-reads:
     post:
@@ -41,8 +43,6 @@ paths:
       - runs
       summary: Start a run
       operationId: start_dossier_reads_post
-      security:
-      - HTTPBearer: []
       parameters:
       - name: X-PharmAlign-Contract
         in: header
@@ -114,13 +114,15 @@ paths:
                     - 3.2.P.3
       responses:
         '202':
-          description: Successful Response
+          description: 'The same run, in its current state: this run_id and body were sent before, and the run is
+            still running.'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/DossierReadRun'
         '200':
-          description: This run_id already exists with the same body.
+          description: 'The same run, in its current state: this run_id and body were sent before, and the run has
+            finished.'
           content:
             application/json:
               schema:
@@ -156,8 +158,6 @@ paths:
       - runs
       summary: Run status, and the result once finished
       operationId: poll_dossier_reads__run_id__get
-      security:
-      - HTTPBearer: []
       parameters:
       - name: run_id
         in: path
@@ -221,6 +221,9 @@ paths:
                     status: not_found
                     evidence: []
                   issues: []
+                  searches_tried:
+                  - 'search_dossier: finished product site'
+                  - 'read_page: d-17 p2-5'
         '404':
           description: No run with this id, or it has expired.
           content:
@@ -238,8 +241,6 @@ paths:
       - runs
       summary: Cancel a run, such as one a newer run has replaced
       operationId: cancel_dossier_reads__run_id__delete
-      security:
-      - HTTPBearer: []
       parameters:
       - name: run_id
         in: path
@@ -281,17 +282,6 @@ paths:
       - health
       summary: Liveness
       operationId: health_health_get
-      security:
-      - HTTPBearer: []
-      parameters:
-      - name: X-PharmAlign-Contract
-        in: header
-        required: true
-        schema:
-          type: string
-          description: Contract version. Answered with the same header.
-          title: X-Pharmalign-Contract
-        description: Contract version. Answered with the same header.
       responses:
         '200':
           description: Successful Response
@@ -299,42 +289,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Health'
-        '422':
-          description: The request breaks the contract.
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-  /health/details:
-    get:
-      tags:
-      - health
-      summary: Models and tools, for agent health. Holds no document content.
-      operationId: health_details_health_details_get
-      security:
-      - HTTPBearer: []
-      parameters:
-      - name: X-PharmAlign-Contract
-        in: header
-        required: true
-        schema:
-          type: string
-          description: Contract version. Answered with the same header.
-          title: X-Pharmalign-Contract
-        description: Contract version. Answered with the same header.
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthDetails'
-        '422':
-          description: The request breaks the contract.
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
 components:
   schemas:
     AgentInfo:
@@ -604,6 +558,14 @@ components:
             $ref: '#/components/schemas/ReadIssue'
           type: array
           title: Issues
+        searches_tried:
+          items:
+            type: string
+            maxLength: 500
+            minLength: 1
+          type: array
+          title: Searches Tried
+          description: What was searched or read to look for the facts, to show nothing was missed.
       additionalProperties: false
       type: object
       required:
@@ -829,50 +791,6 @@ components:
       required:
       - status
       title: Health
-    HealthDetails:
-      properties:
-        status:
-          type: string
-          enum:
-          - ok
-          - degraded
-          - down
-          title: Status
-        agent:
-          type: string
-          pattern: ^[a-z][a-z0-9_-]{0,63}$
-          title: Agent
-        version:
-          type: string
-          maxLength: 128
-          minLength: 1
-          title: Version
-        contract_version:
-          type: string
-          maxLength: 128
-          minLength: 1
-          title: Contract Version
-        models:
-          items:
-            $ref: '#/components/schemas/ModelHealth'
-          type: array
-          title: Models
-        tools:
-          items:
-            type: string
-            pattern: ^[a-z][a-z0-9_-]{0,63}$
-          type: array
-          title: Tools
-      additionalProperties: false
-      type: object
-      required:
-      - status
-      - agent
-      - version
-      - contract_version
-      - models
-      - tools
-      title: HealthDetails
     ModelCall:
       properties:
         model:
@@ -904,27 +822,6 @@ components:
       - output_tokens
       - duration_ms
       title: ModelCall
-    ModelHealth:
-      properties:
-        role:
-          type: string
-          pattern: ^[a-z][a-z0-9_-]{0,63}$
-          title: Role
-        model:
-          type: string
-          maxLength: 128
-          minLength: 1
-          title: Model
-        available:
-          type: boolean
-          title: Available
-      additionalProperties: false
-      type: object
-      required:
-      - role
-      - model
-      - available
-      title: ModelHealth
     Problem:
       properties:
         type:
@@ -1019,8 +916,15 @@ components:
       properties:
         code:
           type: string
-          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          enum:
+          - invalid_output
+          - output_truncated
+          - internal_error
+          - budget_exceeded
           title: Code
+          description: '`invalid_output`: the answer broke the schema, even after one retry. `output_truncated`:
+            the model was cut off. `internal_error`: the agent failed for another reason. `budget_exceeded`: the
+            run used its model or tool calls, or its deadline, before it could answer.'
         message:
           type: string
           maxLength: 500
@@ -1108,8 +1012,3 @@ components:
       - pack
       - kb_snapshot
       title: Versions
-  securitySchemes:
-    HTTPBearer:
-      type: http
-      description: Service token. Only the server can call an agent.
-      scheme: bearer

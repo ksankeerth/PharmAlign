@@ -1,0 +1,90 @@
+{
+  "document_map": [
+    {
+      "doc_id": "d-1042-17",
+      "module": "3.2.P.8",
+      "basis": "Title and table of contents"
+    }
+  ],
+  "facts": [
+    {
+      "key": "shelf_life_months",
+      "status": "found",
+      "value": "36 months",
+      "number": 36,
+      "unit": "months",
+      "evidence": [
+        {
+          "anchor": "d-1042-17:v1:p2",
+          "quote": "a shelf life of 36 months"
+        }
+      ]
+    },
+    {
+      "key": "strength",
+      "status": "found",
+      "value": "500 mg / 125 mg",
+      "number": null,
+      "unit": null,
+      "evidence": [
+        {
+          "anchor": "d-1042-19:v1:p4",
+          "quote": "a strength per tablet of 500 mg / 125 mg"
+        }
+      ]
+    },
+    {
+      "key": "manufacturing_site",
+      "status": "found",
+      "value": "Example Pharma, Plant 2",
+      "number": null,
+      "unit": null,
+      "evidence": [
+        {
+          "anchor": "d-1042-19:v1:p4",
+          "quote": "The finished product site is Example Pharma, Plant 2"
+        }
+      ]
+    },
+    {
+      "key": "long_term_temp_c",
+      "status": "found",
+      "value": "25",
+      "number": 25,
+      "unit": "C",
+      "evidence": [
+        {
+          "anchor": "d-1042-17:v1:p41",
+          "quote": "long-term conditions of 25 C / 60% RH"
+        }
+      ]
+    },
+    {
+      "key": "long_term_rh_pct",
+      "status": "found",
+      "value": "60",
+      "number": 60,
+      "unit": "%",
+      "evidence": [
+        {
+          "anchor": "d-1042-17:v1:p41",
+          "quote": "long-term conditions of 25 C / 60% RH"
+        }
+      ]
+    },
+    {
+      "key": "long_term_months",
+      "status": "found",
+      "value": "12",
+      "number": 12,
+      "unit": "months",
+      "evidence": [
+        {
+          "anchor": "d-1042-17:v1:p41",
+          "quote": "12 months of long-term data are available for all batches"
+        }
+      ]
+    }
+  ],
+  "issues": []
+}

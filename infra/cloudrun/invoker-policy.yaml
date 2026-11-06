@@ -1,0 +1,6 @@
+# Who may call an agent: only the server's service account. Filled with envsubst, applied with
+# `gcloud run services set-iam-policy` (see README.md). allUsers is never added.
+bindings:
+  - role: roles/run.invoker
+    members:
+      - serviceAccount:${SERVER_SERVICE_ACCOUNT}

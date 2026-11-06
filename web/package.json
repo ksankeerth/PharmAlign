@@ -1,0 +1,41 @@
+{
+  "name": "pharmalign-web",
+  "private": true,
+  "license": "Apache-2.0",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "gen:api": "openapi-typescript ../contracts/openapi/server.yaml -o src/api/schema.ts --default-non-nullable=false && node scripts/gen-operations.mjs",
+    "check:copy": "node scripts/check-copy.mjs",
+    "smoke": "playwright test e2e/smoke.spec.ts --workers=1",
+    "e2e": "playwright test e2e/scenarios --workers=1 --global-timeout=1200000",
+    "e2e:all": "playwright test e2e/scenarios/watch-audit.spec.ts --workers=1 --global-timeout=1200000 && playwright test e2e/scenarios/admin.spec.ts e2e/scenarios/owner.spec.ts e2e/scenarios/cases.spec.ts --workers=1 --global-timeout=1200000",
+    "sweep": "playwright test e2e/sweep.spec.ts e2e/keyboard.spec.ts"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@fontsource/ibm-plex-sans": "5.3.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-router-dom": "7.18.4"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
+    "@playwright/test": "1.63.0",
+    "@types/node": "24.10.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "js-yaml": "4.1.0",
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3",
+    "vite": "8.3.4",
+    "vitest": "5.0.5"
+  }
+}

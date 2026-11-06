@@ -1,0 +1,8 @@
+[
+{"tenant_id":"ws-ae","doc":{"id":"s-1","kind":"empty_slot","detail":"Executive regulations of the medicines law in force (current copy under review)","count":1}},
+{"tenant_id":"ws-ae","doc":{"id":"s-2","kind":"no_source","detail":"Child-resistant closures for oral liquids (PACK-01)","count":1}},
+{"tenant_id":"ws-ae","doc":{"id":"s-3","kind":"local_practice_rule","detail":"Reliance route rules are local practice with no published source","count":3}},
+{"tenant_id":"ws-ae","doc":{"id":"s-4","kind":"repeated_waiver","detail":"LBL-02 waived for punctuation-only leaflet differences","count":4}},
+{"tenant_id":"ws-ae","doc":{"id":"s-5","kind":"no_source","detail":"Re-review trigger after a foreign label change","count":6}},
+{"tenant_id":"ws-om","doc":{"id":"s-om-1","kind":"empty_slot","detail":"Government connection specification","count":1}}
+]

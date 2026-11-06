@@ -6,8 +6,8 @@ This product is licensed under the Apache License, Version 2.0 (see LICENSE).
 Scope of the license
 --------------------
 The Apache License covers the original work in this repository: the folder
-structure, file naming, the manifests (simulation/server/knowledge/Inputs.csv,
-simulation/server/knowledge/InputDocs/Inputs.md) and the metadata,
+structure, file naming, the manifests (knowledge/manifests/Inputs.csv,
+knowledge/manifests/Inputs.md) and the metadata,
 classifications and descriptions written for this project.
 
 It does NOT cover the third-party documents listed in those manifests. Those
@@ -19,9 +19,11 @@ Commission, US FDA, MHRA, Swissmedic, ITU, OECD and others. Each remains under
 its publisher's own copyright and terms of use. They are not stored in this
 repository, and nothing in it grants any right to them.
 
-The original source of every document is listed in the source_url column of
-simulation/server/knowledge/Inputs.csv. To use a document, obtain it from that
-source and follow the publisher's terms.
+The original source of every document is listed in knowledge/SOURCES.md. To
+use a document, obtain it from that source and follow the publisher's terms.
+
+The prototype's knowledge library is for demonstration only. Nothing shown in it
+is offered for republication.
 
 If you are a rights holder and want a document removed, open an issue in this
 repository.

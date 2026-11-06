@@ -1,0 +1,7 @@
+[
+{"tenant_id":"ws-ae","doc":{"id":"sc-1","case_id":"CASE-1043","check_result_id":"cr-1043-door-02","assigned_to":"p-chris","status":"open","note":null}},
+{"tenant_id":"ws-ae","doc":{"id":"sc-2","case_id":"CASE-1044","check_result_id":"cr-1044-safe-01","assigned_to":"p-alex","status":"open","note":null}},
+{"tenant_id":"ws-ae","doc":{"id":"sc-3","case_id":"CASE-1039","check_result_id":"cr-1039-door-01","assigned_to":"p-alex","status":"agree","note":"Modules index matches the files."}},
+{"tenant_id":"ws-ae","doc":{"id":"sc-4","case_id":"CASE-1039","check_result_id":"cr-1039-qual-07","assigned_to":"p-dana","status":"open","note":null}},
+{"tenant_id":"ws-ae","doc":{"id":"sc-5","case_id":"CASE-1037","check_result_id":"cr-1037-legal-01","assigned_to":"p-chris","status":"disagree","note":"The quoted licence page is for the importer, not the holder. Raised with the Process Owner."}}
+]

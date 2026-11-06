@@ -1,0 +1,3 @@
+[
+{"tenant_id":"ws-ae","doc":{"id":"dl-1","from_person_id":"p-chris","to_person_id":"p-alex","role":"case_manager","valid_from":{"$d":-3},"valid_to":{"$d":4},"reason":"Planned leave. Alex covers case management for Chris's queue.","created_by":"p-jordan","created_at":{"$t":-446400}}}
+]

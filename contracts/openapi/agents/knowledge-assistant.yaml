@@ -1,0 +1,662 @@
+# Generated from pharmalign_contracts by scripts/generate_openapi.py. Do not edit.
+openapi: 3.1.0
+info:
+  title: PharmAlign Knowledge Assistant agent
+  description: 'Answers questions from the knowledge base for anyone: laws, guidelines and the country''s pack.
+    Given a case, it also knows that case. It explains, and doesn''t decide.
+
+
+    **Flow.** `POST /sessions` creates a session scoped to one person. With a `case_id` it is also scoped to that
+    case. Without one it is knowledge-only. `POST /sessions/{agent_session_id}/turns` answers one message as server-sent
+    events. Each event is one line, `data: {json}`, followed by a blank line, and the JSON is an `AssistantEvent`
+    that carries its own `type`. There is no `event:` line. The stream ends when the agent closes it. Errors before
+    the stream starts are problem JSON.
+
+
+    **Budget.** One turn may use 12 model calls, 20 tool calls and 90 seconds. Past any of these the turn ends with
+    a retryable `error` event (`budget_exceeded` or `deadline_exceeded`).
+
+
+    **Answers.** A `message` cites passages by anchor and quote. The caller checks each quote and labels it with
+    the document title and legal status. When nothing qualifies, the agent sends `no_source` with the searches it
+    tried, and doesn''t answer from memory. It may suggest follow-up questions.
+
+
+    **Rules.** It says when something wasn''t checked or wasn''t saved. It can''t change a status, waive a check,
+    send anything or advise promoting. `draft_comment` is posted only when a person confirms it. Sessions live in
+    memory, so after a restart the caller starts a new one.
+
+
+    **Data.** It reads only through its tools, which code scopes to this person, and to the case if there is one.
+    A knowledge-only session gets only `search_kb`, `get_doc_status`, `read_clause`, `lookup_term`, `read_notice`.
+    A case session gets all of: `search_kb`, `get_doc_status`, `read_clause`, `lookup_term`, `read_notice`, `get_facts`,
+    `get_findings`, `get_conflicts`, `get_previous_run`, `get_check`, `compare_pack`, `read_page`, `read_reference`,
+    `get_run_trace`, `draft_comment`.
+
+    '
+  version: 1.5.0
+paths:
+  /sessions:
+    post:
+      tags:
+      - sessions
+      summary: Create a session
+      operationId: create_sessions_post
+      parameters:
+      - name: X-PharmAlign-Contract
+        in: header
+        required: true
+        schema:
+          type: string
+          description: Contract version. Answered with the same header.
+          title: X-Pharmalign-Contract
+        description: Contract version. Answered with the same header.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionCreate'
+            examples:
+              example:
+                value:
+                  run_token: example-signed-token
+                  tenant: example-country
+                  mode: simulation
+                  execution_profile:
+                    model_set: default
+                    gate: 'on'
+                    data_class: synthetic
+                  as_of: '2026-11-01T10:00:00Z'
+                  versions:
+                    pack: pack-3
+                    kb_snapshot: snap-14
+                  case_id: case-1042
+                  user_id: demo-case-officer
+                  view: case_officer
+                  language: en
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionCreated'
+        '422':
+          description: The request breaks the contract.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      x-agent-tools:
+      - search_kb
+      - get_doc_status
+      - read_clause
+      - lookup_term
+      - read_notice
+      - get_facts
+      - get_findings
+      - get_conflicts
+      - get_previous_run
+      - get_check
+      - compare_pack
+      - read_page
+      - read_reference
+      - get_run_trace
+      - draft_comment
+  /sessions/{agent_session_id}/turns:
+    post:
+      tags:
+      - sessions
+      summary: One turn, as server-sent events
+      operationId: turn_sessions__agent_session_id__turns_post
+      parameters:
+      - name: agent_session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Agent Session Id
+      - name: X-PharmAlign-Contract
+        in: header
+        required: true
+        schema:
+          type: string
+          description: Contract version. Answered with the same header.
+          title: X-Pharmalign-Contract
+        description: Contract version. Answered with the same header.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TurnRequest'
+            examples:
+              example:
+                value:
+                  message: Why did this check need a person?
+                  focus:
+                    check_id: QUAL-07
+      responses:
+        '200':
+          description: A stream of `AssistantEvent`.
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/AssistantEvent'
+        '404':
+          description: Unknown session. Start a new one.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: The request breaks the contract.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /health:
+    get:
+      tags:
+      - health
+      summary: Liveness
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+components:
+  schemas:
+    ExecutionProfile:
+      properties:
+        model_set:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Model Set
+          description: Which approved model list to use.
+        gate:
+          type: string
+          enum:
+          - 'on'
+          - 'off'
+          title: Gate
+          description: '`off` removes knowledge and source rules, for comparison runs in simulation only.'
+          default: 'on'
+        data_class:
+          type: string
+          enum:
+          - public
+          - confidential
+          - synthetic
+          title: Data Class
+          description: Decides which models are allowed. Fallback never leaves this class's approved list.
+      additionalProperties: false
+      type: object
+      required:
+      - model_set
+      - data_class
+      title: ExecutionProfile
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+      additionalProperties: false
+      type: object
+      required:
+      - status
+      title: Health
+    Problem:
+      properties:
+        type:
+          type: string
+          title: Type
+          default: about:blank
+        title:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Title
+        status:
+          type: integer
+          maximum: 599.0
+          minimum: 400.0
+          title: Status
+        code:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Code
+        detail:
+          anyOf:
+          - type: string
+            maxLength: 500
+            minLength: 1
+          - type: 'null'
+          title: Detail
+        run_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Run Id
+      additionalProperties: false
+      type: object
+      required:
+      - title
+      - status
+      - code
+      title: Problem
+      description: RFC 9457 problem details.
+    SessionCreate:
+      properties:
+        run_token:
+          type: string
+          minLength: 8
+          title: Run Token
+        tenant:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Tenant
+        mode:
+          type: string
+          enum:
+          - live
+          - simulation
+          title: Mode
+        execution_profile:
+          $ref: '#/components/schemas/ExecutionProfile'
+        as_of:
+          type: string
+          format: date-time
+          title: As Of
+        versions:
+          $ref: '#/components/schemas/Versions'
+        case_id:
+          anyOf:
+          - type: string
+            maxLength: 128
+            minLength: 1
+          - type: 'null'
+          title: Case Id
+        user_id:
+          type: string
+          maxLength: 128
+          minLength: 1
+          title: User Id
+        view:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: View
+        language:
+          type: string
+          pattern: ^[a-z]{2}(-[A-Z]{2})?$
+          title: Language
+          default: en
+          examples:
+          - en
+          - ar
+      additionalProperties: false
+      type: object
+      required:
+      - run_token
+      - tenant
+      - mode
+      - execution_profile
+      - as_of
+      - versions
+      - user_id
+      - view
+      title: SessionCreate
+      description: 'Scoped by the caller to one person. With a `case_id` it is also scoped to that case. Without
+        one, it is a knowledge-only session
+
+        with no case tools.'
+    SessionCreated:
+      properties:
+        agent_session_id:
+          type: string
+          maxLength: 128
+          minLength: 1
+          title: Agent Session Id
+      additionalProperties: false
+      type: object
+      required:
+      - agent_session_id
+      title: SessionCreated
+    TurnFocus:
+      properties:
+        check_id:
+          anyOf:
+          - type: string
+            maxLength: 128
+            minLength: 1
+          - type: 'null'
+          title: Check Id
+        finding_id:
+          anyOf:
+          - type: string
+            maxLength: 128
+            minLength: 1
+          - type: 'null'
+          title: Finding Id
+      additionalProperties: false
+      type: object
+      title: TurnFocus
+    TurnRequest:
+      properties:
+        message:
+          type: string
+          maxLength: 4000
+          minLength: 1
+          title: Message
+        focus:
+          anyOf:
+          - $ref: '#/components/schemas/TurnFocus'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - message
+      title: TurnRequest
+    Versions:
+      properties:
+        pack:
+          type: string
+          maxLength: 128
+          minLength: 1
+          title: Pack
+          description: Pinned country pack version.
+        kb_snapshot:
+          type: string
+          maxLength: 128
+          minLength: 1
+          title: Kb Snapshot
+          description: Pinned knowledge snapshot. Tools read only this.
+      additionalProperties: false
+      type: object
+      required:
+      - pack
+      - kb_snapshot
+      title: Versions
+    DraftComment:
+      additionalProperties: false
+      description: A draft only. It is posted when a person confirms it.
+      properties:
+        type:
+          const: draft_comment
+          default: draft_comment
+          title: Type
+          type: string
+        check_id:
+          anyOf:
+          - maxLength: 128
+            minLength: 1
+            type: string
+          - type: 'null'
+          default: null
+          title: Check Id
+        text:
+          maxLength: 4000
+          minLength: 1
+          title: Text
+          type: string
+      required:
+      - text
+      title: DraftComment
+      type: object
+    ErrorEvent:
+      additionalProperties: false
+      properties:
+        type:
+          const: error
+          default: error
+          title: Type
+          type: string
+        code:
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Code
+          type: string
+        message:
+          title: Message
+          type: string
+        retryable:
+          title: Retryable
+          type: boolean
+      required:
+      - code
+      - message
+      - retryable
+      title: ErrorEvent
+      type: object
+    Evidence:
+      additionalProperties: false
+      description: A quote, tied to the anchor a tool returned. The caller verifies it against the stored text.
+      properties:
+        anchor:
+          description: 'Stable handle returned by a tool: document, version, position. Never written by hand.'
+          examples:
+          - E-S25:v3:c0412
+          - d-17:v1:p41
+          pattern: ^[A-Za-z0-9_.-]+:[A-Za-z0-9_.-]+:[A-Za-z0-9_.-]+$
+          title: Anchor
+          type: string
+        quote:
+          maxLength: 2000
+          minLength: 1
+          title: Quote
+          type: string
+      required:
+      - anchor
+      - quote
+      title: Evidence
+      type: object
+    Message:
+      additionalProperties: false
+      description: '`trace_ids` lists saved traces this answer read. The caller labels the answer from them: saved,
+        or a new reading.
+
+        Each citation is an anchor a tool returned and a quote from it. The caller checks the quote and adds the
+        title and legal status itself.'
+      properties:
+        type:
+          const: message
+          default: message
+          title: Type
+          type: string
+        text:
+          minLength: 1
+          title: Text
+          type: string
+        trace_ids:
+          items:
+            maxLength: 128
+            minLength: 1
+            type: string
+          title: Trace Ids
+          type: array
+        citations:
+          items:
+            $ref: '#/components/schemas/Evidence'
+          title: Citations
+          type: array
+        suggestions:
+          description: Follow-up questions the person may ask next. Questions only.
+          items:
+            maxLength: 500
+            minLength: 1
+            type: string
+          maxItems: 3
+          title: Suggestions
+          type: array
+      required:
+      - text
+      title: Message
+      type: object
+    NoSource:
+      additionalProperties: false
+      description: No source in the knowledge base answers the question. The agent lists what it searched and doesn't
+        answer from memory.
+      properties:
+        type:
+          const: no_source
+          default: no_source
+          title: Type
+          type: string
+        detail:
+          anyOf:
+          - maxLength: 500
+            minLength: 1
+            type: string
+          - type: 'null'
+          default: null
+          title: Detail
+        searches_tried:
+          items:
+            $ref: '#/components/schemas/SearchStep'
+          minItems: 1
+          title: Searches Tried
+          type: array
+        suggestions:
+          items:
+            maxLength: 500
+            minLength: 1
+            type: string
+          maxItems: 3
+          title: Suggestions
+          type: array
+      required:
+      - searches_tried
+      title: NoSource
+      type: object
+    NotAvailable:
+      additionalProperties: false
+      description: Used when something wasn't checked, wasn't saved or is outside what the agent does. The agent
+        says so and doesn't guess.
+      properties:
+        type:
+          const: not_available
+          default: not_available
+          title: Type
+          type: string
+        reason:
+          enum:
+          - not_checked
+          - not_saved
+          - out_of_scope
+          title: Reason
+          type: string
+        detail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Detail
+      required:
+      - reason
+      title: NotAvailable
+      type: object
+    SearchStep:
+      additionalProperties: false
+      description: One search the agent made before saying it found no source.
+      properties:
+        search:
+          maxLength: 500
+          minLength: 1
+          title: Search
+          type: string
+        result:
+          maxLength: 500
+          minLength: 1
+          title: Result
+          type: string
+        candidates:
+          anyOf:
+          - minimum: 0
+            type: integer
+          - type: 'null'
+          default: null
+          title: Candidates
+      required:
+      - search
+      - result
+      title: SearchStep
+      type: object
+    TextDelta:
+      additionalProperties: false
+      properties:
+        type:
+          const: text_delta
+          default: text_delta
+          title: Type
+          type: string
+        text:
+          title: Text
+          type: string
+      required:
+      - text
+      title: TextDelta
+      type: object
+    Usage:
+      additionalProperties: false
+      properties:
+        model_calls:
+          minimum: 0
+          title: Model Calls
+          type: integer
+        tool_calls:
+          minimum: 0
+          title: Tool Calls
+          type: integer
+        input_tokens:
+          minimum: 0
+          title: Input Tokens
+          type: integer
+        output_tokens:
+          minimum: 0
+          title: Output Tokens
+          type: integer
+      required:
+      - model_calls
+      - tool_calls
+      - input_tokens
+      - output_tokens
+      title: Usage
+      type: object
+    UsageEvent:
+      additionalProperties: false
+      properties:
+        type:
+          const: usage
+          default: usage
+          title: Type
+          type: string
+        usage:
+          $ref: '#/components/schemas/Usage'
+      required:
+      - usage
+      title: UsageEvent
+      type: object
+    AssistantEvent:
+      discriminator:
+        mapping:
+          draft_comment: '#/components/schemas/DraftComment'
+          error: '#/components/schemas/ErrorEvent'
+          message: '#/components/schemas/Message'
+          no_source: '#/components/schemas/NoSource'
+          not_available: '#/components/schemas/NotAvailable'
+          text_delta: '#/components/schemas/TextDelta'
+          usage: '#/components/schemas/UsageEvent'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/TextDelta'
+      - $ref: '#/components/schemas/Message'
+      - $ref: '#/components/schemas/DraftComment'
+      - $ref: '#/components/schemas/NotAvailable'
+      - $ref: '#/components/schemas/NoSource'
+      - $ref: '#/components/schemas/UsageEvent'
+      - $ref: '#/components/schemas/ErrorEvent'
+      description: One server-sent event.

@@ -1,0 +1,16 @@
+[
+{"tenant_id":"ws-ae","doc":{"id":"sl-01","key":"medicines_law","label":"Medicines law in force","importance":"must","status":"replace","document_id":"A-01","gap_id":null,"notes":"Non-official copy from a third-party legal site. Replace with the official gazette text."}},
+{"tenant_id":"ws-ae","doc":{"id":"sl-02","key":"medicines_law_regulations","label":"Executive regulations of the medicines law","importance":"must","status":"missing","document_id":null,"gap_id":null,"notes":"Not yet published for the 2024 law. A-06 covers the repealed 2019 law."}},
+{"tenant_id":"ws-ae","doc":{"id":"sl-03","key":"fees_schedule","label":"Service fees","importance":"must","status":"filled","document_id":"A-03","gap_id":null,"notes":null}},
+{"tenant_id":"ws-ae","doc":{"id":"sl-04","key":"registration_service","label":"Marketing authorisation service","importance":"must","status":"filled","document_id":"B-01","gap_id":null,"notes":null}},
+{"tenant_id":"ws-ae","doc":{"id":"sl-05","key":"ctd_structure","label":"Dossier structure (CTD)","importance":"must","status":"filled","document_id":"G-03","gap_id":null,"notes":null}},
+{"tenant_id":"ws-ae","doc":{"id":"sl-06","key":"stability_guideline","label":"Stability testing guideline","importance":"must","status":"filled","document_id":"E-S25","gap_id":null,"notes":null}},
+{"tenant_id":"ws-ae","doc":{"id":"sl-07","key":"labelling_guideline","label":"Product information and labelling","importance":"must","status":"filled","document_id":"E-S06","gap_id":null,"notes":null}},
+{"tenant_id":"ws-ae","doc":{"id":"sl-08","key":"pv_guideline","label":"Pharmacovigilance guideline","importance":"must","status":"filled","document_id":"B-S09","gap_id":null,"notes":null}},
+{"tenant_id":"ws-ae","doc":{"id":"sl-09","key":"gmp_guideline","label":"Good manufacturing practice","importance":"must","status":"filled","document_id":"E-S15","gap_id":null,"notes":null}},
+{"tenant_id":"ws-ae","doc":{"id":"sl-10","key":"reliance_guidance","label":"Reliance practice","importance":"must","status":"filled","document_id":"F-01","gap_id":null,"notes":null}},
+{"tenant_id":"ws-ae","doc":{"id":"sl-11","key":"variations_guideline","label":"Variations","importance":"nice","status":"filled","document_id":"E-S03","gap_id":null,"notes":null}},
+{"tenant_id":"ws-ae","doc":{"id":"sl-12","key":"recall_policy","label":"Recall procedure","importance":"nice","status":"filled","document_id":"C-19","gap_id":null,"notes":null}},
+{"tenant_id":"ws-ae","doc":{"id":"sl-13","key":"pricing_rules","label":"Pricing rules","importance":"nice","status":"bad_copy","document_id":"B-S01","gap_id":null,"notes":"Scanned edition: 6 pages have no text layer."}},
+{"tenant_id":"ws-ae","doc":{"id":"sl-14","key":"child_resistant_packaging","label":"Child-resistant packaging","importance":"nice","status":"missing","document_id":null,"gap_id":"gap-02","notes":"No source found during PACK-01."}}
+]

@@ -1,0 +1,10 @@
+[
+{"tenant_id":"ws-ae","id":"dossier-reader","doc":{"agent":"dossier-reader","status":"ok","version":"1.0.0","contract_version":"1.0.0","models_available":2,"models_total":2,"last_success_at":{"$t":-360},"failures_last_hour":0}},
+{"tenant_id":"ws-ae","id":"checklist-assessor","doc":{"agent":"checklist-assessor","status":"ok","version":"1.0.0","contract_version":"1.0.0","models_available":2,"models_total":2,"last_success_at":{"$t":-180},"failures_last_hour":1}},
+{"tenant_id":"ws-ae","id":"sameness","doc":{"agent":"sameness","status":"ok","version":"1.0.0","contract_version":"1.0.0","models_available":2,"models_total":2,"last_success_at":{"$t":-2460},"failures_last_hour":0}},
+{"tenant_id":"ws-ae","id":"reliance-watch","doc":{"agent":"reliance-watch","status":"ok","version":"1.0.0","contract_version":"1.0.0","models_available":2,"models_total":2,"last_success_at":{"$t":-2520},"failures_last_hour":0}},
+{"tenant_id":"ws-ae","id":"challenger","doc":{"agent":"challenger","status":"degraded","version":"1.0.0","contract_version":"1.0.0","models_available":1,"models_total":2,"last_success_at":{"$t":-1080},"failures_last_hour":2}},
+{"tenant_id":"ws-ae","id":"coordinator","doc":{"agent":"coordinator","status":"ok","version":"1.0.0","contract_version":"1.0.0","models_available":2,"models_total":2,"last_success_at":{"$t":-2340},"failures_last_hour":0}},
+{"tenant_id":"ws-ae","id":"knowledge-assistant","doc":{"agent":"knowledge-assistant","status":"ok","version":"1.0.0","contract_version":"1.0.0","models_available":2,"models_total":2,"last_success_at":{"$t":-720},"failures_last_hour":0}},
+{"tenant_id":"ws-ae","id":"gap-analyst","doc":{"agent":"gap-analyst","status":"ok","version":"1.0.0","contract_version":"1.0.0","models_available":1,"models_total":1,"last_success_at":{"$t":-28800},"failures_last_hour":0}}
+]

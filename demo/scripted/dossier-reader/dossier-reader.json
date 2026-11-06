@@ -1,0 +1,33 @@
+{
+  "case": "CASE-1042",
+  "calls": [
+    {
+      "tool": "list_documents",
+      "args": {}
+    },
+    {
+      "tool": "read_page",
+      "args": {
+        "doc_id": "d-1042-17",
+        "page": 2
+      }
+    },
+    {
+      "tool": "read_page",
+      "args": {
+        "doc_id": "d-1042-19",
+        "page": 4
+      }
+    },
+    {
+      "tool": "read_page",
+      "args": {
+        "doc_id": "d-1042-17",
+        "page": 41
+      }
+    }
+  ],
+  "answer": {
+    "from": "replay/runs/CASE-1042/dossier-reader.json"
+  }
+}

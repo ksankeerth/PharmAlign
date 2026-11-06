@@ -1,0 +1,19 @@
+{
+  "case": "CASE-1042",
+  "calls": [
+    {
+      "tool": "get_facts",
+      "args": {}
+    },
+    {
+      "tool": "read_reference",
+      "args": {}
+    }
+  ],
+  "answer": {
+    "from": "replay/runs/CASE-1042/sameness.json",
+    "patch": {
+      "fields.2.agent_view": null
+    }
+  }
+}

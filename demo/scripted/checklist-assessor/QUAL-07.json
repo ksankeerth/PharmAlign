@@ -1,0 +1,15 @@
+{
+  "case": "CASE-1042",
+  "calls": [
+    {
+      "tool": "read_page",
+      "args": {
+        "doc_id": "d-1042-17",
+        "page": 41
+      }
+    }
+  ],
+  "answer": {
+    "from": "replay/runs/CASE-1042/QUAL-07.json"
+  }
+}

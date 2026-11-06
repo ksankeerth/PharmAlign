@@ -1,0 +1,19 @@
+{
+  "case": "CASE-1042",
+  "calls": [
+    {
+      "tool": "get_findings",
+      "args": {}
+    },
+    {
+      "tool": "get_conflicts",
+      "args": {}
+    }
+  ],
+  "answer": {
+    "from": "replay/runs/CASE-1042/coordinator.json",
+    "patch": {
+      "draft_questions.0.texts.ar": "يرجى توضيح مدة الصلاحية وظروف الثبات طويلة الأمد."
+    }
+  }
+}

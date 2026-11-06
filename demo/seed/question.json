@@ -1,0 +1,4 @@
+[
+{"tenant_id":"ws-ae","doc":{"id":"q-1042-1","case_id":"CASE-1042","status":"draft","check_ids":["QUAL-07","SAME-01"],"texts":{"en":"1. Please provide long-term stability data at 30 C / 65% RH covering at least 12 months, or explain how the 25 C / 60% RH data supports storage in this climate.\n2. Please justify the proposed 36-month shelf life, given that the reference approval grants 24 months."},"drafted_by":"agent","sent_by":null,"sent_at":null,"reply_due_at":null,"clock_stopped":false}},
+{"tenant_id":"ws-ae","doc":{"id":"q-1045-1","case_id":"CASE-1045","status":"draft","check_ids":["QUAL-03"],"texts":{"en":"Return notice. The submission is incomplete: Module 3.2.P.8 (stability of the finished product) is missing. Assessment has not started. Please resubmit with the stability report."},"drafted_by":"agent","sent_by":null,"sent_at":null,"reply_due_at":null,"clock_stopped":false}}
+]

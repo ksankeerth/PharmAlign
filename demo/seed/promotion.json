@@ -1,0 +1,8 @@
+[
+{"tenant_id":"ws-ae","doc":{"id":"pr-1044","case_id":"CASE-1044","promoted_by":"p-chris","fingerprint":"sha256:f05f7d5ce156b8adf62b0cbc89b894d3c6afb70114ea68efa4447fd2ff8fd386","at":{"$t":-72000}}},
+{"tenant_id":"ws-ae","doc":{"id":"pr-1039","case_id":"CASE-1039","promoted_by":"p-chris","fingerprint":"sha256:e0899d712cec4a9f64a9c52fa379e070267ad964da9cd2c957287fb32249ba0c","at":{"$t":-1130400}}},
+{"tenant_id":"ws-ae","doc":{"id":"pr-1037","case_id":"CASE-1037","promoted_by":"p-alex","fingerprint":"sha256:5f03132f29ed5e0b46c3147a9139f3ba01f78fcd88acc910381fc83c72724d7e","at":{"$t":-352800}}},
+{"tenant_id":"ws-ae","doc":{"id":"pr-1036","case_id":"CASE-1036","promoted_by":"p-chris","fingerprint":"sha256:0f4b792c8acd097cc17fe4ff20a628797c6914ccc8b5c01c59da39431fc30006","at":{"$t":-93600}}},
+{"tenant_id":"ws-ae","doc":{"id":"pr-1052","case_id":"CASE-1052","promoted_by":"p-chris","fingerprint":"sha256:b3034da9a49a11ec457ea00aa6d20753390b475d575dd757f14475e1417e5f72","at":{"$t":-36000}}},
+{"tenant_id":"ws-ae","doc":{"id":"pr-1053","case_id":"CASE-1053","promoted_by":"p-chris","fingerprint":"sha256:19b5109669ceea214d46fa96dc416aed75404d3948691fca0683faeef1ab81cc","at":{"$t":-50400}}}
+]

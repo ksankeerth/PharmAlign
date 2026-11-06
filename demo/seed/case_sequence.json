@@ -1,0 +1,4 @@
+[
+{"tenant_id":"ws-ae","id":"CASE-1042:1","doc":{"case_id":"CASE-1042","number":1,"received_at":{"$t":-1569600},"document_ids":["d-1042-01","d-1042-02","d-1042-03","d-1042-05","d-1042-17","d-1042-19","d-1042-22","d-1042-23","d-1042-25","d-1042-27","d-1042-30"],"changed_check_ids":[]}},
+{"tenant_id":"ws-ae","id":"CASE-1042:2","doc":{"case_id":"CASE-1042","number":2,"received_at":{"$t":-97200},"document_ids":["d-1042-18"],"changed_check_ids":["QUAL-07","SAME-01"]}}
+]

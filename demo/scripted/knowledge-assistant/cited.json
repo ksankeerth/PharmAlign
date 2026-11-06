@@ -1,0 +1,18 @@
+{
+  "question": "Which guidance applies to the presentation of a patient leaflet?",
+  "calls": [
+    {"tool": "search_kb", "args": {"query": "guidance on presenting the summary of product characteristics, patient leaflet and label", "purpose": "requirement"}},
+    {"tool": "read_clause", "args": {"anchor": "E-S06:v1:c0001"}}
+  ],
+  "answer": {
+    "events": [
+      {
+        "type": "message",
+        "text": "The GCC guidance for presenting the SPC, PIL and label covers how a patient leaflet is presented. It is the guidance in force for this.",
+        "trace_ids": [],
+        "citations": [{"anchor": "E-S06:v1:c0001", "quote": "Section 1 of GCC Guidance for Presenting the SPC, PIL and Label"}],
+        "suggestions": ["Which languages must a leaflet be in?"]
+      }
+    ]
+  }
+}

@@ -1,0 +1,1093 @@
+# Generated from pharmalign_contracts by scripts/generate_openapi.py. Do not edit.
+openapi: 3.1.0
+info:
+  title: PharmAlign Regulator Records API
+  version: 1.5.0
+  description: 'What PharmAlign expects from a government system of record. The built-in mock serves it at `/mock`
+    in simulation, and a real connector adapts a government system to it.
+
+
+    **Principles**
+
+
+    - The government system stays the record. PharmAlign never overwrites it.
+
+    - Reading is the default. A change is a proposal backed by a signed decision.
+
+    - Only the fields a step needs. Nothing here is specific to one country.
+
+
+    **Exactly once.** `POST /proposals` requires `Idempotency-Key`. The same key returns the first result and applies
+    nothing new. If a call times out, the caller reads `GET /proposals` by key to learn the outcome, and doesn''t
+    guess.
+
+
+    **Stale data.** `based_on_version` protects against changing a record that has since moved on.
+
+
+    **Test controls** exist only in the mock. A real connector doesn''t implement them.
+
+    '
+servers:
+- url: /mock
+tags:
+- name: Licences
+- name: Submissions
+- name: Proposals
+- name: Events
+- name: Metrics
+- name: Test controls
+- name: Operations
+paths:
+  /licences:
+    get:
+      summary: List licences
+      operationId: get_licences
+      parameters:
+      - name: changed_since
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Only records changed after this time.
+      - name: substance
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecordLicencePage'
+        '401':
+          description: Not signed in.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: This view may not do this.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: The request breaks the contract.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - bearerAuth: []
+      tags:
+      - Licences
+  /licences/{licence_id}:
+    get:
+      summary: One licence, with its current version
+      operationId: get_licences_licence_id
+      parameters:
+      - name: licence_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 128
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecordLicence'
+        '401':
+          description: Not signed in.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: This view may not do this.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - bearerAuth: []
+      tags:
+      - Licences
+  /submissions:
+    get:
+      summary: List submissions
+      operationId: get_submissions
+      parameters:
+      - name: received_since
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionPage'
+        '401':
+          description: Not signed in.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: This view may not do this.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: The request breaks the contract.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - bearerAuth: []
+      tags:
+      - Submissions
+  /submissions/{submission_id}:
+    get:
+      summary: One submission
+      operationId: get_submissions_submission_id
+      parameters:
+      - name: submission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 128
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+        '401':
+          description: Not signed in.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: This view may not do this.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - bearerAuth: []
+      tags:
+      - Submissions
+  /submissions/{submission_id}/documents/{document_id}:
+    get:
+      summary: Download a document
+      operationId: get_submissions_submission_id_documents_document_id
+      description: Returns the file. Treat it as untrusted.
+      parameters:
+      - name: submission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 128
+      - name: document_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 128
+      responses:
+        '200':
+          description: Success.
+        '401':
+          description: Not signed in.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: This view may not do this.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - bearerAuth: []
+      tags:
+      - Submissions
+  /proposals:
+    post:
+      summary: Propose a change
+      operationId: post_proposals
+      description: '`Idempotency-Key` is required here.'
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          type: string
+          maxLength: 128
+        description: Repeating a request with the same key returns the first result and changes nothing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposalCreate'
+      responses:
+        '202':
+          description: Success.
+          content:
+            application/json:
+              schema: &id001
+                $ref: '#/components/schemas/ProposalStatus'
+        '401':
+          description: Not signed in.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: This view may not do this.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: '`based_on_version` no longer matches the record, or this key was used with a different body.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: The request breaks the contract.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - bearerAuth: []
+      tags:
+      - Proposals
+    get:
+      summary: Find a proposal's outcome by key
+      operationId: get_proposals
+      parameters:
+      - name: idempotency_key
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalStatusPage'
+        '401':
+          description: Not signed in.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: This view may not do this.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: The request breaks the contract.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - bearerAuth: []
+      tags:
+      - Proposals
+  /proposals/{proposal_id}:
+    get:
+      summary: A proposal's outcome
+      operationId: get_proposals_proposal_id
+      parameters:
+      - name: proposal_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 128
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema: *id001
+        '401':
+          description: Not signed in.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: This view may not do this.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - bearerAuth: []
+      tags:
+      - Proposals
+  /events:
+    get:
+      summary: Changes since a point in time
+      operationId: get_events
+      parameters:
+      - name: since
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecordEventPage'
+        '401':
+          description: Not signed in.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: This view may not do this.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: The request breaks the contract.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - bearerAuth: []
+      tags:
+      - Events
+  /metrics/review:
+    get:
+      summary: Aggregate figures
+      operationId: get_metrics_review
+      parameters:
+      - name: from
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: to
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewMetrics'
+        '401':
+          description: Not signed in.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: This view may not do this.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: The request breaks the contract.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - bearerAuth: []
+      tags:
+      - Metrics
+  /test-controls/failure-mode:
+    post:
+      summary: Make the mock misbehave
+      operationId: post_test_controls_failure_mode
+      description: Plays failures such as a change that applied but timed out. Exists only in the mock.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FailureMode'
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailureModeSet'
+        '401':
+          description: Not signed in.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: This view may not do this.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: The request breaks the contract.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+      - bearerAuth: []
+      x-simulation-only: true
+      tags:
+      - Test controls
+  /health:
+    get:
+      summary: Liveness
+      operationId: get_health
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+      tags:
+      - Operations
+components:
+  schemas:
+    FailureMode:
+      additionalProperties: false
+      properties:
+        mode:
+          enum:
+          - normal
+          - applied_but_timed_out
+          - reject_next
+          - unavailable
+          - slow
+          - timeout_before_applying
+          title: Mode
+          type: string
+      required:
+      - mode
+      title: FailureMode
+      type: object
+    FailureModeSet:
+      additionalProperties: false
+      properties:
+        mode:
+          enum:
+          - normal
+          - applied_but_timed_out
+          - reject_next
+          - unavailable
+          - slow
+          - timeout_before_applying
+          title: Mode
+          type: string
+        set_at:
+          format: date-time
+          title: Set At
+          type: string
+      required:
+      - mode
+      - set_at
+      title: FailureModeSet
+      type: object
+    Health:
+      additionalProperties: false
+      properties:
+        status:
+          const: ok
+          title: Status
+          type: string
+      required:
+      - status
+      title: Health
+      type: object
+    Problem:
+      additionalProperties: false
+      description: RFC 9457 problem details.
+      properties:
+        type:
+          default: about:blank
+          title: Type
+          type: string
+        title:
+          maxLength: 500
+          minLength: 1
+          title: Title
+          type: string
+        status:
+          maximum: 599
+          minimum: 400
+          title: Status
+          type: integer
+        code:
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Code
+          type: string
+        detail:
+          anyOf:
+          - maxLength: 500
+            minLength: 1
+            type: string
+          - type: 'null'
+          default: null
+          title: Detail
+        run_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Run Id
+      required:
+      - title
+      - status
+      - code
+      title: Problem
+      type: object
+    ProposalCreate:
+      additionalProperties: false
+      description: A proposed change. The government system decides whether to apply it, and remains the record.
+      properties:
+        action:
+          enum:
+          - grant
+          - refuse
+          - suspend
+          - revoke
+          - update
+          - send_question
+          title: Action
+          type: string
+        decision_ref:
+          description: The signed decision behind this proposal.
+          maxLength: 128
+          minLength: 1
+          title: Decision Ref
+          type: string
+        signed_payload_hash:
+          pattern: ^sha256:[0-9a-f]{4,64}$
+          title: Signed Payload Hash
+          type: string
+        signed_by:
+          maxLength: 500
+          minLength: 1
+          title: Signed By
+          type: string
+        signed_at:
+          format: date-time
+          title: Signed At
+          type: string
+        licence_id:
+          anyOf:
+          - maxLength: 128
+            minLength: 1
+            type: string
+          - type: 'null'
+          default: null
+          title: Licence Id
+        submission_id:
+          anyOf:
+          - maxLength: 128
+            minLength: 1
+            type: string
+          - type: 'null'
+          default: null
+          title: Submission Id
+        based_on_version:
+          anyOf:
+          - maxLength: 128
+            minLength: 1
+            type: string
+          - type: 'null'
+          default: null
+          description: The record version this was based on. A mismatch is refused.
+          title: Based On Version
+        payload:
+          additionalProperties: true
+          title: Payload
+          type: object
+      required:
+      - action
+      - decision_ref
+      - signed_payload_hash
+      - signed_by
+      - signed_at
+      title: ProposalCreate
+      type: object
+    ProposalStatus:
+      additionalProperties: false
+      properties:
+        id:
+          maxLength: 128
+          minLength: 1
+          title: Id
+          type: string
+        idempotency_key:
+          maxLength: 128
+          minLength: 1
+          title: Idempotency Key
+          type: string
+        state:
+          enum:
+          - received
+          - applied
+          - rejected
+          title: State
+          type: string
+        gov_ref:
+          anyOf:
+          - maxLength: 128
+            minLength: 1
+            type: string
+          - type: 'null'
+          default: null
+          title: Gov Ref
+        resulting_version:
+          anyOf:
+          - maxLength: 128
+            minLength: 1
+            type: string
+          - type: 'null'
+          default: null
+          title: Resulting Version
+        reason:
+          anyOf:
+          - maxLength: 500
+            minLength: 1
+            type: string
+          - type: 'null'
+          default: null
+          title: Reason
+        updated_at:
+          format: date-time
+          title: Updated At
+          type: string
+      required:
+      - id
+      - idempotency_key
+      - state
+      - updated_at
+      title: ProposalStatus
+      type: object
+    ProposalStatusPage:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ProposalStatus'
+          title: Items
+          type: array
+        next_cursor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          description: Pass as `cursor` for the next page. Null on the last page.
+          title: Next Cursor
+      required:
+      - items
+      title: ProposalStatusPage
+      type: object
+    RecordEvent:
+      additionalProperties: false
+      properties:
+        id:
+          maxLength: 128
+          minLength: 1
+          title: Id
+          type: string
+        at:
+          format: date-time
+          title: At
+          type: string
+        kind:
+          enum:
+          - submission_received
+          - reply_received
+          - licence_changed
+          - proposal_applied
+          - proposal_rejected
+          title: Kind
+          type: string
+        object_id:
+          maxLength: 128
+          minLength: 1
+          title: Object Id
+          type: string
+      required:
+      - id
+      - at
+      - kind
+      - object_id
+      title: RecordEvent
+      type: object
+    RecordEventPage:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/RecordEvent'
+          title: Items
+          type: array
+        next_cursor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          description: Pass as `cursor` for the next page. Null on the last page.
+          title: Next Cursor
+      required:
+      - items
+      title: RecordEventPage
+      type: object
+    RecordLicence:
+      additionalProperties: false
+      properties:
+        id:
+          maxLength: 128
+          minLength: 1
+          title: Id
+          type: string
+        version:
+          description: Changes whenever this record changes.
+          maxLength: 128
+          minLength: 1
+          title: Version
+          type: string
+        status:
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Status
+          type: string
+        medicine_name:
+          maxLength: 500
+          minLength: 1
+          title: Medicine Name
+          type: string
+        substances:
+          items:
+            maxLength: 500
+            minLength: 1
+            type: string
+          title: Substances
+          type: array
+        strength:
+          anyOf:
+          - maxLength: 500
+            minLength: 1
+            type: string
+          - type: 'null'
+          default: null
+          title: Strength
+        form:
+          anyOf:
+          - maxLength: 500
+            minLength: 1
+            type: string
+          - type: 'null'
+          default: null
+          title: Form
+        holder:
+          maxLength: 500
+          minLength: 1
+          title: Holder
+          type: string
+        manufacturer:
+          anyOf:
+          - maxLength: 500
+            minLength: 1
+            type: string
+          - type: 'null'
+          default: null
+          title: Manufacturer
+        valid_from:
+          anyOf:
+          - format: date
+            type: string
+          - type: 'null'
+          default: null
+          title: Valid From
+        valid_to:
+          anyOf:
+          - format: date
+            type: string
+          - type: 'null'
+          default: null
+          title: Valid To
+        updated_at:
+          format: date-time
+          title: Updated At
+          type: string
+      required:
+      - id
+      - version
+      - status
+      - medicine_name
+      - substances
+      - holder
+      - updated_at
+      title: RecordLicence
+      type: object
+    RecordLicencePage:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/RecordLicence'
+          title: Items
+          type: array
+        next_cursor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          description: Pass as `cursor` for the next page. Null on the last page.
+          title: Next Cursor
+      required:
+      - items
+      title: RecordLicencePage
+      type: object
+    ReviewMetrics:
+      additionalProperties: false
+      description: Aggregates only. No individual records.
+      properties:
+        period_from:
+          format: date
+          title: Period From
+          type: string
+        period_to:
+          format: date
+          title: Period To
+          type: string
+        submissions_received:
+          title: Submissions Received
+          type: integer
+        decisions_recorded:
+          title: Decisions Recorded
+          type: integer
+      required:
+      - period_from
+      - period_to
+      - submissions_received
+      - decisions_recorded
+      title: ReviewMetrics
+      type: object
+    Submission:
+      additionalProperties: false
+      properties:
+        id:
+          maxLength: 128
+          minLength: 1
+          title: Id
+          type: string
+        sequence:
+          minimum: 0
+          title: Sequence
+          type: integer
+        case_type:
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Case Type
+          type: string
+        applicant:
+          maxLength: 500
+          minLength: 1
+          title: Applicant
+          type: string
+        medicine_name:
+          maxLength: 500
+          minLength: 1
+          title: Medicine Name
+          type: string
+        received_at:
+          format: date-time
+          title: Received At
+          type: string
+        documents:
+          items:
+            $ref: '#/components/schemas/SubmissionDocument'
+          title: Documents
+          type: array
+        licence_id:
+          anyOf:
+          - maxLength: 128
+            minLength: 1
+            type: string
+          - type: 'null'
+          default: null
+          title: Licence Id
+      required:
+      - id
+      - sequence
+      - case_type
+      - applicant
+      - medicine_name
+      - received_at
+      - documents
+      title: Submission
+      type: object
+    SubmissionDocument:
+      additionalProperties: false
+      properties:
+        id:
+          maxLength: 128
+          minLength: 1
+          title: Id
+          type: string
+        filename:
+          maxLength: 500
+          minLength: 1
+          title: Filename
+          type: string
+        content_hash:
+          pattern: ^sha256:[0-9a-f]{4,64}$
+          title: Content Hash
+          type: string
+        language:
+          examples:
+          - en
+          - ar
+          pattern: ^[a-z]{2}(-[A-Z]{2})?$
+          title: Language
+          type: string
+        size_bytes:
+          minimum: 0
+          title: Size Bytes
+          type: integer
+        module_hint:
+          anyOf:
+          - maxLength: 500
+            minLength: 1
+            type: string
+          - type: 'null'
+          default: null
+          title: Module Hint
+      required:
+      - id
+      - filename
+      - content_hash
+      - language
+      - size_bytes
+      title: SubmissionDocument
+      type: object
+    SubmissionPage:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/Submission'
+          title: Items
+          type: array
+        next_cursor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          description: Pass as `cursor` for the next page. Null on the last page.
+          title: Next Cursor
+      required:
+      - items
+      title: SubmissionPage
+      type: object
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Service token from the connection's settings.

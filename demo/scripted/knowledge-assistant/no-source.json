@@ -1,0 +1,18 @@
+{
+  "question": "What does the law require for exporting veterinary vaccines for fish farms?",
+  "calls": [
+    {"tool": "search_kb", "args": {"query": "export licence for veterinary vaccines for fish farms", "purpose": "requirement"}}
+  ],
+  "answer": {
+    "events": [
+      {
+        "type": "no_source",
+        "detail": "Nothing in force in the knowledge base answers this.",
+        "searches_tried": [
+          {"search": "export licence for veterinary vaccines for fish farms, in force only", "result": "no passage was similar enough"}
+        ],
+        "suggestions": ["Which guidance applies to the presentation of a patient leaflet?"]
+      }
+    ]
+  }
+}

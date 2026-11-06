@@ -1,43 +1,26 @@
-"""Where a contract run meets the agent. This is the function you build.
+"""Where a contract run meets the agent.
 
-`app/contract/api.py` calls `read_dossier` once per run, in the background, and turns what it
-returns (or raises) into the run's status:
+The contract routes (in `pharmalign_agent_common`) call `read_dossier` once per run, in the
+background, and turn what it returns (or raises) into the run's status:
 
-- returns a `ReadOutcome`              -> `completed`, with the result
-- raises `BudgetExceeded`              -> `stopped_early`, finish reason `budget`
-- runs past `budget.deadline_seconds`  -> `stopped_early`, finish reason `deadline` (handled for you)
-- raises `NotImplementedError`         -> `failed`, code `not_implemented` (what happens today)
-- returns a result that breaks a rule  -> `failed`, code `invalid_output`
-- raises anything else                 -> `failed`, code `internal_error`
-
-A suggested shape, which AGENT.md explains:
-
-1. Put the run's documents where the tools can find them (session state is a good place).
-2. Run `root_agent` from `app/agent.py` with a message built from the request's fact keys and modules.
-3. Parse the agent's final answer into `DossierReadResult` and return it with the usage you counted.
+- returns a `RunOutcome`      -> completed, with the result
+- raises `BudgetExceeded`     -> stopped_early, finish reason budget
+- runs past the deadline      -> stopped_early, finish reason deadline
+- raises `OutputTruncated`    -> failed, finish reason length
+- raises `OutputInvalid`      -> failed, code invalid_output (after one retry)
+- raises anything else        -> failed, code internal_error
 """
-from dataclasses import dataclass, field
+from google.adk.models.base_llm import BaseLlm
+from pharmalign_agent_common import BudgetExceeded, RunOutcome, Settings, run_agent
+from pharmalign_contracts.agents.run_agents import DossierReadRequest
 
-from app.contract.models import (
-    DossierReadRequest,
-    DossierReadResult,
-    ModelCall,
-    ToolError,
-    Usage,
-)
+__all__ = ["BudgetExceeded", "RunOutcome", "read_dossier"]
 
 
-class BudgetExceeded(Exception):
-    """Raise when the run would go past `budget.max_model_calls` or `budget.max_tool_calls`."""
+async def read_dossier(
+    request: DossierReadRequest, *, settings: Settings | None = None, model: BaseLlm | None = None
+) -> RunOutcome:
+    """Runs the agent for one request. `model` is for tests; runs normally use the configured model."""
+    from app.agent import SPEC
 
-
-@dataclass
-class ReadOutcome:
-    result: DossierReadResult
-    usage: Usage | None = None
-    model_calls: list[ModelCall] = field(default_factory=list)
-    tool_errors: list[ToolError] = field(default_factory=list)
-
-
-async def read_dossier(request: DossierReadRequest) -> ReadOutcome:
-    raise NotImplementedError("The Dossier Reader isn't built yet. See AGENT.md, 'Your task'.")
+    return await run_agent(SPEC, request, settings=settings or Settings.from_env(), model=model)

@@ -1,0 +1,46 @@
+{
+  "outcome": {
+    "kind": "extraction",
+    "extracted": [
+      {
+        "key": "long_term_temp_c",
+        "status": "found",
+        "value": "25",
+        "number": 25,
+        "unit": "C",
+        "evidence": [
+          {
+            "anchor": "d-1042-17:v1:p41",
+            "quote": "long-term conditions of 25 C / 60% RH"
+          }
+        ]
+      },
+      {
+        "key": "long_term_rh_pct",
+        "status": "found",
+        "value": "60",
+        "number": 60,
+        "unit": "%",
+        "evidence": [
+          {
+            "anchor": "d-1042-17:v1:p41",
+            "quote": "long-term conditions of 25 C / 60% RH"
+          }
+        ]
+      },
+      {
+        "key": "long_term_months",
+        "status": "found",
+        "value": "12",
+        "number": 12,
+        "unit": "months",
+        "evidence": [
+          {
+            "anchor": "d-1042-17:v1:p41",
+            "quote": "12 months of long-term data are available for all batches"
+          }
+        ]
+      }
+    ]
+  }
+}

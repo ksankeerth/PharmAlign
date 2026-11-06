@@ -1,0 +1,11 @@
+{
+  "name": "Bahrain",
+  "country_code": "BH",
+  "authority_name": "Bahrain Medicines Authority (fictional)",
+  "languages": ["ar", "en"],
+  "time_zone": "Asia/Bahrain",
+  "day_counting": "sun_thu",
+  "data_location": "Bahrain",
+  "template": "copy",
+  "copy_from_workspace_id": "ws-sa"
+}

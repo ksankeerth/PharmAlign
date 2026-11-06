@@ -1,0 +1,20 @@
+{
+  "outcome": {
+    "kind": "finding",
+    "status": "met",
+    "summary": "The leaflet states a dose and the guidance on leaflets applies.",
+    "reasoning": "The English leaflet was read against the guidance on patient information.",
+    "evidence": [
+      {
+        "anchor": "E-S06:v1:c0001",
+        "quote": "Section 1 of GCC Guidance for Presenting the SPC, PIL and Label"
+      },
+      {
+        "anchor": "d-1050-22:v1:p3",
+        "quote": "one tablet of 500 mg twice daily"
+      }
+    ],
+    "no_source": null,
+    "question_for_company": null
+  }
+}

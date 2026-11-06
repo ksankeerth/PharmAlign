@@ -1,0 +1,49 @@
+{
+  "fields": [
+    {
+      "key": "shelf_life_months",
+      "there_status": "found",
+      "there_value": "24 months",
+      "there_number": 24,
+      "agent_view": null,
+      "reference_evidence": [
+        {
+          "anchor": "ref-doc-3:v1:p2",
+          "quote": "approved with a shelf life of 24 months"
+        }
+      ],
+      "dossier_evidence": []
+    },
+    {
+      "key": "strength",
+      "there_status": "found",
+      "there_value": "500 mg / 125 mg",
+      "there_number": null,
+      "agent_view": null,
+      "reference_evidence": [
+        {
+          "anchor": "ref-doc-3:v1:p2",
+          "quote": "a strength per tablet of 500 mg / 125 mg"
+        }
+      ],
+      "dossier_evidence": []
+    },
+    {
+      "key": "manufacturing_site",
+      "there_status": "found",
+      "there_value": "Example Pharma, Plant 2",
+      "there_number": null,
+      "agent_view": "same",
+      "reference_evidence": [
+        {
+          "anchor": "ref-doc-3:v1:p2",
+          "quote": "The approved site of manufacture is Example Pharma, Plant 2"
+        }
+      ],
+      "dossier_evidence": []
+    }
+  ],
+  "searches_tried": [
+    "read_reference: ref-doc-3 pages 1-2"
+  ]
+}

@@ -22,15 +22,19 @@ from fastapi import FastAPI
 from google.adk.cli.fast_api import get_fast_api_app
 from google.adk.runners import Runner
 
-from app.app_utils import services
-from app.app_utils.a2a import attach_a2a_routes
-from app.contract.api import attach_contract_routes
+from pharmalign_agent_common import Settings, attach_first, build_router
 
-load_dotenv()
+load_dotenv()  # before the agent module reads its settings
+
+from app import reader  # noqa: E402
+from app.agent import SPEC  # noqa: E402
+from app.app_utils import services  # noqa: E402
+from app.app_utils.a2a import attach_a2a_routes  # noqa: E402
+
 allow_origins = (
     os.getenv("ALLOW_ORIGINS", "").split(",") if os.getenv("ALLOW_ORIGINS") else None
 )
-otel_to_cloud = True
+otel_to_cloud = Settings.from_env().otel_to_cloud  # PHARMALIGN_OTEL_TO_CLOUD=false turns export off
 
 AGENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -69,7 +73,7 @@ app: FastAPI = get_fast_api_app(
 )
 app.title = "dossier-reader"
 app.description = "API for interacting with the Agent dossier-reader"
-attach_contract_routes(app)
+attach_first(app, build_router(SPEC, Settings.from_env(), reader.read_dossier, health=False))  # the ADK app already serves /health
 
 
 # Main execution

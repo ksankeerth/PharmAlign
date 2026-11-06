@@ -1,0 +1,111 @@
+/* Foreign watch screens: small layout helpers on top of the shared tokens. */
+.wstat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--sp-3);
+}
+.wstat {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  padding: var(--sp-3) var(--sp-4);
+}
+.wstat-warn {
+  border-color: var(--look-line);
+  background: var(--look-soft);
+}
+.wstat-value {
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.wstat-label {
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+}
+.watch-filters {
+  display: flex;
+  gap: var(--sp-4);
+  align-items: end;
+  flex-wrap: wrap;
+}
+.watch-filters .field {
+  min-width: 190px;
+}
+.basis-list {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
+.basis-list li {
+  font-size: var(--fs-xs);
+  background: var(--neutral-soft);
+  border: 1px solid var(--neutral-line);
+  color: var(--neutral-ink);
+  border-radius: var(--r-sm);
+  padding: 1px 6px;
+}
+.title-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 150px;
+}
+.flow {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.flow-step {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: var(--sp-3);
+}
+.flow-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  border: 1px solid var(--accent-line);
+}
+.flow-late .flow-num {
+  background: var(--neutral-soft);
+  color: var(--neutral-ink);
+  border-color: var(--neutral-line);
+}
+.explanation {
+  border-left: 3px solid var(--neutral-line);
+  padding: var(--sp-1) 0 var(--sp-1) var(--sp-3);
+  background: var(--surface-2);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+}
+.incident-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.cov-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--sunken);
+  overflow: hidden;
+  margin-top: var(--sp-2);
+}
+.cov-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}

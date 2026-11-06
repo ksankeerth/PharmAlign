@@ -1,0 +1,70 @@
+{
+  "documents": [
+    {
+      "id": "d-1042-40",
+      "case_id": "CASE-1042",
+      "version": "v1",
+      "sequence": 1,
+      "filename": "nonclinical-summary.pdf",
+      "module": "4.2",
+      "pages": 40,
+      "language": "en",
+      "suspect_pages": []
+    },
+    {
+      "id": "d-1042-50",
+      "case_id": "CASE-1042",
+      "version": "v1",
+      "sequence": 1,
+      "filename": "clinical-summary.pdf",
+      "module": "5.3",
+      "pages": 40,
+      "language": "en",
+      "suspect_pages": []
+    }
+  ],
+  "chunks": [
+    {
+      "id": "d-1042-19:v1:p4",
+      "case_id": "CASE-1042",
+      "document_id": "d-1042-19",
+      "position": 4,
+      "page": 4,
+      "text": "3.2.P.3.1 Manufacturer. The finished product site is Example Pharma, Plant 2. Each tablet has a strength per tablet of 500 mg / 125 mg."
+    },
+    {
+      "id": "d-1042-25:v1:p2",
+      "case_id": "CASE-1042",
+      "document_id": "d-1042-25",
+      "position": 2,
+      "page": 2,
+      "text": "Section 2. The qualified person for pharmacovigilance is named in section 2 and is resident in the country."
+    },
+    {
+      "id": "d-1042-27:v1:p1",
+      "case_id": "CASE-1042",
+      "document_id": "d-1042-27",
+      "position": 1,
+      "page": 1,
+      "text": "Establishment licence number EST-11042, valid until 2028. Issued by the competent authority."
+    },
+    {
+      "id": "d-1042-30:v1:p2",
+      "case_id": "CASE-1042",
+      "document_id": "d-1042-30",
+      "position": 2,
+      "page": 2,
+      "text": "Reference approval. The product was approved with a shelf life of 24 months. It has a strength per tablet of 500 mg / 125 mg. The approved site of manufacture is Example Pharma, Plant 2."
+    }
+  ],
+  "reference_pages": [
+    {
+      "id": "ref-doc-3:v1:p2",
+      "basis_id": "rb-1042",
+      "document_id": "ref-doc-3",
+      "version": "v1",
+      "page": 2,
+      "text": "Reference approval. The product was approved with a shelf life of 24 months. It has a strength per tablet of 500 mg / 125 mg. The approved site of manufacture is Example Pharma, Plant 2."
+    }
+  ]
+}

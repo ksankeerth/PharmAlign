@@ -1,0 +1,86 @@
+[
+  {
+    "version_id": "E-S17-v1",
+    "adopted": true,
+    "legal_status": "in_force",
+    "authority_level": 2,
+    "notes": "GCC central registration procedure. Bahrain follows it for products registered centrally."
+  },
+  {
+    "version_id": "E-S05-v1",
+    "adopted": true,
+    "legal_status": "in_force",
+    "authority_level": 2,
+    "notes": "GCC data requirements for human drug submissions. The dossier content rules."
+  },
+  {
+    "version_id": "E-S06-v1",
+    "adopted": true,
+    "legal_status": "in_force",
+    "authority_level": 2,
+    "notes": "GCC rules for the SPC, PIL and label. Used for labelling checks."
+  },
+  {
+    "version_id": "E-S25-v1",
+    "adopted": true,
+    "legal_status": "in_force",
+    "authority_level": 2,
+    "notes": "GCC stability testing guideline. Used for stability checks."
+  },
+  {
+    "version_id": "E-S15-v1",
+    "adopted": true,
+    "legal_status": "in_force",
+    "authority_level": 2,
+    "notes": "GCC good manufacturing practice. Used for site and GMP checks."
+  },
+  {
+    "version_id": "E-S03-v1",
+    "adopted": true,
+    "legal_status": "in_force",
+    "authority_level": 2,
+    "notes": "GCC variation requirements, version 6.1."
+  },
+  {
+    "version_id": "G-03-v1",
+    "adopted": true,
+    "legal_status": "in_force",
+    "authority_level": 3,
+    "notes": "ICH guideline referenced for the dossier format (CTD). Guidance, not Bahrain law."
+  },
+  {
+    "version_id": "G-01-v1",
+    "adopted": true,
+    "legal_status": "in_force",
+    "authority_level": 3,
+    "notes": "ICH guideline referenced for stability data. Guidance, not Bahrain law."
+  },
+  {
+    "version_id": "G-02-v1",
+    "adopted": true,
+    "legal_status": "in_force",
+    "authority_level": 3,
+    "notes": "ICH guideline referenced for pharmacovigilance plans. Guidance, not Bahrain law."
+  },
+  {
+    "version_id": "F-01-v1",
+    "adopted": true,
+    "legal_status": "in_force",
+    "authority_level": 3,
+    "notes": "WHO guidance on good reliance practices. Supports reliance on trusted regulators."
+  },
+  {
+    "version_id": "F-S05-v1",
+    "adopted": true,
+    "legal_status": "in_force",
+    "authority_level": 3,
+    "notes": "WHO good manufacturing practice principles. Referenced for GMP evidence."
+  },
+  {
+    "version_id": "E-S24-v1",
+    "adopted": true,
+    "legal_status": "in_force",
+    "authority_level": 4,
+    "notes": "Arab League pharmacovigilance guideline. Context for safety reporting."
+  }
+]

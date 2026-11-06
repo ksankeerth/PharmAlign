@@ -1,14 +1,18 @@
 # dossier-reader
 
-Simple ReAct agent
+Reads a dossier's documents through MCP tools and returns facts with proof. Shared runtime: `../common`.
 Agent generated with `agents-cli` version `1.12.0`
+
+On Cloud Run, who may call an agent is set by the platform (invoker permission), not by the agent.
 
 ## Project Structure
 
 ```
 dossier-reader/
 ├── app/         # Core agent code
-│   ├── agent.py               # Main agent logic
+│   ├── agent.py               # Agent definition (tools come from MCP)
+│   ├── rules.py               # First message and result rules
+│   ├── reader.py              # Where a contract run meets the shared runner
 │   ├── fast_api_app.py        # FastAPI Backend server
 │   └── app_utils/             # App utilities and helpers
 ├── tests/                     # Unit, integration, and load tests

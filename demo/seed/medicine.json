@@ -1,0 +1,16 @@
+[
+{"tenant_id":"ws-ae","doc":{"id":"med-amoxiclav","name":"Amoxiclav 625 mg film-coated tablets (synthetic)","substances":["amoxicillin","clavulanic acid"],"strength":"500 mg / 125 mg","form":"film-coated tablet","product_type":"generic"}},
+{"tenant_id":"ws-ae","doc":{"id":"med-atorva","name":"Atorvastatin 20 mg tablets (synthetic)","substances":["atorvastatin"],"strength":"20 mg","form":"film-coated tablet","product_type":"generic"}},
+{"tenant_id":"ws-ae","doc":{"id":"med-metformin","name":"Metformin 500 mg prolonged-release tablets (synthetic)","substances":["metformin hydrochloride"],"strength":"500 mg","form":"prolonged-release tablet","product_type":"generic"}},
+{"tenant_id":"ws-ae","doc":{"id":"med-omeprazole","name":"Omeprazole 20 mg gastro-resistant capsules (synthetic)","substances":["omeprazole"],"strength":"20 mg","form":"gastro-resistant capsule","product_type":"generic"}},
+{"tenant_id":"ws-ae","doc":{"id":"med-levetiracetam","name":"Levetiracetam 500 mg tablets (synthetic)","substances":["levetiracetam"],"strength":"500 mg","form":"film-coated tablet","product_type":"generic"}},
+{"tenant_id":"ws-ae","doc":{"id":"med-cetirizine","name":"Cetirizine 10 mg tablets (synthetic)","substances":["cetirizine dihydrochloride"],"strength":"10 mg","form":"film-coated tablet","product_type":"generic"}},
+{"tenant_id":"ws-ae","doc":{"id":"med-losartan","name":"Losartan 50 mg tablets (synthetic)","substances":["losartan potassium"],"strength":"50 mg","form":"film-coated tablet","product_type":"generic"}},
+{"tenant_id":"ws-ae","doc":{"id":"med-azithro","name":"Azithromycin 200 mg/5 mL powder for oral suspension (synthetic)","substances":["azithromycin"],"strength":"200 mg / 5 mL","form":"powder for oral suspension","product_type":"generic_oral_liquid"}},
+{"tenant_id":"ws-ae","doc":{"id":"med-amlodipine","name":"Amlodipine 5 mg tablets (synthetic)","substances":["amlodipine besilate"],"strength":"5 mg","form":"tablet","product_type":"generic"}},
+{"tenant_id":"ws-ae","doc":{"id":"med-paracetamol","name":"Paracetamol 500 mg tablets (synthetic)","substances":["paracetamol"],"strength":"500 mg","form":"tablet","product_type":"generic"}},
+{"tenant_id":"ws-ae","doc":{"id":"med-ibuprofen","name":"Ibuprofen 400 mg tablets (synthetic)","substances":["ibuprofen"],"strength":"400 mg","form":"film-coated tablet","product_type":"generic"}},
+{"tenant_id":"ws-ae","doc":{"id":"med-clopidogrel","name":"Clopidogrel 75 mg tablets (synthetic)","substances":["clopidogrel"],"strength":"75 mg","form":"film-coated tablet","product_type":"generic"}},
+{"tenant_id":"ws-ae","doc":{"id":"med-sitagliptin","name":"Sitagliptin 100 mg tablets (synthetic)","substances":["sitagliptin"],"strength":"100 mg","form":"film-coated tablet","product_type":"generic"}},
+{"tenant_id":"ws-ae","doc":{"id":"med-rosuva","name":"Rosuvastatin 10 mg tablets (synthetic)","substances":["rosuvastatin"],"strength":"10 mg","form":"film-coated tablet","product_type":"generic"}}
+]

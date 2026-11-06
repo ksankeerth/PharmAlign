@@ -1,0 +1,12 @@
+{
+  "input_fingerprint": "$request.input_fingerprint",
+  "recommendation": {
+    "choice": "hold_officer_review",
+    "reason": "1 item needs a person.",
+    "reason_evidence": [
+      "LBL-02"
+    ]
+  },
+  "summary": "Waiting on LBL-02. The leaflet dose now has a finding, and a person must confirm it before the file can move on.",
+  "draft_questions": []
+}

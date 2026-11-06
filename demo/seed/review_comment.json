@@ -1,0 +1,7 @@
+[
+{"tenant_id":"ws-ae","thread_id":"th-1042-1","case_id":"CASE-1042","doc":{"id":"cm-1042-1","author_type":"person","author_id":"p-alex","text":"Long-term data is at 25 C / 60% RH. This market needs 30 C / 65% RH. The pack says to ask rather than accept a commitment letter. Agree we ask?","at":{"$t":-18000}}},
+{"tenant_id":"ws-ae","thread_id":"th-1042-1","case_id":"CASE-1042","doc":{"id":"cm-1042-2","author_type":"person","author_id":"p-chris","text":"Agree. Combine it with the shelf-life question so the company gets one letter.","at":{"$t":-10800}}},
+{"tenant_id":"ws-ae","thread_id":"th-1042-2","case_id":"CASE-1042","doc":{"id":"cm-1042-3","author_type":"person","author_id":"p-alex","text":"Is the manufacturing site the same as in the reference approval?","at":{"$t":-79200}}},
+{"tenant_id":"ws-ae","thread_id":"th-1042-2","case_id":"CASE-1042","doc":{"id":"cm-1042-4","author_type":"person","author_id":"p-alex","text":"Yes: Plant 2 on both. Only shelf life differs.","at":{"$t":-72000}}},
+{"tenant_id":"ws-ae","thread_id":"th-1043-1","case_id":"CASE-1043","doc":{"id":"cm-1043-1","author_type":"person","author_id":"p-alex","text":"18 months at 30 C / 65% RH. Rule met with margin.","at":{"$t":-18000}}}
+]

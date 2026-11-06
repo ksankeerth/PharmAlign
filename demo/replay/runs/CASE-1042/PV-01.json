@@ -1,0 +1,20 @@
+{
+  "outcome": {
+    "kind": "finding",
+    "status": "met",
+    "summary": "A qualified person for pharmacovigilance is named.",
+    "reasoning": "The summary names the person, as the guideline expects.",
+    "evidence": [
+      {
+        "anchor": "B-S09:v1:c0001",
+        "quote": "Section 1 of MOHAP Good Vigilance Practice guideline"
+      },
+      {
+        "anchor": "d-1042-25:v1:p2",
+        "quote": "The qualified person for pharmacovigilance is named in section 2 and is resident in the country"
+      }
+    ],
+    "no_source": null,
+    "question_for_company": null
+  }
+}

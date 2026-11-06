@@ -1,0 +1,839 @@
+# Generated from pharmalign_contracts by scripts/generate_openapi.py. Do not edit.
+openapi: 3.1.0
+info:
+  title: PharmAlign Gap Analyst agent
+  description: 'Groups signals counted by code into policy-gap candidates and explains them, for a person to review.
+
+
+    **Flow.** `POST /gap-analyses` accepts a run and returns `202` at once. `GET /gap-analyses/{run_id}` returns
+    its status, and the result once finished. `DELETE` cancels it.
+
+
+    **Idempotency.** The same `run_id` and body returns the same run in its current state: `200` once it has finished,
+    `202` while it is still running. The same `run_id` with a different body returns `409`. An unknown `run_id`
+    returns `404`: the caller treats the run as lost and sends it again. Runs are kept for 24 hours, and the caller
+    stores each result on first fetch.
+
+
+    **Honest failures.** A cut-off answer (`length`) or invalid output is `failed`, never a result. A failed run''s
+    `error.code` is one of `invalid_output`, `output_truncated`, `internal_error` or `budget_exceeded`. Tool failures
+    are listed in `tool_errors`.
+
+
+    **Data.** The agent reads only through its tools, which code scopes to this run: `get_gap_signals`, `get_pack_rule`,
+    `search_kb`, `read_clause`, `verify_quote`. It has no web tool, and no way to write, send or change state. Document
+    text is data, never instructions.
+
+
+    **What the caller does with the result.**
+
+    - Requires each candidate to cite a signal it was given.
+
+    - Stores results as candidates only.
+
+    '
+  version: 1.5.0
+paths:
+  /gap-analyses:
+    post:
+      tags:
+      - runs
+      summary: Start a run
+      operationId: start_gap_analyses_post
+      parameters:
+      - name: X-PharmAlign-Contract
+        in: header
+        required: true
+        schema:
+          type: string
+          description: Contract version. Answered with the same header.
+          title: X-Pharmalign-Contract
+        description: Contract version. Answered with the same header.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GapAnalysisRequest'
+            examples:
+              example:
+                value:
+                  run_id: tenant-gaps-g1-a1
+                  run_token: example-signed-token
+                  tenant: example-country
+                  mode: simulation
+                  execution_profile:
+                    model_set: default
+                    gate: 'on'
+                    data_class: synthetic
+                  as_of: '2026-11-01T10:00:00Z'
+                  versions:
+                    pack: pack-3
+                    kb_snapshot: snap-14
+                  priority: batch
+                  language: en
+                  budget:
+                    max_model_calls: 12
+                    max_tool_calls: 20
+                    deadline_seconds: 180
+                  signals:
+                  - id: s-1
+                    kind: empty_slot
+                    detail: Executive regulations of the medicines law
+                    count: 1
+                  - id: s-2
+                    kind: no_source
+                    detail: Re-review trigger after a foreign change
+                    count: 6
+                  pipeline_nodes:
+                  - source
+                  - collector
+                  - preprocessor
+                  - model
+                  - policy
+                  - distributor
+                  - sink
+                  readiness_dimensions:
+                  - Human interface
+                  - AI policy and policy for AI
+      responses:
+        '202':
+          description: 'The same run, in its current state: this run_id and body were sent before, and the run is
+            still running.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GapAnalysisRun'
+        '200':
+          description: 'The same run, in its current state: this run_id and body were sent before, and the run has
+            finished.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GapAnalysisRun'
+        '409':
+          description: This run_id already exists with a different body.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: The request breaks the contract.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: The run wasn't accepted. Retry with the same run_id.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      x-agent-tools:
+      - get_gap_signals
+      - get_pack_rule
+      - search_kb
+      - read_clause
+      - verify_quote
+  /gap-analyses/{run_id}:
+    get:
+      tags:
+      - runs
+      summary: Run status, and the result once finished
+      operationId: poll_gap_analyses__run_id__get
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9_.-]{2,127}$
+          title: Run Id
+      - name: X-PharmAlign-Contract
+        in: header
+        required: true
+        schema:
+          type: string
+          description: Contract version. Answered with the same header.
+          title: X-Pharmalign-Contract
+        description: Contract version. Answered with the same header.
+      responses:
+        '200':
+          description: Status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GapAnalysisRun'
+              example:
+                run_id: tenant-gaps-g1-a1
+                status: completed
+                finish_reason: stop
+                started_at: '2026-11-01T10:00:02Z'
+                finished_at: '2026-11-01T10:00:41Z'
+                agent:
+                  name: gap-analyst
+                  version: 1.0.0
+                  prompt_hash: sha256:7ab2
+                usage:
+                  model_calls: 4
+                  tool_calls: 7
+                  input_tokens: 18200
+                  output_tokens: 950
+                model_calls:
+                - model: model-a
+                  input_tokens: 9000
+                  output_tokens: 400
+                  duration_ms: 8200
+                  fallback: false
+                tool_errors: []
+                result:
+                  candidates:
+                  - title: No rule on when a foreign change triggers re-review
+                    kind: policy
+                    signal_ids:
+                    - s-2
+                    description: No in-force source sets a trigger, a timeline or a responsible role, and there
+                      is no pack rule for it.
+                    global_examples:
+                    - anchor: F-01:v1:c88
+                      quote: the sameness of the product is judged against the reference approval
+                    pipeline_node: policy
+                    readiness_dimension: AI policy and policy for AI
+                    suggested_next_step: Review with the authority
+        '404':
+          description: No run with this id, or it has expired.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: The request breaks the contract.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+    delete:
+      tags:
+      - runs
+      summary: Cancel a run, such as one a newer run has replaced
+      operationId: cancel_gap_analyses__run_id__delete
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9_.-]{2,127}$
+          title: Run Id
+      - name: X-PharmAlign-Contract
+        in: header
+        required: true
+        schema:
+          type: string
+          description: Contract version. Answered with the same header.
+          title: X-Pharmalign-Contract
+        description: Contract version. Answered with the same header.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GapAnalysisRun'
+        '404':
+          description: No run with this id, or it has expired.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: The request breaks the contract.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /health:
+    get:
+      tags:
+      - health
+      summary: Liveness
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+components:
+  schemas:
+    AgentInfo:
+      properties:
+        name:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Name
+        version:
+          type: string
+          maxLength: 128
+          minLength: 1
+          title: Version
+        prompt_hash:
+          type: string
+          pattern: ^sha256:[0-9a-f]{4,64}$
+          title: Prompt Hash
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      - version
+      - prompt_hash
+      title: AgentInfo
+    Budget:
+      properties:
+        max_model_calls:
+          type: integer
+          maximum: 200.0
+          minimum: 1.0
+          title: Max Model Calls
+        max_tool_calls:
+          type: integer
+          maximum: 500.0
+          minimum: 0.0
+          title: Max Tool Calls
+        deadline_seconds:
+          type: integer
+          maximum: 3600.0
+          minimum: 5.0
+          title: Deadline Seconds
+      additionalProperties: false
+      type: object
+      required:
+      - max_model_calls
+      - max_tool_calls
+      - deadline_seconds
+      title: Budget
+    Evidence:
+      properties:
+        anchor:
+          type: string
+          pattern: ^[A-Za-z0-9_.-]+:[A-Za-z0-9_.-]+:[A-Za-z0-9_.-]+$
+          title: Anchor
+          description: 'Stable handle returned by a tool: document, version, position. Never written by hand.'
+          examples:
+          - E-S25:v3:c0412
+          - d-17:v1:p41
+        quote:
+          type: string
+          maxLength: 2000
+          minLength: 1
+          title: Quote
+      additionalProperties: false
+      type: object
+      required:
+      - anchor
+      - quote
+      title: Evidence
+      description: A quote, tied to the anchor a tool returned. The caller verifies it against the stored text.
+    ExecutionProfile:
+      properties:
+        model_set:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Model Set
+          description: Which approved model list to use.
+        gate:
+          type: string
+          enum:
+          - 'on'
+          - 'off'
+          title: Gate
+          description: '`off` removes knowledge and source rules, for comparison runs in simulation only.'
+          default: 'on'
+        data_class:
+          type: string
+          enum:
+          - public
+          - confidential
+          - synthetic
+          title: Data Class
+          description: Decides which models are allowed. Fallback never leaves this class's approved list.
+      additionalProperties: false
+      type: object
+      required:
+      - model_set
+      - data_class
+      title: ExecutionProfile
+    GapAnalysisRequest:
+      properties:
+        run_id:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9_.-]{2,127}$
+          title: Run Id
+          description: Unique per request body.
+        run_token:
+          type: string
+          minLength: 8
+          title: Run Token
+          description: Signed by the caller. Scopes tools to this run.
+        tenant:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Tenant
+        mode:
+          type: string
+          enum:
+          - live
+          - simulation
+          title: Mode
+        execution_profile:
+          $ref: '#/components/schemas/ExecutionProfile'
+        as_of:
+          type: string
+          format: date-time
+          title: As Of
+          description: The agent's notion of now. Used instead of the system clock.
+        versions:
+          $ref: '#/components/schemas/Versions'
+        priority:
+          type: string
+          enum:
+          - urgent
+          - normal
+          - batch
+          title: Priority
+          default: normal
+        language:
+          type: string
+          pattern: ^[a-z]{2}(-[A-Z]{2})?$
+          title: Language
+          default: en
+          examples:
+          - en
+          - ar
+        budget:
+          $ref: '#/components/schemas/Budget'
+        previous_rejection:
+          anyOf:
+          - $ref: '#/components/schemas/Rejection'
+          - type: 'null'
+        signals:
+          items:
+            $ref: '#/components/schemas/GapSignal'
+          type: array
+          minItems: 1
+          title: Signals
+        pipeline_nodes:
+          items:
+            type: string
+            pattern: ^[a-z][a-z0-9_-]{0,63}$
+          type: array
+          title: Pipeline Nodes
+        readiness_dimensions:
+          items:
+            type: string
+            maxLength: 500
+            minLength: 1
+          type: array
+          title: Readiness Dimensions
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - run_token
+      - tenant
+      - mode
+      - execution_profile
+      - as_of
+      - versions
+      - budget
+      - signals
+      title: GapAnalysisRequest
+    GapAnalysisResult:
+      properties:
+        candidates:
+          items:
+            $ref: '#/components/schemas/GapCandidate'
+          type: array
+          title: Candidates
+      additionalProperties: false
+      type: object
+      required:
+      - candidates
+      title: GapAnalysisResult
+      description: Candidates for a person to review. Nothing here is a confirmed gap.
+    GapAnalysisRun:
+      properties:
+        run_id:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9_.-]{2,127}$
+          title: Run Id
+          description: Unique per request body.
+        status:
+          type: string
+          enum:
+          - queued
+          - running
+          - completed
+          - stopped_early
+          - failed
+          - cancelled
+          title: Status
+        finish_reason:
+          anyOf:
+          - type: string
+            enum:
+            - stop
+            - length
+            - budget
+            - deadline
+            - cancelled
+            - error
+          - type: 'null'
+          title: Finish Reason
+        started_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Started At
+        finished_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finished At
+        agent:
+          $ref: '#/components/schemas/AgentInfo'
+        usage:
+          anyOf:
+          - $ref: '#/components/schemas/Usage'
+          - type: 'null'
+        model_calls:
+          items:
+            $ref: '#/components/schemas/ModelCall'
+          type: array
+          title: Model Calls
+        tool_errors:
+          items:
+            $ref: '#/components/schemas/ToolError'
+          type: array
+          title: Tool Errors
+          description: Tool failures during the run. A result with these may be incomplete.
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/RunError'
+          - type: 'null'
+        result:
+          anyOf:
+          - $ref: '#/components/schemas/GapAnalysisResult'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - status
+      - agent
+      title: GapAnalysisRun
+    GapCandidate:
+      properties:
+        title:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Title
+        kind:
+          type: string
+          enum:
+          - policy
+          - standards
+          title: Kind
+        signal_ids:
+          items:
+            type: string
+            maxLength: 128
+            minLength: 1
+          type: array
+          minItems: 1
+          title: Signal Ids
+        pack_rule:
+          anyOf:
+          - type: string
+            maxLength: 128
+            minLength: 1
+          - type: 'null'
+          title: Pack Rule
+          description: The check id of the pack rule this concerns, or null when there is no pack rule.
+        description:
+          type: string
+          maxLength: 4000
+          minLength: 1
+          title: Description
+        global_examples:
+          items:
+            $ref: '#/components/schemas/Evidence'
+          type: array
+          title: Global Examples
+        pipeline_node:
+          anyOf:
+          - type: string
+            pattern: ^[a-z][a-z0-9_-]{0,63}$
+          - type: 'null'
+          title: Pipeline Node
+        readiness_dimension:
+          anyOf:
+          - type: string
+            maxLength: 500
+            minLength: 1
+          - type: 'null'
+          title: Readiness Dimension
+        suggested_next_step:
+          anyOf:
+          - type: string
+            maxLength: 500
+            minLength: 1
+          - type: 'null'
+          title: Suggested Next Step
+      additionalProperties: false
+      type: object
+      required:
+      - title
+      - kind
+      - signal_ids
+      - pack_rule
+      - description
+      title: GapCandidate
+    GapSignal:
+      properties:
+        id:
+          type: string
+          maxLength: 128
+          minLength: 1
+          title: Id
+        kind:
+          type: string
+          enum:
+          - empty_slot
+          - no_source
+          - local_practice_rule
+          - repeated_waiver
+          - repeated_override
+          title: Kind
+        detail:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Detail
+        count:
+          type: integer
+          minimum: 1.0
+          title: Count
+          default: 1
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - kind
+      - detail
+      title: GapSignal
+      description: Counted by code.
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+      additionalProperties: false
+      type: object
+      required:
+      - status
+      title: Health
+    ModelCall:
+      properties:
+        model:
+          type: string
+          maxLength: 128
+          minLength: 1
+          title: Model
+        input_tokens:
+          type: integer
+          minimum: 0.0
+          title: Input Tokens
+        output_tokens:
+          type: integer
+          minimum: 0.0
+          title: Output Tokens
+        duration_ms:
+          type: integer
+          minimum: 0.0
+          title: Duration Ms
+        fallback:
+          type: boolean
+          title: Fallback
+          default: false
+      additionalProperties: false
+      type: object
+      required:
+      - model
+      - input_tokens
+      - output_tokens
+      - duration_ms
+      title: ModelCall
+    Problem:
+      properties:
+        type:
+          type: string
+          title: Type
+          default: about:blank
+        title:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Title
+        status:
+          type: integer
+          maximum: 599.0
+          minimum: 400.0
+          title: Status
+        code:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Code
+        detail:
+          anyOf:
+          - type: string
+            maxLength: 500
+            minLength: 1
+          - type: 'null'
+          title: Detail
+        run_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Run Id
+      additionalProperties: false
+      type: object
+      required:
+      - title
+      - status
+      - code
+      title: Problem
+      description: RFC 9457 problem details.
+    Rejection:
+      properties:
+        rule:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Rule
+        message:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Message
+      additionalProperties: false
+      type: object
+      required:
+      - rule
+      - message
+      title: Rejection
+      description: Why the caller refused the previous attempt.
+    RunError:
+      properties:
+        code:
+          type: string
+          enum:
+          - invalid_output
+          - output_truncated
+          - internal_error
+          - budget_exceeded
+          title: Code
+          description: '`invalid_output`: the answer broke the schema, even after one retry. `output_truncated`:
+            the model was cut off. `internal_error`: the agent failed for another reason. `budget_exceeded`: the
+            run used its model or tool calls, or its deadline, before it could answer.'
+        message:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Message
+        retryable:
+          type: boolean
+          title: Retryable
+      additionalProperties: false
+      type: object
+      required:
+      - code
+      - message
+      - retryable
+      title: RunError
+    ToolError:
+      properties:
+        tool:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Tool
+        code:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Code
+        message:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Message
+        retryable:
+          type: boolean
+          title: Retryable
+      additionalProperties: false
+      type: object
+      required:
+      - tool
+      - code
+      - message
+      - retryable
+      title: ToolError
+    Usage:
+      properties:
+        model_calls:
+          type: integer
+          minimum: 0.0
+          title: Model Calls
+        tool_calls:
+          type: integer
+          minimum: 0.0
+          title: Tool Calls
+        input_tokens:
+          type: integer
+          minimum: 0.0
+          title: Input Tokens
+        output_tokens:
+          type: integer
+          minimum: 0.0
+          title: Output Tokens
+      additionalProperties: false
+      type: object
+      required:
+      - model_calls
+      - tool_calls
+      - input_tokens
+      - output_tokens
+      title: Usage
+    Versions:
+      properties:
+        pack:
+          type: string
+          maxLength: 128
+          minLength: 1
+          title: Pack
+          description: Pinned country pack version.
+        kb_snapshot:
+          type: string
+          maxLength: 128
+          minLength: 1
+          title: Kb Snapshot
+          description: Pinned knowledge snapshot. Tools read only this.
+      additionalProperties: false
+      type: object
+      required:
+      - pack
+      - kb_snapshot
+      title: Versions

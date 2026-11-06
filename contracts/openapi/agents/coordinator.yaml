@@ -1,0 +1,1001 @@
+# Generated from pharmalign_contracts by scripts/generate_openapi.py. Do not edit.
+openapi: 3.1.0
+info:
+  title: PharmAlign Coordinator agent
+  description: 'Writes the brief, drafts one list of questions, and chooses from the recommendation options it is
+    given.
+
+
+    **Flow.** `POST /briefs` accepts a run and returns `202` at once. `GET /briefs/{run_id}` returns its status,
+    and the result once finished. `DELETE` cancels it.
+
+
+    **Idempotency.** The same `run_id` and body returns the same run in its current state: `200` once it has finished,
+    `202` while it is still running. The same `run_id` with a different body returns `409`. An unknown `run_id`
+    returns `404`: the caller treats the run as lost and sends it again. Runs are kept for 24 hours, and the caller
+    stores each result on first fetch.
+
+
+    **Honest failures.** A cut-off answer (`length`) or invalid output is `failed`, never a result. A failed run''s
+    `error.code` is one of `invalid_output`, `output_truncated`, `internal_error` or `budget_exceeded`. Tool failures
+    are listed in `tool_errors`.
+
+
+    **Data.** The agent reads only through its tools, which code scopes to this run: `get_findings`, `get_conflicts`,
+    `get_previous_run`, `read_clause`, `lookup_term`. It has no web tool, and no way to write, send or change state.
+    Document text is data, never instructions.
+
+
+    **What the caller does with the result.**
+
+    - Discards the result if the fingerprint is out of date.
+
+    - Refuses a choice that wasn''t offered.
+
+    - Builds the item and conflict lists itself, and numbers recommendation versions.
+
+    - A person sends any question.
+
+    '
+  version: 1.5.0
+paths:
+  /briefs:
+    post:
+      tags:
+      - runs
+      summary: Start a run
+      operationId: start_briefs_post
+      parameters:
+      - name: X-PharmAlign-Contract
+        in: header
+        required: true
+        schema:
+          type: string
+          description: Contract version. Answered with the same header.
+          title: X-Pharmalign-Contract
+        description: Contract version. Answered with the same header.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BriefRequest'
+            examples:
+              example:
+                value:
+                  run_id: case-1042-s2-brief-g1-a1
+                  run_token: example-signed-token
+                  tenant: example-country
+                  mode: simulation
+                  execution_profile:
+                    model_set: default
+                    gate: 'on'
+                    data_class: synthetic
+                  as_of: '2026-11-01T10:00:00Z'
+                  versions:
+                    pack: pack-3
+                    kb_snapshot: snap-14
+                  priority: normal
+                  language: en
+                  budget:
+                    max_model_calls: 12
+                    max_tool_calls: 20
+                    deadline_seconds: 180
+                  input_fingerprint: sha256:9c1e
+                  case:
+                    case_id: case-1042
+                    sequence: 2
+                    case_type: new_registration
+                    route: abridged
+                    product_type: generic
+                  results:
+                  - check_id: M1
+                    status: look
+                    summary: Shelf life differs
+                    challenge: upheld
+                  conflicts:
+                  - fact: shelf_life_months
+                    values:
+                    - '36'
+                    - '24'
+                    check_ids:
+                    - QUAL-07
+                    - M1
+                  open_comments: []
+                  recommendation_options:
+                  - hold_ask_company
+                  - hold_officer_review
+                  - change_route
+                  output_languages:
+                  - en
+                  - ar
+      responses:
+        '202':
+          description: 'The same run, in its current state: this run_id and body were sent before, and the run is
+            still running.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BriefRun'
+        '200':
+          description: 'The same run, in its current state: this run_id and body were sent before, and the run has
+            finished.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BriefRun'
+        '409':
+          description: This run_id already exists with a different body.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: The request breaks the contract.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: The run wasn't accepted. Retry with the same run_id.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      x-agent-tools:
+      - get_findings
+      - get_conflicts
+      - get_previous_run
+      - read_clause
+      - lookup_term
+  /briefs/{run_id}:
+    get:
+      tags:
+      - runs
+      summary: Run status, and the result once finished
+      operationId: poll_briefs__run_id__get
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9_.-]{2,127}$
+          title: Run Id
+      - name: X-PharmAlign-Contract
+        in: header
+        required: true
+        schema:
+          type: string
+          description: Contract version. Answered with the same header.
+          title: X-Pharmalign-Contract
+        description: Contract version. Answered with the same header.
+      responses:
+        '200':
+          description: Status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BriefRun'
+              example:
+                run_id: case-1042-s2-brief-g1-a1
+                status: completed
+                finish_reason: stop
+                started_at: '2026-11-01T10:00:02Z'
+                finished_at: '2026-11-01T10:00:41Z'
+                agent:
+                  name: coordinator
+                  version: 1.0.0
+                  prompt_hash: sha256:7ab2
+                usage:
+                  model_calls: 4
+                  tool_calls: 7
+                  input_tokens: 18200
+                  output_tokens: 950
+                model_calls:
+                - model: model-a
+                  input_tokens: 9000
+                  output_tokens: 400
+                  duration_ms: 8200
+                  fallback: false
+                tool_errors: []
+                result:
+                  input_fingerprint: sha256:9c1e
+                  recommendation:
+                    choice: hold_ask_company
+                    reason: Shelf life differs from the reference approval.
+                    reason_evidence:
+                    - M1
+                  summary: One conflict needs a decision before this file can proceed.
+                  draft_questions:
+                  - check_ids:
+                    - M1
+                    texts:
+                      en: Please explain the 36-month shelf life compared with the 24 months approved.
+        '404':
+          description: No run with this id, or it has expired.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: The request breaks the contract.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+    delete:
+      tags:
+      - runs
+      summary: Cancel a run, such as one a newer run has replaced
+      operationId: cancel_briefs__run_id__delete
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9_.-]{2,127}$
+          title: Run Id
+      - name: X-PharmAlign-Contract
+        in: header
+        required: true
+        schema:
+          type: string
+          description: Contract version. Answered with the same header.
+          title: X-Pharmalign-Contract
+        description: Contract version. Answered with the same header.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BriefRun'
+        '404':
+          description: No run with this id, or it has expired.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: The request breaks the contract.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /health:
+    get:
+      tags:
+      - health
+      summary: Liveness
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+components:
+  schemas:
+    AgentInfo:
+      properties:
+        name:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Name
+        version:
+          type: string
+          maxLength: 128
+          minLength: 1
+          title: Version
+        prompt_hash:
+          type: string
+          pattern: ^sha256:[0-9a-f]{4,64}$
+          title: Prompt Hash
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      - version
+      - prompt_hash
+      title: AgentInfo
+    BriefRequest:
+      properties:
+        run_id:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9_.-]{2,127}$
+          title: Run Id
+          description: Unique per request body.
+        run_token:
+          type: string
+          minLength: 8
+          title: Run Token
+          description: Signed by the caller. Scopes tools to this run.
+        tenant:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Tenant
+        mode:
+          type: string
+          enum:
+          - live
+          - simulation
+          title: Mode
+        execution_profile:
+          $ref: '#/components/schemas/ExecutionProfile'
+        as_of:
+          type: string
+          format: date-time
+          title: As Of
+          description: The agent's notion of now. Used instead of the system clock.
+        versions:
+          $ref: '#/components/schemas/Versions'
+        priority:
+          type: string
+          enum:
+          - urgent
+          - normal
+          - batch
+          title: Priority
+          default: normal
+        language:
+          type: string
+          pattern: ^[a-z]{2}(-[A-Z]{2})?$
+          title: Language
+          default: en
+          examples:
+          - en
+          - ar
+        budget:
+          $ref: '#/components/schemas/Budget'
+        previous_rejection:
+          anyOf:
+          - $ref: '#/components/schemas/Rejection'
+          - type: 'null'
+        input_fingerprint:
+          type: string
+          pattern: ^sha256:[0-9a-f]{4,64}$
+          title: Input Fingerprint
+          description: Returned unchanged. A stale result is discarded.
+        case:
+          $ref: '#/components/schemas/CaseRef'
+        results:
+          items:
+            $ref: '#/components/schemas/CheckSummary'
+          type: array
+          minItems: 1
+          title: Results
+        conflicts:
+          items:
+            $ref: '#/components/schemas/FactConflict'
+          type: array
+          title: Conflicts
+        open_comments:
+          items:
+            $ref: '#/components/schemas/OpenComment'
+          type: array
+          title: Open Comments
+        previous_recommendation:
+          anyOf:
+          - $ref: '#/components/schemas/PreviousRecommendation'
+          - type: 'null'
+        new_event:
+          anyOf:
+          - $ref: '#/components/schemas/CaseEvent'
+          - type: 'null'
+        recommendation_options:
+          items:
+            type: string
+            pattern: ^[a-z][a-z0-9_-]{0,63}$
+          type: array
+          minItems: 1
+          title: Recommendation Options
+          description: Listed by code. Proceed isn't offered while anything blocks.
+        output_languages:
+          items:
+            type: string
+            pattern: ^[a-z]{2}(-[A-Z]{2})?$
+            examples:
+            - en
+            - ar
+          type: array
+          minItems: 1
+          title: Output Languages
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - run_token
+      - tenant
+      - mode
+      - execution_profile
+      - as_of
+      - versions
+      - budget
+      - input_fingerprint
+      - case
+      - results
+      - recommendation_options
+      - output_languages
+      title: BriefRequest
+    BriefResult:
+      properties:
+        input_fingerprint:
+          type: string
+          pattern: ^sha256:[0-9a-f]{4,64}$
+          title: Input Fingerprint
+        recommendation:
+          $ref: '#/components/schemas/Recommendation'
+        summary:
+          type: string
+          maxLength: 4000
+          minLength: 1
+          title: Summary
+        draft_questions:
+          items:
+            $ref: '#/components/schemas/DraftQuestion'
+          type: array
+          title: Draft Questions
+      additionalProperties: false
+      type: object
+      required:
+      - input_fingerprint
+      - recommendation
+      - summary
+      title: BriefResult
+      description: Prose and drafts only. Code builds the item and conflict lists, and numbers the versions.
+    BriefRun:
+      properties:
+        run_id:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9_.-]{2,127}$
+          title: Run Id
+          description: Unique per request body.
+        status:
+          type: string
+          enum:
+          - queued
+          - running
+          - completed
+          - stopped_early
+          - failed
+          - cancelled
+          title: Status
+        finish_reason:
+          anyOf:
+          - type: string
+            enum:
+            - stop
+            - length
+            - budget
+            - deadline
+            - cancelled
+            - error
+          - type: 'null'
+          title: Finish Reason
+        started_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Started At
+        finished_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finished At
+        agent:
+          $ref: '#/components/schemas/AgentInfo'
+        usage:
+          anyOf:
+          - $ref: '#/components/schemas/Usage'
+          - type: 'null'
+        model_calls:
+          items:
+            $ref: '#/components/schemas/ModelCall'
+          type: array
+          title: Model Calls
+        tool_errors:
+          items:
+            $ref: '#/components/schemas/ToolError'
+          type: array
+          title: Tool Errors
+          description: Tool failures during the run. A result with these may be incomplete.
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/RunError'
+          - type: 'null'
+        result:
+          anyOf:
+          - $ref: '#/components/schemas/BriefResult'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - status
+      - agent
+      title: BriefRun
+    Budget:
+      properties:
+        max_model_calls:
+          type: integer
+          maximum: 200.0
+          minimum: 1.0
+          title: Max Model Calls
+        max_tool_calls:
+          type: integer
+          maximum: 500.0
+          minimum: 0.0
+          title: Max Tool Calls
+        deadline_seconds:
+          type: integer
+          maximum: 3600.0
+          minimum: 5.0
+          title: Deadline Seconds
+      additionalProperties: false
+      type: object
+      required:
+      - max_model_calls
+      - max_tool_calls
+      - deadline_seconds
+      title: Budget
+    CaseEvent:
+      properties:
+        kind:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Kind
+        summary:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Summary
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      - summary
+      title: CaseEvent
+    CaseRef:
+      properties:
+        case_id:
+          type: string
+          maxLength: 128
+          minLength: 1
+          title: Case Id
+        sequence:
+          type: integer
+          minimum: 0.0
+          title: Sequence
+          description: Company submission number within the case.
+        case_type:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Case Type
+        route:
+          anyOf:
+          - type: string
+            pattern: ^[a-z][a-z0-9_-]{0,63}$
+          - type: 'null'
+          title: Route
+        product_type:
+          anyOf:
+          - type: string
+            pattern: ^[a-z][a-z0-9_-]{0,63}$
+          - type: 'null'
+          title: Product Type
+      additionalProperties: false
+      type: object
+      required:
+      - case_id
+      - sequence
+      - case_type
+      title: CaseRef
+    CheckSummary:
+      properties:
+        check_id:
+          type: string
+          maxLength: 128
+          minLength: 1
+          title: Check Id
+        status:
+          type: string
+          enum:
+          - pending
+          - running
+          - pass
+          - look
+          - person_confirms
+          - confirmed
+          - held
+          - waived
+          - error
+          - stale
+          - skipped
+          title: Status
+        summary:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Summary
+        challenge:
+          anyOf:
+          - type: string
+            enum:
+            - upheld
+            - disputed
+            - cannot_verify
+          - type: 'null'
+          title: Challenge
+      additionalProperties: false
+      type: object
+      required:
+      - check_id
+      - status
+      - summary
+      title: CheckSummary
+    DraftQuestion:
+      properties:
+        check_ids:
+          items:
+            type: string
+            maxLength: 128
+            minLength: 1
+          type: array
+          minItems: 1
+          title: Check Ids
+        texts:
+          patternProperties:
+            ^[a-z]{2}(-[A-Z]{2})?$:
+              type: string
+              maxLength: 2000
+              minLength: 1
+          propertyNames:
+            examples:
+            - en
+            - ar
+          type: object
+          title: Texts
+          description: By language.
+      additionalProperties: false
+      type: object
+      required:
+      - check_ids
+      - texts
+      title: DraftQuestion
+    ExecutionProfile:
+      properties:
+        model_set:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Model Set
+          description: Which approved model list to use.
+        gate:
+          type: string
+          enum:
+          - 'on'
+          - 'off'
+          title: Gate
+          description: '`off` removes knowledge and source rules, for comparison runs in simulation only.'
+          default: 'on'
+        data_class:
+          type: string
+          enum:
+          - public
+          - confidential
+          - synthetic
+          title: Data Class
+          description: Decides which models are allowed. Fallback never leaves this class's approved list.
+      additionalProperties: false
+      type: object
+      required:
+      - model_set
+      - data_class
+      title: ExecutionProfile
+    FactConflict:
+      properties:
+        fact:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Fact
+        values:
+          items:
+            type: string
+            maxLength: 500
+            minLength: 1
+          type: array
+          minItems: 2
+          title: Values
+        check_ids:
+          items:
+            type: string
+            maxLength: 128
+            minLength: 1
+          type: array
+          title: Check Ids
+      additionalProperties: false
+      type: object
+      required:
+      - fact
+      - values
+      - check_ids
+      title: FactConflict
+      description: Found by code.
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+      additionalProperties: false
+      type: object
+      required:
+      - status
+      title: Health
+    ModelCall:
+      properties:
+        model:
+          type: string
+          maxLength: 128
+          minLength: 1
+          title: Model
+        input_tokens:
+          type: integer
+          minimum: 0.0
+          title: Input Tokens
+        output_tokens:
+          type: integer
+          minimum: 0.0
+          title: Output Tokens
+        duration_ms:
+          type: integer
+          minimum: 0.0
+          title: Duration Ms
+        fallback:
+          type: boolean
+          title: Fallback
+          default: false
+      additionalProperties: false
+      type: object
+      required:
+      - model
+      - input_tokens
+      - output_tokens
+      - duration_ms
+      title: ModelCall
+    OpenComment:
+      properties:
+        thread_id:
+          type: string
+          maxLength: 128
+          minLength: 1
+          title: Thread Id
+        check_id:
+          anyOf:
+          - type: string
+            maxLength: 128
+            minLength: 1
+          - type: 'null'
+          title: Check Id
+        text:
+          type: string
+          maxLength: 4000
+          minLength: 1
+          title: Text
+      additionalProperties: false
+      type: object
+      required:
+      - thread_id
+      - text
+      title: OpenComment
+    PreviousRecommendation:
+      properties:
+        version:
+          type: integer
+          minimum: 1.0
+          title: Version
+        choice:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Choice
+        reason:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Reason
+      additionalProperties: false
+      type: object
+      required:
+      - version
+      - choice
+      - reason
+      title: PreviousRecommendation
+    Problem:
+      properties:
+        type:
+          type: string
+          title: Type
+          default: about:blank
+        title:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Title
+        status:
+          type: integer
+          maximum: 599.0
+          minimum: 400.0
+          title: Status
+        code:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Code
+        detail:
+          anyOf:
+          - type: string
+            maxLength: 500
+            minLength: 1
+          - type: 'null'
+          title: Detail
+        run_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Run Id
+      additionalProperties: false
+      type: object
+      required:
+      - title
+      - status
+      - code
+      title: Problem
+      description: RFC 9457 problem details.
+    Recommendation:
+      properties:
+        choice:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Choice
+        reason:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Reason
+        reason_evidence:
+          items:
+            type: string
+            maxLength: 128
+            minLength: 1
+          type: array
+          minItems: 1
+          title: Reason Evidence
+          description: The check ids (or finding ids) in `results` that the reason rests on.
+      additionalProperties: false
+      type: object
+      required:
+      - choice
+      - reason
+      - reason_evidence
+      title: Recommendation
+    Rejection:
+      properties:
+        rule:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Rule
+        message:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Message
+      additionalProperties: false
+      type: object
+      required:
+      - rule
+      - message
+      title: Rejection
+      description: Why the caller refused the previous attempt.
+    RunError:
+      properties:
+        code:
+          type: string
+          enum:
+          - invalid_output
+          - output_truncated
+          - internal_error
+          - budget_exceeded
+          title: Code
+          description: '`invalid_output`: the answer broke the schema, even after one retry. `output_truncated`:
+            the model was cut off. `internal_error`: the agent failed for another reason. `budget_exceeded`: the
+            run used its model or tool calls, or its deadline, before it could answer.'
+        message:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Message
+        retryable:
+          type: boolean
+          title: Retryable
+      additionalProperties: false
+      type: object
+      required:
+      - code
+      - message
+      - retryable
+      title: RunError
+    ToolError:
+      properties:
+        tool:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Tool
+        code:
+          type: string
+          pattern: ^[a-z][a-z0-9_-]{0,63}$
+          title: Code
+        message:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Message
+        retryable:
+          type: boolean
+          title: Retryable
+      additionalProperties: false
+      type: object
+      required:
+      - tool
+      - code
+      - message
+      - retryable
+      title: ToolError
+    Usage:
+      properties:
+        model_calls:
+          type: integer
+          minimum: 0.0
+          title: Model Calls
+        tool_calls:
+          type: integer
+          minimum: 0.0
+          title: Tool Calls
+        input_tokens:
+          type: integer
+          minimum: 0.0
+          title: Input Tokens
+        output_tokens:
+          type: integer
+          minimum: 0.0
+          title: Output Tokens
+      additionalProperties: false
+      type: object
+      required:
+      - model_calls
+      - tool_calls
+      - input_tokens
+      - output_tokens
+      title: Usage
+    Versions:
+      properties:
+        pack:
+          type: string
+          maxLength: 128
+          minLength: 1
+          title: Pack
+          description: Pinned country pack version.
+        kb_snapshot:
+          type: string
+          maxLength: 128
+          minLength: 1
+          title: Kb Snapshot
+          description: Pinned knowledge snapshot. Tools read only this.
+      additionalProperties: false
+      type: object
+      required:
+      - pack
+      - kb_snapshot
+      title: Versions

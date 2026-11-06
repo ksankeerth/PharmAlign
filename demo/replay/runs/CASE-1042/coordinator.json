@@ -1,0 +1,23 @@
+{
+  "input_fingerprint": "$request.input_fingerprint",
+  "recommendation": {
+    "choice": "hold_ask_company",
+    "reason": "The shelf life differs from the reference approval, and stability conditions do not meet the rule.",
+    "reason_evidence": [
+      "SAME-01",
+      "QUAL-07"
+    ]
+  },
+  "summary": "Two findings need a decision before this file can proceed. One question to the company is drafted.",
+  "draft_questions": [
+    {
+      "check_ids": [
+        "SAME-01",
+        "QUAL-07"
+      ],
+      "texts": {
+        "en": "Please explain the shelf life and the long-term stability conditions."
+      }
+    }
+  ]
+}

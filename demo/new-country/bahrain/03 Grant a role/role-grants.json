@@ -1,0 +1,9 @@
+[
+  { "display_name": "Hana Mirza", "role": "assessor", "discipline": "quality", "scope": "Bahrain", "valid_from": "2026-11-01" },
+  { "display_name": "Idris Kamal", "role": "assessor", "discipline": "labelling", "scope": "Bahrain", "valid_from": "2026-11-01" },
+  { "display_name": "Yusuf Bakr", "role": "decision_maker", "scope": "Bahrain", "valid_from": "2026-11-01" },
+  { "display_name": "Salma Rahim", "role": "decision_maker", "scope": "Bahrain", "valid_from": "2026-11-01" },
+  { "display_name": "Maryam Ghosh", "role": "process_owner", "scope": "Bahrain", "valid_from": "2026-11-01" },
+  { "display_name": "Karim Odell", "role": "process_owner", "scope": "Bahrain", "valid_from": "2026-11-01" },
+  { "display_name": "Tariq Vance", "role": "auditor", "scope": "Bahrain", "valid_from": "2026-11-01" }
+]

@@ -1,0 +1,150 @@
+# Database, server and web. The default stack answers agent runs from stored replays.
+# The `agents` profile adds the 8 agent services with a scripted model (no model key). To make the server call them:
+#   docker compose --env-file agents.env --profile agents up -d --build
+# The tokens below are development defaults only. Set real ones in the environment for anything else.
+name: pharmalign
+
+x-agent: &agent
+  environment:
+    PHARMALIGN_MODEL_MODE: scripted
+    PHARMALIGN_MCP_URL: http://server:8000/mcp
+    PHARMALIGN_OTEL_TO_CLOUD: "false"
+    PHARMALIGN_DEMO_DIR: /demo
+  volumes:
+    - ./demo:/demo:ro
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2)"]
+    interval: 5s
+    timeout: 3s
+    retries: 30
+    start_period: 10s
+  depends_on:
+    server:
+      condition: service_healthy
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: pharmalign
+      POSTGRES_PASSWORD: pharmalign
+      POSTGRES_DB: pharmalign
+    ports:
+      - "127.0.0.1:5544:5432"
+    volumes:
+      - pharmalign_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pharmalign"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    environment:
+      PHARMALIGN_ENV: simulation
+      PHARMALIGN_DATABASE_URL: postgresql+asyncpg://pharmalign:pharmalign@db:5432/pharmalign
+      PHARMALIGN_SERVICE_TOKEN: ${PHARMALIGN_SERVICE_TOKEN:-dev-only-service-token}
+      PHARMALIGN_RUN_TOKEN_SECRET: ${PHARMALIGN_RUN_TOKEN_SECRET:-dev-only-run-token-secret}
+      # Replay unless agents.env sets http. The URLs are only used in http mode.
+      PHARMALIGN_AGENT_MODE: ${PHARMALIGN_AGENT_MODE:-replay}
+      PHARMALIGN_AGENT_URL_DOSSIER_READER: http://dossier-reader:8080
+      PHARMALIGN_AGENT_URL_CHECKLIST_ASSESSOR: http://checklist-assessor:8080
+      PHARMALIGN_AGENT_URL_SAMENESS: http://sameness:8080
+      PHARMALIGN_AGENT_URL_CHALLENGER: http://challenger:8080
+      PHARMALIGN_AGENT_URL_COORDINATOR: http://coordinator:8080
+      PHARMALIGN_AGENT_URL_RELIANCE_WATCH: http://reliance-watch:8080
+      PHARMALIGN_AGENT_URL_GAP_ANALYST: http://gap-analyst:8080
+      PHARMALIGN_AGENT_URL_KNOWLEDGE_ASSISTANT: http://knowledge-assistant:8080
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build: ./web
+    ports:
+      - "127.0.0.1:5190:80"
+    depends_on:
+      server:
+        condition: service_healthy
+
+  # The agent services. Scripts are read from ./demo, which is not in the images.
+
+  dossier-reader:
+    profiles: ["agents"]
+    <<: *agent
+    build:
+      context: .
+      dockerfile: agents/dossier-reader/Dockerfile
+    ports:
+      - "127.0.0.1:8101:8080"
+
+  checklist-assessor:
+    profiles: ["agents"]
+    <<: *agent
+    build:
+      context: .
+      dockerfile: agents/checklist-assessor/Dockerfile
+    ports:
+      - "127.0.0.1:8102:8080"
+
+  sameness:
+    profiles: ["agents"]
+    <<: *agent
+    build:
+      context: .
+      dockerfile: agents/sameness/Dockerfile
+    ports:
+      - "127.0.0.1:8103:8080"
+
+  challenger:
+    profiles: ["agents"]
+    <<: *agent
+    build:
+      context: .
+      dockerfile: agents/challenger/Dockerfile
+    ports:
+      - "127.0.0.1:8104:8080"
+
+  coordinator:
+    profiles: ["agents"]
+    <<: *agent
+    build:
+      context: .
+      dockerfile: agents/coordinator/Dockerfile
+    ports:
+      - "127.0.0.1:8105:8080"
+
+  reliance-watch:
+    profiles: ["agents"]
+    <<: *agent
+    build:
+      context: .
+      dockerfile: agents/reliance-watch/Dockerfile
+    ports:
+      - "127.0.0.1:8106:8080"
+
+  gap-analyst:
+    profiles: ["agents"]
+    <<: *agent
+    build:
+      context: .
+      dockerfile: agents/gap-analyst/Dockerfile
+    ports:
+      - "127.0.0.1:8107:8080"
+
+  knowledge-assistant:
+    profiles: ["agents"]
+    <<: *agent
+    build:
+      context: .
+      dockerfile: agents/knowledge-assistant/Dockerfile
+    ports:
+      - "127.0.0.1:8108:8080"
+
+volumes:
+  pharmalign_db:

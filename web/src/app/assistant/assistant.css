@@ -1,0 +1,468 @@
+/* The Knowledge Assistant panel. It sits beside the page, so the page stays usable while it is open. */
+.assistant {
+  position: sticky;
+  top: var(--topbar-h);
+  height: calc(100vh - var(--topbar-h));
+  width: 432px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-left: 1px solid var(--line);
+  animation: as-in var(--d-base) var(--ease);
+}
+@keyframes as-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+@media (max-width: 1100px) {
+  .assistant {
+    position: fixed;
+    right: 0;
+    z-index: 45;
+    width: min(432px, 100vw);
+    box-shadow: var(--shadow-pop);
+  }
+}
+
+.as-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+.as-mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  border: 1px solid var(--accent-line);
+  flex: none;
+}
+.as-head-text {
+  flex: 1;
+  min-width: 0;
+}
+.as-head-text h2 {
+  margin: 0;
+  font-size: var(--fs-lg);
+  line-height: 1.2;
+}
+.as-head-text p {
+  margin: 1px 0 0;
+}
+
+.as-modes {
+  display: flex;
+  gap: 2px;
+  margin: var(--sp-3) var(--sp-4) 0;
+  padding: 2px;
+  background: var(--sunken);
+  border-radius: var(--r-md);
+}
+.as-mode {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.as-mode:hover {
+  color: var(--ink);
+}
+.as-mode[aria-pressed="true"] {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+.as-rule {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin: var(--sp-3) var(--sp-4) 0;
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+}
+.as-rule .icon {
+  flex: none;
+  margin-top: 1px;
+}
+
+.as-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.as-empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-top: var(--sp-4);
+}
+.as-empty h3 {
+  margin: 0;
+  font-size: var(--fs-xl);
+  letter-spacing: -0.01em;
+}
+.as-empty p {
+  margin: 0 0 var(--sp-2);
+  max-width: 36ch;
+}
+.as-starters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.as-starter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-md);
+  cursor: pointer;
+  transition: border-color var(--d-fast) var(--ease), background var(--d-fast) var(--ease);
+}
+.as-starter .icon {
+  flex: none;
+  color: var(--ink-3);
+}
+.as-starter:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+.as-starter:hover .icon {
+  color: var(--accent-ink);
+}
+
+.as-turn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.as-ask {
+  align-self: flex-end;
+  max-width: 88%;
+  padding: 8px 12px;
+  background: var(--accent);
+  color: var(--on-accent);
+  border-radius: var(--r-lg) var(--r-lg) var(--r-sm) var(--r-lg);
+  font-size: var(--fs-md);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.as-answer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+.as-answer > * {
+  max-width: 100%;
+}
+.as-text {
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.as-caret {
+  display: inline-block;
+  width: 7px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--accent);
+  border-radius: 1px;
+  animation: as-blink 1s steps(2, start) infinite;
+}
+@keyframes as-blink {
+  to {
+    visibility: hidden;
+  }
+}
+.as-thinking {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.as-cites {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: 100%;
+}
+.as-cite {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.as-cite-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.as-cite-title {
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.as-cite-head .pill {
+  flex: none;
+}
+.as-cite-where {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+}
+.as-cite-anchor {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  background: var(--sunken);
+  padding: 0 4px;
+  border-radius: var(--r-sm);
+}
+.as-cite-quote {
+  margin: 0;
+  padding: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.as-cite-quote::before {
+  content: "\201C";
+}
+.as-cite-quote::after {
+  content: "\201D";
+}
+.as-cite-quote mark {
+  background: var(--look-soft);
+  color: var(--look-ink);
+  padding: 0 2px;
+  border-radius: 2px;
+}
+.as-cite-link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+}
+.as-unverified {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin: 0;
+}
+
+.as-nosource {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--neutral-line);
+  border-left: 3px solid var(--neutral-ink);
+  border-radius: var(--r-md);
+  background: var(--neutral-soft);
+  color: var(--ink);
+}
+.as-nosource-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.as-nosource p {
+  margin: 6px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+.as-tried {
+  margin-top: 10px;
+}
+.as-tried-title {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+.as-tried ol {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--fs-sm);
+}
+.as-tried-what {
+  display: block;
+  font-weight: 500;
+}
+.as-tried-result {
+  display: block;
+  color: var(--ink-2);
+}
+
+.as-suggest {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.as-chip {
+  padding: 5px 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.as-chip:hover:not(:disabled) {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent-ink);
+}
+.as-chip:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.as-compose {
+  padding: var(--sp-3) var(--sp-4) var(--sp-3);
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.as-compose p {
+  margin: 0;
+}
+.as-focus {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.as-box {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-2);
+}
+.as-box textarea {
+  flex: 1;
+  resize: none;
+}
+
+/* The Ask button in the top bar. */
+.ask-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 10px 0 11px;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font: inherit;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  cursor: pointer;
+}
+.ask-btn:hover,
+.ask-btn[aria-expanded="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.ask-btn kbd {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 1px 5px;
+  border: 1px solid currentColor;
+  border-radius: var(--r-sm);
+  opacity: 0.8;
+}
+@media (max-width: 900px) {
+  .ask-btn kbd {
+    display: none;
+  }
+}
+
+/* The source page that a citation opens. */
+.src-passage {
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  line-height: 1.6;
+}
+.src-passage-cited {
+  border-color: var(--accent);
+  border-left-width: 3px;
+  background: var(--accent-soft);
+}
+.src-passage mark {
+  background: var(--look-soft);
+  color: var(--look-ink);
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant {
+    animation: none;
+  }
+  .as-caret {
+    animation: none;
+  }
+}

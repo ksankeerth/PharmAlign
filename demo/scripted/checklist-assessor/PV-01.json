@@ -1,0 +1,21 @@
+{
+  "case": "CASE-1042",
+  "calls": [
+    {
+      "tool": "read_clause",
+      "args": {
+        "anchor": "B-S09:v1:c0001"
+      }
+    },
+    {
+      "tool": "read_page",
+      "args": {
+        "doc_id": "d-1042-25",
+        "page": 2
+      }
+    }
+  ],
+  "answer": {
+    "from": "replay/runs/CASE-1042/PV-01.json"
+  }
+}

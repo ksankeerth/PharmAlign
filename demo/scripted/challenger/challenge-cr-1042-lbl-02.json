@@ -1,0 +1,24 @@
+{
+  "case": "CASE-1042",
+  "calls": [
+    {
+      "tool": "read_clause",
+      "args": {
+        "anchor": "E-S06:v1:c0001"
+      }
+    },
+    {
+      "tool": "read_page",
+      "args": {
+        "doc_id": "d-1042-22",
+        "page": 3
+      }
+    }
+  ],
+  "answer": {
+    "from": "replay/runs/CASE-1042/challenge-cr-1042-lbl-02.json",
+    "patch": {
+      "evidence": "$request.target.evidence"
+    }
+  }
+}

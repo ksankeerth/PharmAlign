@@ -1,0 +1,46 @@
+[project]
+name = "pharmalign-server"
+version = "0.1.0"
+description = "The PharmAlign server: API, state, audit and background jobs"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pharmalign-contracts",
+    "alembic>=1.13",
+    "asyncpg>=0.29",
+    "fastapi>=0.115",
+    "httpx>=0.27",
+    "pydantic-settings>=2.3",
+    "python-multipart>=0.0.9",
+    "sqlalchemy[asyncio]>=2.0.30",
+    "uvicorn>=0.30",
+    "mcp>=1.24,<2",
+]
+
+[project.optional-dependencies]
+# Parsers and the local embedding model are optional. Nothing here is needed to run the server in simulation.
+fast-pdf = ["pymupdf>=1.24"]
+docling = ["docling>=2.0"]
+bge-m3 = ["sentence-transformers>=3.0"]
+
+[dependency-groups]
+dev = ["pytest>=8", "pytest-asyncio>=0.26", "pytest-timeout>=2.3", "pymupdf>=1.24"]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+pharmalign-contracts = { path = "../contracts", editable = true }
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+timeout = 120  # seconds per test, so a stuck test fails instead of hanging
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+pythonpath = ["."]
+testpaths = ["tests"]
+filterwarnings = ["ignore:Expression #1.*operator clause:UserWarning", "ignore:builtin type .* has no __module__ attribute:DeprecationWarning"]  # the vector indexes use an operator class alembic cannot compare
+addopts = "-m 'not chain'"
+markers = [
+    "seeded: the module loads the full demo seed once and does not clean between tests",
+    "chain: runs against the 8 real agent services (scripts/run-local-agents.sh start); run with -m chain",
+]
