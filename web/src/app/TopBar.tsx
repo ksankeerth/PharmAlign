@@ -1,12 +1,11 @@
-// The top bar: wordmark, workspace switcher, mode badge, Ask, notifications, View as, and
+// The top bar: wordmark, workspace name, mode badge, Ask, notifications, View as, and
 // a settings menu (theme).
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { Icon, Menu, MenuDivider, MenuItem, MenuLabel, useToast } from "../components";
 import { useApi } from "../hooks/useApi";
 import { formatRelative } from "../lib/format";
-import { VIEW_LABEL } from "../lib/labels";
-import type { View } from "../api/types";
+import { actsAs, ROLE_LABEL, type RoleGroup, roleGroup, roleLabel } from "../lib/roles";
 import { useAssistant } from "./assistant/AssistantContext";
 import { homeFor } from "./navigation";
 import { useSession } from "./session";
@@ -121,23 +120,23 @@ function AskButton() {
 }
 
 export function TopBar({ onToggleNav }: { onToggleNav: () => void }) {
-  const { me, people, workspaces, workspace, switchPerson, switchWorkspace } = useSession();
+  const { me, people, workspace, switchPerson } = useSession();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const toast = useToast();
 
-  const byView = people.reduce<Record<string, typeof people>>((acc, p) => {
-    (acc[p.view] ??= []).push(p);
+  const byGroup = people.reduce<Partial<Record<RoleGroup, typeof people>>>((acc, p) => {
+    (acc[roleGroup(p.view)] ??= []).push(p);
     return acc;
   }, {});
-  const order: View[] = ["case_officer", "decision_maker", "process_owner", "platform_admin", "auditor"];
+  const order: RoleGroup[] = ["case_officer", "platform_admin"];
 
   const pickPerson = async (id: string) => {
     try {
       const m = await switchPerson(id);
-      toast.info(`Viewing as ${m.display_name}, ${VIEW_LABEL[m.view]}`);
+      toast.info(`Viewing as ${m.display_name}, ${roleLabel(m.view)}`);
       // Another person in the same view keeps the screen they are on (a second Decision Maker opens the same package).
-      if (m.view !== me?.view) navigate(homeFor(m.view));
+      if (!me || roleGroup(m.view) !== roleGroup(me.view)) navigate(homeFor(m.view));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not switch person");
     }
@@ -150,57 +149,7 @@ export function TopBar({ onToggleNav }: { onToggleNav: () => void }) {
       </button>
       <Wordmark />
 
-      {me?.view === "platform_admin" ? (
-        <Menu
-          label="Workspaces"
-          align="left"
-          width={320}
-          trigger={(p) => (
-            <button type="button" className="ws-switch" {...p}>
-              <Icon name="globe" />
-              <span className="ws-name truncate">{workspace?.name ?? "No workspace"}</span>
-              <Icon name="chevron-down" size={14} />
-            </button>
-          )}
-        >
-          {(close) => (
-            <>
-              <MenuLabel>Country workspaces</MenuLabel>
-              {workspaces.map((w) => (
-                <MenuItem
-                  key={w.id}
-                  checked={w.id === workspace?.id}
-                  hint={MODE_LABEL[w.mode] ?? w.mode}
-                  onSelect={async () => {
-                    close();
-                    try {
-                      await switchWorkspace(w.id);
-                      toast.info(`Switched to ${w.name}`);
-                      navigate(homeFor(me.view));
-                    } catch (e) {
-                      toast.error(e instanceof Error ? e.message : "Could not switch workspace");
-                    }
-                  }}
-                >
-                  {w.name}
-                </MenuItem>
-              ))}
-              <MenuDivider />
-              <MenuItem
-                onSelect={() => {
-                  close();
-                  navigate("/admin/setup?new=1");
-                }}
-              >
-                <Icon name="plus" />
-                Set up a country
-              </MenuItem>
-              <MenuDivider />
-              <div className="menu-note">{workspace?.authority_name ?? ""}. No real authority's name or branding is used.</div>
-            </>
-          )}
-        </Menu>
-      ) : workspace ? (
+      {workspace ? (
         <span className="ws-switch ws-label" title={`${workspace.authority_name}. No real authority's name or branding is used.`}>
           <Icon name="globe" />
           <span className="ws-name truncate">{workspace.name}</span>
@@ -230,7 +179,7 @@ export function TopBar({ onToggleNav }: { onToggleNav: () => void }) {
             </span>
             <span className="viewas-text">
               <span className="viewas-name">{me?.display_name ?? "Loading"}</span>
-              <span className="viewas-view">{me ? VIEW_LABEL[me.view] : ""}</span>
+              <span className="viewas-view">{roleLabel(me?.view)}</span>
             </span>
             <Icon name="chevron-down" size={14} />
           </button>
@@ -240,11 +189,11 @@ export function TopBar({ onToggleNav }: { onToggleNav: () => void }) {
           <>
             <MenuLabel>View as a demo person</MenuLabel>
             {order
-              .filter((v) => byView[v]?.length)
-              .map((v) => (
-                <div key={v}>
-                  <div className="menu-group">{VIEW_LABEL[v]}</div>
-                  {byView[v].map((p) => (
+              .filter((g) => byGroup[g]?.length)
+              .map((g) => (
+                <div key={g}>
+                  <div className="menu-group">{ROLE_LABEL[g]}</div>
+                  {byGroup[g]?.map((p) => (
                     <MenuItem
                       key={p.person_id}
                       checked={p.person_id === me?.person_id}
@@ -262,7 +211,7 @@ export function TopBar({ onToggleNav }: { onToggleNav: () => void }) {
                 </div>
               ))}
             <MenuDivider />
-            <div className="menu-note">Each view is one named person, so separation-of-duty rules still apply.</div>
+            <div className="menu-note">Each person is named, so separation-of-duty rules still apply.</div>
           </>
         )}
       </Menu>
@@ -285,7 +234,7 @@ export function TopBar({ onToggleNav }: { onToggleNav: () => void }) {
                 {t === "system" ? "Match system" : t === "light" ? "Light" : "Dark"}
               </MenuItem>
             ))}
-            {me?.view === "platform_admin" ? (
+            {actsAs(me?.view, "platform_admin") ? (
               <>
                 <MenuDivider />
                 <MenuItem

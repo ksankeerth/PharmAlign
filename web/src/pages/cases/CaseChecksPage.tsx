@@ -11,6 +11,7 @@ import { useApi, useMutation } from "../../hooks/useApi";
 import { formatDateTime, formatRelative } from "../../lib/format";
 import { CHECK_STATUS_LABEL } from "../../lib/labels";
 import { MethodTag } from "./shared";
+import { actsAs } from "../../lib/roles";
 
 const CLEAR = new Set(["pass", "confirmed", "waived"]);
 const SEVERITY_ORDER: Tone[] = ["held", "error", "look", "accent", "pass", "neutral"];
@@ -202,7 +203,7 @@ export default function CaseChecksPage() {
   const groups: StageStatus[] = [...stages, ...(unplaced.length ? [{ key: "other", label: "Other checks", check_ids: unplaced.map((c) => c.id) }] : [])];
   const blockingOpen = items.filter((c) => c.blocking && !CLEAR.has(c.status));
   const errors = items.filter((c) => c.status === "error");
-  const canAct = view === "case_officer" || view === "decision_maker";
+  const canAct = actsAs(view, "case_officer") || actsAs(view, "decision_maker");
 
   return (
     <div className="stack">

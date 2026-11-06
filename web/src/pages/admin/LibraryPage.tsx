@@ -12,6 +12,7 @@ import { formatDate } from "../../lib/format";
 import { humanize } from "../../lib/labels";
 import { pickFields, type FieldMap } from "../../lib/fillJson";
 import { DOC_TYPE_LABEL, LEGAL_LABEL, LegalPill, Metric, REVIEW_LABEL, ReviewPill } from "./shared";
+import { actsAs } from "../../lib/roles";
 
 const REVIEW_STATUSES = ["unreviewed", "approved", "approved_with_notes", "rejected", "needs_update"] as const;
 const PAGE = 40;
@@ -250,7 +251,8 @@ async function loadAll(workspaceId: string): Promise<Row[]> {
 
 export default function LibraryPage() {
   const nav = useNavigate();
-  const { workspace } = useSession();
+  const { workspace, view } = useSession();
+  const canManage = actsAs(view, "platform_admin");
   const wsId = workspace?.id ?? "ws-ae";
   const { data, error, loading, reload } = useApi(() => loadAll(wsId), [wsId]);
   const [q, setQ] = useState("");
@@ -309,9 +311,11 @@ export default function LibraryPage() {
         title="Document library"
         subtitle="Public documents only. Company dossiers are never stored here, so this screen shows catalogue facts and health, not case content."
         actions={
-          <Button variant="primary" icon="plus" onClick={() => setRegisterOpen(true)}>
-            Register a document
-          </Button>
+          canManage ? (
+            <Button variant="primary" icon="plus" onClick={() => setRegisterOpen(true)}>
+              Register a document
+            </Button>
+          ) : undefined
         }
       />
       <RegisterDocumentModal open={registerOpen} onClose={() => setRegisterOpen(false)} />

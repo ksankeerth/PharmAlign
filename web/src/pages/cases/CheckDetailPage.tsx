@@ -13,6 +13,7 @@ import { formatDateTime, formatRelative, shortFingerprint } from "../../lib/form
 import { humanize } from "../../lib/labels";
 import { DossierPageView, SourceCard } from "./EvidenceViewer";
 import { ActionDialog, describeSource, evidenceHref, METHOD, parseAnchor, Refusal, useCaseDocs, useNames, useReadFingerprint, useSourceTitles } from "./shared";
+import { actsAs } from "../../lib/roles";
 
 const LEGAL_FORCE: Record<CheckDetail["legal_force"], { label: string; severity: string; hint: string }> = {
   binding: { label: "Binding law", severity: "blocking", hint: "Only a Decision Maker may waive it." },
@@ -323,9 +324,9 @@ export default function CheckDetailPage() {
   if (!check.data) return <SkeletonLines lines={10} />;
   const c = check.data;
   const old = !c.is_current;
-  const canAct = (view === "case_officer" || view === "decision_maker") && !old;
+  const canAct = (actsAs(view, "case_officer") || actsAs(view, "decision_maker")) && !old;
   const frozen = ["signed", "recording", "closed"].includes(detail.data?.status ?? "");
-  const canConfirm = view === "case_officer" && !old && !frozen && (c.status === "person_confirms" || c.status === "look");
+  const canConfirm = actsAs(view, "case_officer") && !old && !frozen && (c.status === "person_confirms" || c.status === "look");
   const canWaive = canAct && !frozen && (c.status === "held" || c.status === "look" || c.status === "person_confirms");
   const canRecheck = canAct && !frozen && c.status !== "running" && (c.method === "agent" || c.method === "typed" || c.status === "error");
   const waiveBy = pack.data?.document.checks.find((d) => d.id === c.check_id)?.waive_by ?? (c.legal_force === "binding" ? "decision_maker" : "case_officer");
@@ -542,7 +543,7 @@ export default function CheckDetailPage() {
                 ) : null}
                 {c.status === "running" ? <p className="xsmall muted" style={{ margin: 0 }}>Running. Actions return when it finishes.</p> : null}
                 {frozen ? <p className="xsmall muted" style={{ margin: 0 }}>This case is signed, so its checks are frozen.</p> : null}
-                {view === "auditor" ? <p className="xsmall muted" style={{ margin: 0 }}>Read-only in the Auditor view.</p> : null}
+                {actsAs(view, "auditor") ? <p className="xsmall muted" style={{ margin: 0 }}>Read-only in the Auditor view.</p> : null}
               </div>
             </Panel>
           ) : null}

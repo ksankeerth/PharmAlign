@@ -13,6 +13,7 @@ from .audit import AuditEntry
 from .clock import Clock
 from .config import Settings
 from .identity import Actor, IdentityProvider
+from .roles import same_group
 from .store import DocStore
 from .tables import ROW, DomainEventRow, JobRow
 
@@ -82,6 +83,10 @@ class Ctx:
     @property
     def view(self) -> Optional[str]:
         return self.person.view if self.person else None
+
+    def acts_as(self, view: str) -> bool:
+        """True if this person can use `view`: it is theirs, or it is in their role group while the groups are on."""
+        return self.view == view or (self.rt.settings.two_roles and same_group(self.view, view))
 
     @property
     def workspace_id(self) -> Optional[str]:

@@ -59,6 +59,8 @@ class Settings(BaseSettings):
     run_token_secret: Optional[str] = None
     # The agent tool server at /mcp. None turns it on in simulation only.
     mcp_enabled: Optional[bool] = None
+    # The five views act as two roles (see authz.ROLE_GROUPS). On in simulation, off elsewhere.
+    two_roles: Optional[bool] = None
     # The pharmalign_agent login. Unset uses the database URL with the development password, in simulation only.
     agent_database_url: Optional[str] = None
     mcp_max_rows: int = 50  # rows in one result
@@ -72,6 +74,8 @@ class Settings(BaseSettings):
             self.agent_poll_seconds = 1.0 if self.env == "simulation" else 5.0
         if self.mcp_enabled is None:
             self.mcp_enabled = self.env == "simulation"
+        if self.two_roles is None:
+            self.two_roles = self.env == "simulation"
         if self.env == "simulation":
             self.connector_base_url = self.connector_base_url or "http://127.0.0.1:8000/mock"
             self.connector_token = self.connector_token or "simulation-regulator-token"

@@ -41,6 +41,7 @@ uv run pytest                         # uses its own database, pharmalign_test
 | `SERVICE_TOKEN` | unset | Bearer token for non-person callers. Unset refuses them all |
 | `RUN_TOKEN_SECRET` | unset | Signs each agent run's tool scope. Required outside simulation |
 | `DEFAULT_TENANT`, `DEFAULT_PERSON` | `ws-ae`, `p-alex` | The workspace and the person with no cookie (simulation) |
+| `TWO_ROLES` | on in simulation, off elsewhere | The five views act as two role groups (`app/roles.py`). Tests set it off |
 | `WORKER_ENABLED`, `WORKER_POLL_SECONDS`, `JOB_LEASE_SECONDS` | `true`, 1, 60 | The in-process job worker |
 
 The agent, connector, mock regulator, watch and knowledge settings are listed in their sections below.

@@ -9,6 +9,7 @@ import { useApi } from "../../hooks/useApi";
 import { type WatchMatch } from "../../api";
 import { Basis, ConfidencePill, MatchActions, MatchStatusPill, TargetLabel } from "./shared";
 import "./watch.css";
+import { actsAs } from "../../lib/roles";
 
 export default function IncidentsPage() {
   const { view } = useSession();
@@ -28,7 +29,7 @@ export default function IncidentsPage() {
     { key: "t", header: "Licence or case", render: (m) => <div className="title-cell"><TargetLabel m={m} /><Basis items={m.match_basis} /></div> },
     { key: "c", header: "Confidence", render: (m) => <ConfidencePill c={m.match_confidence} /> },
     { key: "s", header: "Status", render: (m) => <MatchStatusPill s={m.status} />, hideBelow: 900 },
-    { key: "a", header: "Decision", render: (m) => <MatchActions match={m} noticeTitle={byNotice.get(m.notice_id)?.title} canAct={view === "case_officer"} />, align: "right" },
+    { key: "a", header: "Decision", render: (m) => <MatchActions match={m} noticeTitle={byNotice.get(m.notice_id)?.title} canAct={actsAs(view, "case_officer")} />, align: "right" },
   ];
 
   return (

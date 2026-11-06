@@ -1,7 +1,7 @@
-// The top bar shows the workspace and mode for every view, and only the Platform Admin can switch workspace.
+// The top bar shows the UAE and the mode for everyone, with no way to switch country, and two roles.
 // The Demo page opens for the admin and shows what is loaded.
 import { expect, test } from "@playwright/test";
-import { main, open, PEOPLE, resetDemo, settled, switchWorkspace } from "../helpers";
+import { main, open, PEOPLE, resetDemo, settled } from "../helpers";
 
 // The scenarios change data, so each file starts from the seed.
 test.beforeAll(async ({ request }) => {
@@ -9,7 +9,7 @@ test.beforeAll(async ({ request }) => {
 });
 
 const VIEWS = [
-  { person: PEOPLE.jordan, url: "/admin/setup" },
+  { person: PEOPLE.jordan, url: "/admin/library" },
   { person: PEOPLE.sam, url: "/owner/packs" },
   { person: PEOPLE.alex, url: "/cases" },
   { person: PEOPLE.dana, url: "/cases/decisions" },
@@ -24,28 +24,24 @@ for (const v of VIEWS) {
     await expect(bar(page)).toContainText("United Arab Emirates");
     await expect(bar(page).locator(".mode-badge")).toContainText("Simulation");
     await expect(bar(page)).not.toContainText("No workspace");
-    // Only the Platform Admin has a switcher. The others see a plain label.
-    await expect(bar(page).locator("button.ws-switch")).toHaveCount(v.person === PEOPLE.jordan ? 1 : 0);
+    await expect(bar(page).locator("button.ws-switch")).toHaveCount(0);
   });
 }
 
-test("the admin switches to Saudi Arabia and back, and the page follows", async ({ page }) => {
-  await open(page, "/admin/setup", PEOPLE.jordan);
-  await switchWorkspace(page, "Saudi Arabia");
-  await expect(bar(page).locator("button.ws-switch")).toContainText("Saudi Arabia");
-  await expect(bar(page).locator(".mode-badge")).toContainText("Simulation");
-  await expect(main(page).getByRole("heading", { level: 1 }).first()).toBeVisible();
+test("View as lists two roles, and only the Platform Admin can register a document", async ({ page }) => {
+  await open(page, "/admin/library", PEOPLE.alex);
+  await expect(main(page).getByRole("heading", { level: 1, name: "Document library" })).toBeVisible();
   await settled(page);
-  // The Setup tracker follows the switch.
-  await page.goto("/admin/setup");
-  await expect(main(page).getByText("Saudi Arabia").first()).toBeVisible();
-
-  await switchWorkspace(page, "United Arab Emirates");
-  await expect(bar(page)).not.toContainText("No workspace");
+  await expect(main(page).getByRole("button", { name: "Register a document" })).toHaveCount(0);
+  await page.getByRole("button", { name: /View as/ }).click();
+  await expect(page.locator(".menu-group")).toHaveText(["Case Officer", "Platform Admin"]);
+  await page.keyboard.press("Escape");
+  await open(page, "/admin/library", PEOPLE.jordan);
+  await expect(main(page).getByRole("button", { name: "Register a document" })).toBeVisible();
 });
 
 test("the Demo page opens for the admin and shows the counts", async ({ page }) => {
-  await open(page, "/admin/setup", PEOPLE.jordan);
+  await open(page, "/admin/library", PEOPLE.jordan);
   await page.getByRole("button", { name: "Settings" }).click();
   await page.getByRole("menuitem", { name: "Demo" }).click();
   await expect(page).toHaveURL(/\/admin\/demo$/);
@@ -57,6 +53,7 @@ test("the Demo page opens for the admin and shows the counts", async ({ page }) 
   const panel = main(page).locator("#demo-data");
   await expect(panel.getByText("People", { exact: true }).locator("xpath=following-sibling::*[1]")).toHaveText(String(status.people));
   await expect(panel.getByText("Cases", { exact: true }).locator("xpath=following-sibling::*[1]")).toHaveText(String(status.cases));
-  for (const w of status.workspaces) await expect(panel.getByRole("cell", { name: w.name, exact: true })).toBeVisible();
+  await expect(panel.getByRole("cell", { name: "United Arab Emirates", exact: true })).toBeVisible();
+  await expect(panel.getByRole("cell", { name: "Saudi Arabia", exact: true })).toHaveCount(0);
   await expect(panel.getByRole("button", { name: "Reset the demo" })).toBeEnabled();
 });

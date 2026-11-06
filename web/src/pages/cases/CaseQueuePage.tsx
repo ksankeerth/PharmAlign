@@ -10,6 +10,7 @@ import { useApi } from "../../hooks/useApi";
 import { formatDate, formatRelative } from "../../lib/format";
 import { humanize } from "../../lib/labels";
 import { useNames } from "./shared";
+import { actsAs } from "../../lib/roles";
 
 /** What a case is waiting for, in the words the queue uses. */
 type QueueState = "held" | "ready" | "review" | "running" | "company" | "awaiting" | "on_hold" | "unknown" | "rejected" | "recording" | "recorded" | "closed" | "intake";
@@ -77,7 +78,7 @@ async function loadQueue(view: View | null): Promise<Row[]> {
     cases.items.map(async (c) => {
       let canPromote: boolean | null = null;
       let decision: Decision | null = null;
-      if (c.status === "in_review" && view === "case_officer") {
+      if (c.status === "in_review" && actsAs(view, "case_officer")) {
         canPromote = await api.getPromotionCheck(c.id).then((p) => p.can_promote, () => null);
       }
       if (c.status === "recording" || c.status === "signed" || c.status === "closed") {
@@ -212,7 +213,7 @@ export default function CaseQueuePage() {
       <PageHeader
         title="Case queue"
         status={<SyntheticTag />}
-        subtitle={view === "decision_maker" ? "Cases waiting for your signature come first when you filter by Awaiting signature." : "Every case in this workspace. A person promotes and a person signs; nothing is decided automatically."}
+        subtitle={actsAs(view, "decision_maker") ? "Cases waiting for your signature come first when you filter by Awaiting signature." : "Every case in this workspace. A person promotes and a person signs; nothing is decided automatically."}
       />
 
       {error ? <ErrorState error={error} onRetry={reload} /> : null}

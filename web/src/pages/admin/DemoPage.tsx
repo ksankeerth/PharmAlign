@@ -1,20 +1,18 @@
 // Demo: what demo data is loaded and a reset to it, the files for setting up a new country by hand, and the demo people to view as.
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { api, isApiError } from "../../api";
-import type { DemoPerson, DemoStatus, View, WorkspaceSummary } from "../../api/types";
+import type { DemoPerson, DemoStatus, WorkspaceSummary } from "../../api/types";
 import { Button, Callout, Checkbox, ConfirmModal, EmptyState, ErrorState, KeyValue, PageHeader, Panel, Pill, Skeleton, Table, useToast } from "../../components";
 import { homeFor } from "../../app/navigation";
 import { useSession } from "../../app/session";
 import { formatRelative } from "../../lib/format";
-import { VIEW_LABEL } from "../../lib/labels";
-import { ROUTES } from "../../routes";
-import { DEMO_STEPS } from "./demoSteps";
+import { ROLE_LABEL, type RoleGroup, roleGroup } from "../../lib/roles";
 import "./admin.css";
 
 const POLL_MS = 2000;
 const MODE_LABEL: Record<WorkspaceSummary["mode"], string> = { draft: "Setup", simulation: "Simulation", shadow: "Shadow", live: "Live" };
-const VIEW_ORDER: View[] = ["platform_admin", "process_owner", "case_officer", "decision_maker", "auditor"];
+const GROUP_ORDER: RoleGroup[] = ["case_officer", "platform_admin"];
 
 export default function DemoPage() {
   const { me } = useSession();
@@ -86,9 +84,8 @@ export default function DemoPage() {
   if (error && !status && !waiting) return <ErrorState error={error} onRetry={() => void load()} />;
   return (
     <div className="stack">
-      <PageHeader title="Demo" subtitle="The demo data, how to set up a country by hand, and the demo people to view the app as." />
+      <PageHeader title="Demo" subtitle="The demo data and the demo people to view the app as." />
       <DataPanel status={status} waiting={waiting} onReset={() => { setWithLibrary(true); setOpen(true); }} />
-      <StepsPanel />
       <PeoplePanel />
       <ConfirmModal
         open={open}
@@ -147,7 +144,7 @@ function DataPanel({ status, waiting, onReset }: { status: DemoStatus | null; wa
               ]}
             />
             <Table
-              rows={status.workspaces}
+              rows={status.workspaces.filter((w) => w.country_code === "AE")}
               rowKey={(w) => w.id}
               dense
               caption="Workspaces"
@@ -165,50 +162,12 @@ function DataPanel({ status, waiting, onReset }: { status: DemoStatus | null; wa
   );
 }
 
-// The Process Owner pages are not open to the Platform Admin, so the step says who opens them.
-const openToAdmin = (to: string) => {
-  const path = to.split("?")[0];
-  return ROUTES.find((r) => r.path === path)?.views.includes("platform_admin") ?? true;
-};
-
-function StepsPanel() {
-  return (
-    <Panel title="Set up a country yourself" id="demo-steps" padded={false}>
-      <div className="panel-body">
-        <p>
-          To see how a country is set up, you can do it yourself. The files for a fictional country, Bahrain, are in the <code>demo/new-country/bahrain/</code> folder of the repository. Each folder is named after the form it fills, and each form has a <strong>Fill from a JSON file</strong> button. Work down the folders in order, because later steps use what the earlier ones made.
-        </p>
-      </div>
-      <Table
-        rows={DEMO_STEPS}
-        rowKey={(s) => s.folder}
-        dense
-        caption="Folders in order"
-        columns={[
-          { key: "folder", header: "Folder", render: (s) => <code className="nowrap">{s.folder}</code> },
-          {
-            key: "where",
-            header: "Where in the app",
-            render: (s) => (
-              <>
-                <Link to={s.to}>{s.page}</Link>
-                {openToAdmin(s.to) ? null : <div className="muted small">Open as a person with that view</div>}
-              </>
-            ),
-          },
-          { key: "action", header: "What to press", render: (s) => <span className="small">{s.action}</span> },
-        ]}
-      />
-    </Panel>
-  );
-}
-
 function PeoplePanel() {
   const { people, switchPerson } = useSession();
   const navigate = useNavigate();
   const toast = useToast();
   const [busy, setBusy] = useState<string | null>(null);
-  const groups = VIEW_ORDER.map((view) => ({ view, people: people.filter((p) => p.view === view) })).filter((g) => g.people.length > 0);
+  const groups = GROUP_ORDER.map((group) => ({ group, people: people.filter((p) => roleGroup(p.view) === group) })).filter((g) => g.people.length > 0);
 
   const viewAs = async (p: DemoPerson) => {
     setBusy(p.person_id);
@@ -225,16 +184,16 @@ function PeoplePanel() {
   return (
     <Panel title="People to view as" id="demo-people">
       <div className="stack">
-        <p>Each person sees the app as their view does. People in another workspace appear here after you switch to that workspace.</p>
+        <p>Each person sees the app as their role does.</p>
         {groups.length === 0 ? <EmptyState title="No demo people" icon="users" /> : null}
         {groups.map((g) => (
-          <div key={g.view} className="stack-sm">
-            <h3>{VIEW_LABEL[g.view]}</h3>
+          <div key={g.group} className="stack-sm">
+            <h3>{ROLE_LABEL[g.group]}</h3>
             <Table
               rows={g.people}
               rowKey={(p) => p.person_id}
               dense
-              caption={`${VIEW_LABEL[g.view]} people`}
+              caption={`${ROLE_LABEL[g.group]} people`}
               columns={[
                 { key: "name", header: "Person", render: (p) => <span className="strong">{p.display_name}</span> },
                 {

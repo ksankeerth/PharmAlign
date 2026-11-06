@@ -8,6 +8,7 @@ import { useSession } from "../../app/session";
 import { Button, EmptyState, ErrorState, EvidenceQuote, MenuDivider, PageHeader, Pill, SkeletonLines, StatusPill, SyntheticTag, useToast } from "../../components";
 import { useApi } from "../../hooks/useApi";
 import { ActionDialog, describeSource, Refusal, useCaseDocs, useNames } from "./shared";
+import { actsAs } from "../../lib/roles";
 
 interface Item {
   spot: SpotCheck;
@@ -128,7 +129,7 @@ export default function SpotChecksPage() {
       <PageHeader
         title="Spot checks"
         status={<SyntheticTag />}
-        subtitle={view === "auditor" ? "Every spot check in this workspace, read-only." : "A random sample of passed checks, assigned to you. Read the evidence and say whether you agree."}
+        subtitle={actsAs(view, "auditor") ? "Every spot check in this workspace, read-only." : "A random sample of passed checks, assigned to you. Read the evidence and say whether you agree."}
       />
       {error ? <ErrorState error={error} onRetry={reload} /> : null}
       {!data && !error ? <SkeletonLines lines={8} /> : null}

@@ -9,6 +9,7 @@ import { useApi } from "../../hooks/useApi";
 import { formatRelative } from "../../lib/format";
 import { humanize } from "../../lib/labels";
 import { useNames } from "./shared";
+import { actsAs } from "../../lib/roles";
 
 const PROMOTABLE = new Set(["in_review", "held", "with_company", "in_pipeline"]);
 
@@ -67,17 +68,17 @@ export default function CaseLayout() {
                 Decision
               </ButtonLink>
             ) : null}
-            {view === "case_officer" && PROMOTABLE.has(d.status) ? (
+            {actsAs(view, "case_officer") && PROMOTABLE.has(d.status) ? (
               <ButtonLink to={`${base}/promote`} variant="primary" icon="arrow-right">
                 Promotion
               </ButtonLink>
             ) : null}
-            {d.status === "promoted" && view === "case_officer" ? (
+            {d.status === "promoted" && actsAs(view, "case_officer") ? (
               <ButtonLink to={`${base}/signing`} icon="pen">
                 Signing package
               </ButtonLink>
             ) : null}
-            {view === "decision_maker" && d.status === "promoted" ? (
+            {actsAs(view, "decision_maker") && d.status === "promoted" ? (
               <ButtonLink to={`${base}/signing`} variant="primary" icon="pen">
                 Signing package
               </ButtonLink>

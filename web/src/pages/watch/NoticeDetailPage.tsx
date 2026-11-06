@@ -9,6 +9,7 @@ import { formatDate, formatDateTime, shortFingerprint } from "../../lib/format";
 import { humanize } from "../../lib/labels";
 import { Basis, ConfidencePill, MatchActions, MatchStatusPill, TargetLabel } from "./shared";
 import "./watch.css";
+import { actsAs } from "../../lib/roles";
 
 const RANK: Record<string, number> = { info: 0, review: 1, urgent: 2 };
 
@@ -30,7 +31,7 @@ export default function NoticeDetailPage() {
       {loading ? <SkeletonLines lines={6} /> : null}
     </div>
   );
-  return <Detail n={data} crumbs={crumbs} canAct={view === "case_officer"} />;
+  return <Detail n={data} crumbs={crumbs} canAct={actsAs(view, "case_officer")} />;
 }
 
 function Detail({ n, crumbs, canAct }: { n: NoticeDetail; crumbs: { label: string; to?: string }[]; canAct: boolean }) {

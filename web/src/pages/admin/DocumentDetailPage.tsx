@@ -11,12 +11,14 @@ import { toProblem } from "../../api/errors";
 import { formatBytes, formatDate, formatDateTime, shortFingerprint } from "../../lib/format";
 import { humanize } from "../../lib/labels";
 import { DOC_TYPE_LABEL, LegalPill, QualityPill, ReviewPill, usePeopleNames } from "./shared";
+import { actsAs } from "../../lib/roles";
 
 const INTERVAL: Record<string, number | null> = { fixed: 90, versioned: 90, periodic: 180, living: 30, draft: 30, point_in_time: null };
 
 export default function DocumentDetailPage() {
   const { documentId = "" } = useParams();
-  const { workspace } = useSession();
+  const { workspace, view } = useSession();
+  const canManage = actsAs(view, "platform_admin");
   const names = usePeopleNames();
   const toast = useToast();
   const { data: doc, error, reload } = useApi(() => api.getDocument(documentId), [documentId]);
@@ -173,7 +175,7 @@ export default function DocumentDetailPage() {
               align: "right",
               render: (v) => (
                 <div className="row" style={{ justifyContent: "flex-end" }}>
-                  <ButtonLink size="sm" to={`/admin/library/versions/${v.id}/ingest`}>Ingest</ButtonLink>
+                  {canManage ? <ButtonLink size="sm" to={`/admin/library/versions/${v.id}/ingest`}>Ingest</ButtonLink> : null}
                   <ButtonLink size="sm" variant="ghost" to={`/admin/library/versions/${v.id}/quality`}>Quality</ButtonLink>
                 </div>
               ),
@@ -209,6 +211,7 @@ export default function DocumentDetailPage() {
           </table>
         </Panel>
 
+        {canManage ? (
         <Panel title="Add a version">
           <Tabs
             label="How the version arrives"
@@ -251,6 +254,7 @@ export default function DocumentDetailPage() {
             </div>
           </Tabs>
         </Panel>
+        ) : null}
       </div>
     </div>
   );

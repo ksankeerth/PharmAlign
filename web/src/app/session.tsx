@@ -5,6 +5,10 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { api, onApiChange } from "../api";
 import type { DemoPerson, Me, View, Workspace, WorkspaceSummary } from "../api/types";
+import { actsAs } from "../lib/roles";
+
+// The UI shows the UAE only. Other workspaces stay on the server.
+const UAE_WORKSPACE = "ws-ae";
 
 export interface Session {
   me: Me | null;
@@ -24,7 +28,7 @@ const SessionContext = createContext<Session | null>(null);
 
 async function loadWorkspaces(me: Me): Promise<Workspace[]> {
   // Only the Platform Admin may list workspaces, and the others work without the list.
-  if (me.view !== "platform_admin") return [];
+  if (!actsAs(me.view, "platform_admin")) return [];
   try {
     return (await api.listWorkspaces()).items;
   } catch {
@@ -49,7 +53,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     const mine = ++latest.current;
     try {
-      const m = await api.getMe();
+      let m = await api.getMe();
+      if (m.view === "platform_admin" && m.workspace?.id !== UAE_WORKSPACE) {
+        await api.setSessionWorkspace({ workspace_id: UAE_WORKSPACE });
+        m = await api.getMe();
+      }
       const [p, w] = await Promise.all([api.listDemoPeople().then((r) => r.items).catch(() => []), loadWorkspaces(m)]);
       if (mine !== latest.current) return;
       setMe(m);

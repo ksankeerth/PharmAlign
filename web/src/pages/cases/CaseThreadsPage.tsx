@@ -10,6 +10,7 @@ import { Button, Callout, EmptyState, ErrorState, Field, Icon, Panel, Pill, Sele
 import { useApi } from "../../hooks/useApi";
 import { formatDateTime, formatRelative } from "../../lib/format";
 import { ActionDialog, describeSource, evidenceHref, parseAnchor, useCaseDocs, useNames } from "./shared";
+import { actsAs } from "../../lib/roles";
 
 function CommentRow({ comment, names }: { comment: Comment; names: (id: string) => string }) {
   const agent = comment.author_type === "agent";
@@ -261,7 +262,7 @@ export default function CaseThreadsPage() {
   const threads = useApi(() => api.listThreads(caseId, { limit: 200 }), [caseId]);
   const checks = useApi(() => api.listCaseChecks(caseId), [caseId]);
   const [adding, setAdding] = useState(false);
-  const canAct = view === "case_officer" || view === "decision_maker";
+  const canAct = actsAs(view, "case_officer") || actsAs(view, "decision_maker");
 
   if (threads.error) return <ErrorState error={threads.error} onRetry={threads.reload} />;
   if (!threads.data) return <SkeletonLines lines={6} />;

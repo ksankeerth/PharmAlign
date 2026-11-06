@@ -76,7 +76,7 @@ async def start_simulation(req, ctx):
     if await ctx.db.scalar(select(pack.id).where(pack.id == b.pack_version_id, pack.tenant_id == ctx.tenant.id)) is None:
         not_found("Pack version", b.pack_version_id)
     await STORES["kb_snapshot"].require(ctx, b.kb_snapshot_id, "Snapshot")
-    if b.gate == "off" and ctx.view != "platform_admin":
+    if b.gate == "off" and not ctx.acts_as("platform_admin"):
         forbidden("Turning the gate off is a Platform Admin action.")
     sim = m.Simulation(
         scenario_id=scenario.id, pack_version_id=b.pack_version_id, kb_snapshot_id=b.kb_snapshot_id, execution=b.execution, gate=b.gate,
@@ -96,7 +96,7 @@ async def get_simulation(req, ctx):
 @op("GET", "/api/v1/simulations/compare")
 async def compare_simulations(req, ctx):
     """A stored comparison of the two runs, or one built from the two runs themselves. A comparison holds an ungoverned run."""
-    if ctx.view != "platform_admin":
+    if not ctx.acts_as("platform_admin"):
         forbidden("Comparing with an ungoverned run is a Platform Admin action.")
     governed, ungoverned = req.query.governed, req.query.ungoverned
     for c in await COMPARISONS.list(ctx):

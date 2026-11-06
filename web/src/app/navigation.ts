@@ -26,100 +26,77 @@ const WATCH: NavSection = {
   ],
 };
 
+const KNOWLEDGE: NavSection = {
+  label: "Knowledge",
+  items: [
+    { to: "/admin/library", label: "Document library", icon: "book" },
+    { to: "/admin/kb-search", label: "Knowledge search", icon: "search" },
+  ],
+};
+
 const INBOX: NavSection = { label: "Inbox", items: [{ to: "/notifications", label: "Notifications", icon: "bell" }] };
 
+const CASE_NAV: NavSection[] = [
+  {
+    label: "Review",
+    items: [
+      { to: "/cases", label: "Case queue", icon: "inbox", end: true },
+      { to: "/cases/spot-checks", label: "Spot checks", icon: "list-checks" },
+      { to: "/cases/decisions", label: "Decisions", icon: "stamp" },
+    ],
+  },
+  KNOWLEDGE,
+  WATCH,
+  INBOX,
+];
+
+const ADMIN_NAV: NavSection[] = [
+  {
+    label: "Knowledge",
+    items: [
+      ...KNOWLEDGE.items,
+      { to: "/owner/documents", label: "Document reviews", icon: "file-text" },
+      { to: "/owner/adoptions", label: "Adoptions", icon: "book" },
+      { to: "/owner/slots", label: "Required slots", icon: "list-checks" },
+    ],
+  },
+  {
+    label: "Policy",
+    items: [
+      { to: "/owner/packs", label: "Packs and versions", icon: "layers" },
+      { to: "/owner/gaps", label: "Gaps", icon: "flag" },
+    ],
+  },
+  {
+    label: "Operations",
+    items: [
+      { to: "/admin/agents", label: "Agent health", icon: "activity" },
+      { to: "/admin/agent-runs", label: "Agent runs", icon: "cpu" },
+      { to: "/admin/watch-sources", label: "Watch sources", icon: "radar" },
+      { to: "/admin/simulations", label: "Simulations", icon: "beaker", end: true },
+      { to: "/admin/simulations/compare", label: "Governed vs ungoverned", icon: "compare" },
+      { to: "/admin/people", label: "People and roles", icon: "users" },
+      { to: "/admin/demo", label: "Demo", icon: "database" },
+    ],
+  },
+  {
+    label: "Audit",
+    items: [
+      { to: "/audit", label: "Audit log", icon: "history", end: true },
+      { to: "/audit/cases", label: "Case reconstruction", icon: "file-text" },
+      { to: "/audit/verify", label: "Log verification", icon: "shield" },
+    ],
+  },
+  INBOX,
+];
+
+// The UI has two roles, so the five views share two navigations (see lib/roles.ts).
 export const NAVIGATION: Record<View, NavSection[]> = {
-  case_officer: [
-    {
-      label: "Review",
-      items: [
-        { to: "/cases", label: "Case queue", icon: "inbox", end: true },
-        { to: "/cases/spot-checks", label: "Spot checks", icon: "list-checks" },
-        { to: "/cases/decisions", label: "Decisions", icon: "stamp" },
-      ],
-    },
-    WATCH,
-    INBOX,
-  ],
-  decision_maker: [
-    {
-      label: "Decide",
-      items: [
-        { to: "/cases", label: "Case queue", icon: "inbox", end: true },
-        { to: "/cases/decisions", label: "Decisions", icon: "stamp" },
-        { to: "/cases/spot-checks", label: "Spot checks", icon: "list-checks" },
-      ],
-    },
-    { label: "Foreign watch", items: WATCH.items.slice(0, 3) },
-    INBOX,
-  ],
-  process_owner: [
-    {
-      label: "Country pack",
-      items: [
-        { to: "/owner/packs", label: "Packs and versions", icon: "layers" },
-        { to: "/owner/sign-off", label: "Sign-off", icon: "stamp" },
-      ],
-    },
-    {
-      label: "Knowledge",
-      items: [
-        { to: "/owner/documents", label: "Document reviews", icon: "file-text" },
-        { to: "/owner/adoptions", label: "Adoptions", icon: "book" },
-        { to: "/owner/slots", label: "Required slots", icon: "list-checks" },
-      ],
-    },
-    {
-      label: "Improve",
-      items: [
-        { to: "/owner/gaps", label: "Gaps", icon: "flag" },
-        { to: "/admin/simulations", label: "Simulations", icon: "beaker" },
-      ],
-    },
-    INBOX,
-  ],
-  platform_admin: [
-    {
-      label: "Setup",
-      items: [
-        { to: "/admin/setup", label: "Setup tracker", icon: "list-checks" },
-        { to: "/admin/people", label: "People and roles", icon: "users" },
-        { to: "/admin/connections", label: "Connections", icon: "plug" },
-      ],
-    },
-    {
-      label: "Knowledge",
-      items: [
-        { to: "/admin/library", label: "Document library", icon: "book" },
-        { to: "/owner/slots", label: "Required slots", icon: "list-checks" },
-        { to: "/admin/kb-search", label: "Knowledge search", icon: "search" },
-      ],
-    },
-    {
-      label: "Operations",
-      items: [
-        { to: "/admin/agents", label: "Agent health", icon: "activity" },
-        { to: "/admin/agent-runs", label: "Agent runs", icon: "cpu" },
-        { to: "/admin/watch-sources", label: "Watch sources", icon: "radar" },
-        { to: "/admin/simulations", label: "Simulations", icon: "beaker", end: true },
-        { to: "/admin/simulations/compare", label: "Governed vs ungoverned", icon: "compare" },
-        { to: "/admin/demo", label: "Demo", icon: "database" },
-      ],
-    },
-    INBOX,
-  ],
-  auditor: [
-    {
-      label: "Audit",
-      items: [
-        { to: "/audit", label: "Audit log", icon: "history", end: true },
-        { to: "/audit/cases", label: "Case reconstruction", icon: "file-text" },
-        { to: "/audit/verify", label: "Log verification", icon: "shield" },
-      ],
-    },
-    { label: "Foreign watch", items: [WATCH.items[0], WATCH.items[2], WATCH.items[3]] },
-    INBOX,
-  ],
+  case_officer: CASE_NAV,
+  decision_maker: CASE_NAV,
+  platform_admin: ADMIN_NAV,
+  process_owner: ADMIN_NAV,
+  auditor: ADMIN_NAV,
 };
 
 /** Where each view lands after switching person. */

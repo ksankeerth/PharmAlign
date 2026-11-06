@@ -79,6 +79,10 @@ Without `agents.env` the profile starts the agents but the server stays in repla
 
 **Set up a new country.** The files in [demo/new-country/README.md](demo/new-country/README.md) set up Bahrain through the app's own forms, one step at a time.
 
+## Scope of the UI
+
+The UI shows the UAE only, and two roles: **Case Officer** and **Platform Admin**. The other workspaces and new-country setup stay on the server, not in the UI. The server keeps its five views. In simulation they work as two groups (`server/app/roles.py`): Case Officer and Decision Maker; Platform Admin, Process Owner and Auditor. A person can use any view in their group, the audit log records the view used, and separation-of-duty guards still apply: nobody signs a case they assessed or promoted. Outside simulation, or with `PHARMALIGN_TWO_ROLES=false`, each view gets only its own operations. The knowledge pages are open to everyone; only the Platform Admin role can change them.
+
 ## Tests
 
 | Component | Command |

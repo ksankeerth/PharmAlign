@@ -10,6 +10,7 @@ import { Button, Callout, Checkbox, EmptyState, ErrorState, Field, Modal, Panel,
 import { useApi } from "../../hooks/useApi";
 import { formatDate, formatRelative } from "../../lib/format";
 import { ActionDialog, Refusal, useNames } from "./shared";
+import { actsAs } from "../../lib/roles";
 
 const STATUS: Record<Question["status"], { tone: Tone; icon: IconName; label: string }> = {
   draft: { tone: "look", icon: "edit", label: "Draft, not sent" },
@@ -259,7 +260,7 @@ export default function CaseQuestionsPage() {
   const checks = useApi(() => api.listCaseChecks(caseId), [caseId]);
   const [adding, setAdding] = useState(false);
   const [refusal, setRefusal] = useState<unknown>(null);
-  const canAct = view === "case_officer";
+  const canAct = actsAs(view, "case_officer");
 
   if (questions.error) return <ErrorState error={questions.error} onRetry={questions.reload} />;
   if (!questions.data) return <SkeletonLines lines={6} />;

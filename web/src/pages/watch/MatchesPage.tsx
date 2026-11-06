@@ -10,12 +10,13 @@ import { useApi } from "../../hooks/useApi";
 import { formatDateTime } from "../../lib/format";
 import { Basis, ConfidencePill, MatchActions, MatchStatusPill, TargetLabel } from "./shared";
 import "./watch.css";
+import { actsAs } from "../../lib/roles";
 
 type Filter = "open" | "all" | "dismissed" | "rereview_opened";
 
 export default function MatchesPage() {
   const { view } = useSession();
-  const canAct = view === "case_officer";
+  const canAct = actsAs(view, "case_officer");
   const [filter, setFilter] = useState<Filter>("open");
   const [opened, setOpened] = useState<CaseDetail | null>(null);
   const matches = useApi(() => api.listMatches({ limit: 200 }), []);

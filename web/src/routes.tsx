@@ -22,6 +22,7 @@ export interface RouteSpec {
 }
 
 const CO_DM_AU: View[] = ["case_officer", "decision_maker", "auditor"];
+const EVERYONE: View[] = ["platform_admin", "process_owner", "case_officer", "decision_maker", "auditor"];
 
 export const ROUTES: RouteSpec[] = [
   // ---------------------------------------------------------------- Case Officer and Decision Maker
@@ -46,11 +47,11 @@ export const ROUTES: RouteSpec[] = [
 
   // ---------------------------------------------------------------- Platform Admin
   { path: "/admin/setup", title: "Setup tracker", area: "admin", views: ["platform_admin"], page: lazy(() => import("./pages/admin/SetupPage")), as: "p-jordan" },
-  { path: "/admin/library", title: "Document library", area: "admin", views: ["platform_admin"], page: lazy(() => import("./pages/admin/LibraryPage")), as: "p-jordan" },
-  { path: "/admin/library/:documentId", title: "Document", area: "admin", views: ["platform_admin"], page: lazy(() => import("./pages/admin/DocumentDetailPage")), sample: "/admin/library/E-S25", as: "p-jordan" },
+  { path: "/admin/library", title: "Document library", area: "admin", views: EVERYONE, page: lazy(() => import("./pages/admin/LibraryPage")), as: "p-jordan" },
+  { path: "/admin/library/:documentId", title: "Document", area: "admin", views: EVERYONE, page: lazy(() => import("./pages/admin/DocumentDetailPage")), sample: "/admin/library/E-S25", as: "p-jordan" },
   { path: "/admin/library/versions/:versionId/ingest", title: "Ingestion", area: "admin", views: ["platform_admin"], page: lazy(() => import("./pages/admin/IngestionPage")), sample: "/admin/library/versions/B-S01-v1/ingest", as: "p-jordan" },
-  { path: "/admin/library/versions/:versionId/quality", title: "Quality and chunks", area: "admin", views: ["platform_admin"], page: lazy(() => import("./pages/admin/QualityPage")), sample: "/admin/library/versions/E-S25-v1/quality", as: "p-jordan" },
-  { path: "/admin/kb-search", title: "Knowledge search", area: "admin", views: ["platform_admin"], page: lazy(() => import("./pages/admin/KbSearchPage")), as: "p-jordan" },
+  { path: "/admin/library/versions/:versionId/quality", title: "Quality and chunks", area: "admin", views: EVERYONE, page: lazy(() => import("./pages/admin/QualityPage")), sample: "/admin/library/versions/E-S25-v1/quality", as: "p-jordan" },
+  { path: "/admin/kb-search", title: "Knowledge search", area: "admin", views: EVERYONE, page: lazy(() => import("./pages/admin/KbSearchPage")), as: "p-jordan" },
   { path: "/admin/agents", title: "Agent health", area: "admin", views: ["platform_admin"], page: lazy(() => import("./pages/admin/AgentHealthPage")), as: "p-jordan" },
   { path: "/admin/agent-runs", title: "Agent runs", area: "admin", views: ["platform_admin"], page: lazy(() => import("./pages/admin/AgentRunsPage")), as: "p-jordan" },
   { path: "/admin/connections", title: "Connections", area: "admin", views: ["platform_admin"], page: lazy(() => import("./pages/admin/ConnectionsPage")), as: "p-jordan" },

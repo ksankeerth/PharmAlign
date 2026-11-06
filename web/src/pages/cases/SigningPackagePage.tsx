@@ -11,8 +11,9 @@ import { useSession } from "../../app/session";
 import { Button, ButtonLink, Callout, CaseStatusPill, type Column, ErrorState, Field, FingerprintNote, GuardList, Icon, KeyValue, Modal, PageHeader, Panel, Pill, SkeletonLines, StatusPill, SyntheticTag, Table, TextArea, useToast } from "../../components";
 import { useApi } from "../../hooks/useApi";
 import { formatDateTime, formatRelative, shortFingerprint } from "../../lib/format";
-import { humanize, RECOMMENDATION_LABEL, VIEW_LABEL } from "../../lib/labels";
+import { humanize, RECOMMENDATION_LABEL } from "../../lib/labels";
 import { DECISION_TYPE, LEGAL_EFFECT, METHOD, RECOMMENDATION_TONE, Refusal, useNames } from "./shared";
+import { actsAs, roleLabel } from "../../lib/roles";
 
 /** Why this person can't sign: their view, and what they did on this case. */
 function NotYourSignature({ caseId, error }: { caseId: string; error: unknown }) {
@@ -28,13 +29,13 @@ function NotYourSignature({ caseId, error }: { caseId: string; error: unknown })
   return (
     <div className="stack">
       <Callout tone="held" icon="lock" title="You can't sign this case">
-        Signing needs a Decision Maker who took no part in the assessment. You are {names(meId)}, in the {view ? VIEW_LABEL[view] : "current"} view.
+        Signing needs a person who took no part in the assessment. You are {names(meId)}, a {roleLabel(view) || "signed-in person"}.
       </Callout>
       <div className="cw-pair">
         <GuardList
           title="Separation of duties"
           guards={[
-            { guard: "signer_is_decision_maker", passed: view === "decision_maker", detail: view === "decision_maker" ? "You hold the Decision Maker role." : "Only a Decision Maker may open or sign this package.", check_id: null },
+            { guard: "signer_is_decision_maker", passed: actsAs(view, "decision_maker"), detail: actsAs(view, "decision_maker") ? "You can sign for this role." : "Only a Decision Maker may open or sign this package.", check_id: null },
             { guard: "signer_did_not_assess", passed: !isAssessor, detail: isAssessor ? "You are the assigned officer, so you assessed this case." : "You are not recorded as assessing this case.", check_id: null },
             { guard: "signer_did_not_promote", passed: !didPromote, detail: didPromote ? "You promoted this case, so you can't sign it." : promoted ? `${names(promoted.actor_id)} promoted this case.` : "This case has not been promoted yet.", check_id: null },
           ]}
@@ -195,7 +196,7 @@ export default function SigningPackagePage() {
     [caseId, reloadKey, personId],
     { live: false, enabled: Boolean(personId) },
   );
-  const latest = useApi(() => api.getSigningPackage(caseId), [caseId, personId], { enabled: view === "decision_maker" });
+  const latest = useApi(() => api.getSigningPackage(caseId), [caseId, personId], { enabled: actsAs(view, "decision_maker") });
   const medicine = useApi(() => (detail.data ? api.getMedicine(detail.data.medicine_id) : Promise.resolve(null)), [detail.data?.medicine_id]);
   const parties = useApi(() => api.listParties(), []);
 

@@ -8,6 +8,8 @@ import { ButtonLink, Callout, EmptyState, ErrorState, Field, PageHeader, Panel, 
 import { useApi } from "../../hooks/useApi";
 import { formatNumber } from "../../lib/format";
 import { humanize } from "../../lib/labels";
+import { actsAs } from "../../lib/roles";
+import { useSession } from "../../app/session";
 import { Metric, QualityPill, ReviewPill } from "./shared";
 
 const CHECK_LABEL: Record<string, string> = {
@@ -25,6 +27,7 @@ const REASON_TONE: Record<string, Tone> = { image_only: "look", hidden_text: "he
 
 export default function QualityPage() {
   const { versionId = "" } = useParams();
+  const { view } = useSession();
   const version = useApi(() => api.getDocumentVersion(versionId), [versionId]);
   const doc = useApi(() => api.getDocument(version.data!.document_id), [version.data?.document_id], { enabled: Boolean(version.data) });
   const quality = useApi(() => api.getQualityReport(versionId), [versionId]);
@@ -54,7 +57,7 @@ export default function QualityPage() {
         title="Quality report"
         subtitle={doc.data?.title ?? v.filename}
         status={<><QualityPill status={r.status} /><ReviewPill status={v.review_status} /></>}
-        actions={<ButtonLink to={`/admin/library/versions/${v.id}/ingest`} icon="settings">Ingestion options</ButtonLink>}
+        actions={actsAs(view, "platform_admin") ? <ButtonLink to={`/admin/library/versions/${v.id}/ingest`} icon="settings">Ingestion options</ButtonLink> : undefined}
       />
 
       <PrototypeNotice sourceUrl={doc.data?.source_url} />

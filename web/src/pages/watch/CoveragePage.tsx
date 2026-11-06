@@ -9,6 +9,7 @@ import { useApi } from "../../hooks/useApi";
 import { formatDate, formatDateTime, formatRelative } from "../../lib/format";
 import { humanize } from "../../lib/labels";
 import "./watch.css";
+import { actsAs } from "../../lib/roles";
 
 export default function CoveragePage() {
   const { view } = useSession();
@@ -16,7 +17,7 @@ export default function CoveragePage() {
   const licences = useApi(() => api.listLicences({ limit: 200 }), []);
   const medicines = useApi(() => api.listMedicines({ limit: 200 }), []);
   // The source list is for Case Officers and Platform Admins; other views see ids only.
-  const canSeeSources = view === "case_officer" || view === "platform_admin";
+  const canSeeSources = actsAs(view, "case_officer") || actsAs(view, "platform_admin");
   const sources = useApi(() => api.listWatchSources({ limit: 200 }), [], { enabled: canSeeSources });
   const med = useMemo(() => new Map((medicines.data?.items ?? []).map((m) => [m.id, m])), [medicines.data]);
   const lic = useMemo(() => new Map((licences.data?.items ?? []).map((l) => [l.id, l])), [licences.data]);

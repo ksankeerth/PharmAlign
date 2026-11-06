@@ -11,6 +11,7 @@ import { useApi } from "../../hooks/useApi";
 import { formatDateTime, formatRelative } from "../../lib/format";
 import { humanize, ROLE_LABEL } from "../../lib/labels";
 import { ActionDialog, DECISION_TYPE, DecisionStatePill, LEGAL_EFFECT, Refusal, useNames } from "./shared";
+import { actsAs } from "../../lib/roles";
 
 /** queued, sent, then acknowledged, unknown or rejected. */
 function RecordSteps({ proposal }: { proposal: Proposal }) {
@@ -101,8 +102,8 @@ export default function DecisionDetailPage() {
   const d = dec.data;
   const p = proposal.data;
   const onHold = d.state === "on_hold";
-  const canHoldAct = view === "decision_maker" && onHold;
-  const canReadBack = view === "case_officer" && p && (p.state === "unknown" || p.state === "sent");
+  const canHoldAct = actsAs(view, "decision_maker") && onHold;
+  const canReadBack = actsAs(view, "case_officer") && p && (p.state === "unknown" || p.state === "sent");
 
   return (
     <div className="stack">
@@ -138,7 +139,7 @@ export default function DecisionDetailPage() {
                   Revoke
                 </Button>
               </div>
-            ) : view === "case_officer" ? (
+            ) : actsAs(view, "case_officer") ? (
               <span className="small muted">Only a Decision Maker can act on this.</span>
             ) : null}
           </div>
@@ -147,7 +148,7 @@ export default function DecisionDetailPage() {
       {d.record_status === "unknown" ? (
         <Callout tone="look" icon="alert-triangle" title="Record outcome unknown">
           The government system did not confirm the update. The record may or may not have changed.
-          {view !== "case_officer" ? " A Case Officer reads the record back and records the outcome." : ""}
+          {!actsAs(view, "case_officer") ? " A Case Officer reads the record back and records the outcome." : ""}
         </Callout>
       ) : null}
       {d.record_status === "rejected" ? (

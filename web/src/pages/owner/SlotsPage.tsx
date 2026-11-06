@@ -26,6 +26,7 @@ import {
 import type { IconName } from "../../components";
 import { useApi, useMutation } from "../../hooks/useApi";
 import { loadAll } from "./ownerShared";
+import { actsAs } from "../../lib/roles";
 
 const STATUS: Record<
   Slot["status"],
@@ -282,7 +283,7 @@ export default function SlotsPage() {
   const { workspace, view } = useSession();
   const ws = workspace?.id ?? "";
   // The Platform Admin links documents to slots. The Process Owner reviews them here.
-  const canEdit = view === "platform_admin";
+  const canEdit = actsAs(view, "platform_admin");
   const slots = useApi(
     () => loadAll((cursor) => api.listSlots(ws, { cursor, limit: 200 })),
     [ws],

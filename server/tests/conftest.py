@@ -25,6 +25,8 @@ from app.seed import seed_demo_people, truncate_all
 
 # Tests use the deterministic embedder, whether or not the bge-m3 extra is installed.
 os.environ.setdefault("PHARMALIGN_EMBEDDER", "hash")
+# Tests check each of the five views strictly. tests/test_two_roles.py turns the groups on.
+os.environ.setdefault("PHARMALIGN_TWO_ROLES", "false")
 TEST_URL = os.environ.get("PHARMALIGN_TEST_DATABASE_URL", "postgresql+asyncpg://pharmalign:pharmalign@localhost:5544/pharmalign_test")
 SERVICE_TOKEN = "test-service-token"
 START = datetime(2026, 11, 1, 10, 0, tzinfo=timezone.utc)

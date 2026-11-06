@@ -139,7 +139,7 @@ async def _unit_of_work(rt: Runtime, route: R, request: Request) -> Response:
     async with rt.sessions() as db, db.begin():
         actor = None if route.public else await _authenticate(rt, db, request)
         tenant = Tenant(actor.tenant_id, rt.settings.env) if actor else None
-        authz.can_act(route, actor, tenant, rt.settings.env)
+        actor = authz.can_act(route, actor, tenant, rt.settings.env, rt.settings.two_roles)
         if handler is None:
             problem(501, "not_implemented", "Not implemented yet", f"{route.summary} is not implemented.")
         req = await _parse(route, request)

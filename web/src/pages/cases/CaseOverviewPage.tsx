@@ -10,6 +10,7 @@ import { useApi } from "../../hooks/useApi";
 import { formatDate, formatDateTime, formatRelative, shortFingerprint } from "../../lib/format";
 import { factLabel, humanize, RECOMMENDATION_LABEL } from "../../lib/labels";
 import { describeSource, evidenceHref, parseAnchor, RECOMMENDATION_TONE, useCaseDocs, useNames } from "./shared";
+import { actsAs } from "../../lib/roles";
 
 function Recommendation({ rec, checks, caseId }: { rec: RecommendationVersion; checks: CheckResult[]; caseId: string }) {
   const byResult = new Map(checks.map((c) => [c.id, c]));
@@ -118,11 +119,11 @@ function ForeignPanel({ caseId }: { caseId: string }) {
   const basis = useApi(() => api.listCaseRelianceBasis(caseId), [caseId]);
   const matches = useApi(() => api.listMatches({ limit: 200 }), [caseId]);
   const sources = useApi(async () => {
-    if (view === "decision_maker") {
+    if (actsAs(view, "decision_maker")) {
       const pkg = await api.getSigningPackage(caseId).catch(() => null);
       return pkg ? { healthy: pkg.foreign_status.sources_healthy, warning: pkg.foreign_status.warning, last: pkg.foreign_status.last_checked_at } : null;
     }
-    if (view !== "case_officer") return null;
+    if (!actsAs(view, "case_officer")) return null;
     const list = await api.listWatchSources({ limit: 200 }).catch(() => null);
     if (!list) return null;
     const bad = list.items.filter((s) => s.health === "failing" || s.health === "zero_yield" || s.health === "layout_changed");
@@ -191,7 +192,7 @@ function ForeignPanel({ caseId }: { caseId: string }) {
 
 function BlockersPanel({ caseId, checks, status }: { caseId: string; checks: CheckResult[]; status: string }) {
   const { view } = useSession();
-  const check = useApi(() => (view === "case_officer" ? api.getPromotionCheck(caseId) : Promise.resolve(null)), [caseId, view]);
+  const check = useApi(() => (actsAs(view, "case_officer") ? api.getPromotionCheck(caseId) : Promise.resolve(null)), [caseId, view]);
   const threads = useApi(() => api.listThreads(caseId, { status: "open" }), [caseId]);
   const questions = useApi(() => api.listQuestions(caseId), [caseId]);
   const frozen = ["promoted", "signed", "recording", "closed"].includes(status);
@@ -203,7 +204,7 @@ function BlockersPanel({ caseId, checks, status }: { caseId: string; checks: Che
       </Panel>
     );
   }
-  if (view === "case_officer") {
+  if (actsAs(view, "case_officer")) {
     return (
       <Panel
         title="What blocks promotion"

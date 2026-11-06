@@ -11,6 +11,7 @@ import { useApi, useMutation } from "../../hooks/useApi";
 import { formatRelative } from "../../lib/format";
 import { humanize } from "../../lib/labels";
 import { Metric } from "./shared";
+import { actsAs } from "../../lib/roles";
 
 const EVENTS: { kind: SimulationEvent["kind"]; label: string; hint: string }[] = [
   { kind: "foreign_notice", label: "Foreign notice", hint: "A regulator publishes a notice. Matching cases are alerted before any agent runs." },
@@ -49,7 +50,7 @@ export default function SimulationsPage() {
   const [snapshot, setSnapshot] = useState("");
   const [execution, setExecution] = useState<"replay" | "live_model">("replay");
   const [gate, setGate] = useState<"on" | "off">("on");
-  const canGateOff = view === "platform_admin";
+  const canGateOff = actsAs(view, "platform_admin");
 
   useEffect(() => {
     // Each workspace has its own scenario ids, so start on the shelf-life one when it has it.
