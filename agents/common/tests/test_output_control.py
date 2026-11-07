@@ -108,6 +108,19 @@ async def test_failing_tool_is_reported_and_run_continues(spec, mcp_settings):
     assert outcome.tool_errors and outcome.tool_errors[0].tool == "read_page"
 
 
+async def test_a_not_found_answer_is_not_counted_as_a_tool_failure(spec, mcp_settings):
+    from pharmalign_agent_common.testing import FakeMcpServer
+
+    def nothing_there(args):
+        raise RuntimeError(json.dumps({"tool": "read_page", "code": "not_found", "message": "No such page.", "retryable": False}))
+
+    with FakeMcpServer({"read_page": nothing_there}) as server:
+        settings = type(mcp_settings)(mcp_url=server.url)
+        model = FakeModel(script=[call_tool("read_page", doc_id="d-17", page=9), say_json(good_result())])
+        outcome = await run_agent(spec, request(), settings=settings, model=model)
+    assert outcome.tool_errors == []
+
+
 async def test_tools_outside_the_contract_list_are_not_offered(spec, mcp_settings):
     from pharmalign_agent_common.testing import FakeMcpServer
 

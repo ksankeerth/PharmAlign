@@ -13,7 +13,7 @@ import time
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Optional
 
 from google.adk.agents import LlmAgent
 from google.adk.agents.readonly_context import ReadonlyContext
@@ -154,6 +154,18 @@ def build_agent(
     )
 
 
+ANSWER_CODES = frozenset({"not_found", "outside_check_sources"})  # a tool's answer, not a failure: the run goes on and is complete
+
+
+def _error_code(tool_response: dict) -> Optional[str]:
+    """The code in a tool's JSON error body, such as not_found. None when the body is not one."""
+    try:
+        body = json.loads(tool_response["content"][0]["text"])
+    except (KeyError, IndexError, TypeError, ValueError):
+        return None
+    return body.get("code") if isinstance(body, dict) else None
+
+
 def _callbacks(tracker: RunTracker, model_name: str) -> dict[str, Any]:
     def before_model(callback_context, llm_request):
         tracker.before_model()
@@ -168,7 +180,7 @@ def _callbacks(tracker: RunTracker, model_name: str) -> dict[str, Any]:
     def after_tool(tool, args, tool_context, tool_response):
         if tool.name == "set_model_response":
             return
-        if isinstance(tool_response, dict) and tool_response.get("isError"):
+        if isinstance(tool_response, dict) and tool_response.get("isError") and _error_code(tool_response) not in ANSWER_CODES:
             tracker.tool_failed(tool.name, json.dumps(tool_response.get("content", ""))[:500])
         tracker.log.record(tool.name, args, tool_response)
 
