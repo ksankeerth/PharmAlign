@@ -35,6 +35,20 @@ async def test_search_kb_says_no_source_when_nothing_qualifies(app, engine):
         assert not r.error and r["no_source_found"] is True and r["hits"] == [] and r["searches_tried"]
 
 
+async def test_search_kb_inside_given_documents_returns_and_counts_only_their_chunks(app, engine):
+    async with connect(app, await run_token(app, engine, "checklist-assessor")) as s:
+        query = "stability testing long-term conditions"
+        everywhere = await call(s, "search_kb", query=query, top_k=20)
+        assert not everywhere.error and len({h["document_id"] for h in everywhere["hits"]}) > 1
+        doc = everywhere["hits"][0]["document_id"]
+        inside = await call(s, "search_kb", query=query, top_k=20, document_ids=[doc])
+        assert not inside.error and inside["hits"] and {h["document_id"] for h in inside["hits"]} == {doc}
+        assert 0 < inside["searched"] < everywhere["searched"]
+        none = await call(s, "search_kb", query=query, document_ids=["no-such-doc"])
+        assert none["no_source_found"] is True and none["hits"] == [] and none["searched"] == 0
+        assert (await call(s, "search_kb", query=query, top_k=20, document_ids=None))["searched"] == everywhere["searched"]
+
+
 async def test_read_clause_and_doc_status_carry_legal_status(app, engine):
     async with connect(app, await run_token(app, engine, "checklist-assessor")) as s:
         hit = (await call(s, "search_kb", query="stability testing long-term conditions"))["hits"][0]

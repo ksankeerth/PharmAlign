@@ -9,15 +9,15 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from types import SimpleNamespace
-from typing import Any, Awaitable, Callable, Literal, Optional
+from typing import Annotated, Any, Awaitable, Callable, Literal, Optional
 
 from pharmalign_contracts.agents.knowledge_assistant import DraftComment
 from pharmalign_contracts.common import Evidence, FactValue
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationError
 from sqlalchemy import text
 
 from ..knowledge.embedding import Embedder, terms
-from ..knowledge.search import agent_search
+from ..knowledge.search import agent_search, like_contains
 from ..pipeline.citations import CitationContext, SourceChunk, check_quote
 
 DocId = Field(min_length=1, max_length=128)
@@ -69,8 +69,7 @@ def _capped(rows: list, limit: int) -> tuple[list, bool]:
     return rows[:limit], len(rows) > limit
 
 
-def _like(term: str) -> str:
-    return "%" + term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+_like = like_contains
 
 
 # ---------------------------------------------------------------- dossier
@@ -259,11 +258,14 @@ class SearchKb(Args):
     query: str = Field(min_length=2, max_length=1000)
     purpose: Literal["requirement", "context"] = Field("requirement", description="requirement: in-force sources only. context: any status, labelled.")
     top_k: int = Field(5, ge=1, le=20)
+    document_ids: Optional[list[Annotated[str, StringConstraints(min_length=1, max_length=128)]]] = Field(
+        None, max_length=20, description="Search only inside these knowledge documents, e.g. the check's source document.")
 
 
-@tool("Searches the run's pinned knowledge snapshot. Filters first, then ranks. Says no_source_found when nothing qualifies.", SearchKb, needs_case=False)
+@tool("Searches the run's pinned knowledge snapshot, optionally only inside given documents. Filters first, then ranks. Says no_source_found when nothing qualifies.", SearchKb, needs_case=False)
 async def search_kb(conn, a: SearchKb, lim: Limits) -> dict:
-    found = await agent_search(conn, a.query, lim.embedder, top_k=min(a.top_k, lim.max_rows), requirement=a.purpose == "requirement")
+    found = await agent_search(conn, a.query, lim.embedder, top_k=min(a.top_k, lim.max_rows), requirement=a.purpose == "requirement",
+                               document_ids=a.document_ids)
     return {"no_source_found": found.no_source_found, "hits": [h.model_dump(mode="json") for h in found.hits], "searched": found.searched,
             "purpose": a.purpose, "searches_tried": found.searches_tried}
 

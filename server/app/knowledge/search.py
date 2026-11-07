@@ -25,6 +25,11 @@ from .keywords import bm25, fuse, tsquery
 APPROVED = ("approved", "approved_with_notes")
 
 
+def like_contains(term: str) -> str:
+    """An ILIKE pattern that matches `term` anywhere, with the pattern characters in it taken literally. Use with ESCAPE '\\'."""
+    return "%" + term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+
+
 @dataclass
 class Scope:
     """Everything the filter needs. A snapshot pins the versions and their status as frozen; without one, the latest adopted versions."""
@@ -183,36 +188,42 @@ async def search(db: AsyncSession, scope: Scope, query: str, embedder: Embedder,
 
 # ------------------------------------------------------------------ agents
 
-async def agent_search(conn, query: str, embedder: Embedder, top_k: int = 10, requirement: bool = True) -> Found:
+async def agent_search(conn, query: str, embedder: Embedder, top_k: int = 10, requirement: bool = True,
+                       document_ids: Optional[Sequence[str]] = None) -> Found:
     """The same ranking for an agent, through the agent_read views only. The run's tenant and case are set on the connection by the tool server,
     and the views show nothing else: the pinned snapshot, approved versions that passed the gate."""
     qvec = vector_text((await asyncio.to_thread(embedder.embed, [query]))[0])
     view = "agent_read.kb_requirement_chunk" if requirement else "agent_read.kb_chunk"
+    docs = list(dict.fromkeys(document_ids)) if document_ids else None
+    where = " WHERE document_id = ANY(CAST(:docs AS text[]))" if docs else ""
+    scope = {"docs": docs} if docs else {}
     sql = f"""
-        WITH cand AS MATERIALIZED (SELECT * FROM {view})
+        WITH cand AS MATERIALIZED (SELECT * FROM {view}{where})
         SELECT c.anchor AS chunk_id, c.document_id, c.title, c.issuer, c.country AS jurisdiction, c.legal_status, c.authority_level, c.article, c.page, c.text,
                c.section_path, 1 - (v.embedding <=> CAST(CAST(:q AS text) AS vector)) AS score
         FROM cand c JOIN agent_read.kb_chunk_vector v ON v.anchor = c.anchor AND v.model = :model
         ORDER BY v.embedding <=> CAST(CAST(:q AS text) AS vector), c.anchor
         LIMIT :limit
     """
-    rows = (await conn.execute(text(sql), {"q": qvec, "model": embedder.name, "limit": top_k + 25})).mappings().all()
-    candidates = (await conn.execute(text(f"SELECT count(*) FROM {view}"))).scalar_one()
+    rows = (await conn.execute(text(sql), {"q": qvec, "model": embedder.name, "limit": top_k + 25, **scope})).mappings().all()
+    candidates = (await conn.execute(text(f"SELECT count(*) FROM {view}{where}"), scope)).scalar_one()
     query_terms = set(terms(query))
     query_arabic = is_arabic(query)
     hits = [_hit({**r, "jurisdiction": r["jurisdiction"] or "-"}, r["score"]) for r in rows if float(r["score"]) >= embedder.min_score and _supported(query_terms, r, query_arabic)][:top_k]
     filters: dict[str, Any] = {"source": view, "similarity_floor": embedder.min_score, "applied_before_search": True}
+    if docs:
+        filters["document_ids"] = docs
     reranker = embedder.reranker if query_arabic else None
     if reranker and rows:
         filters.update(reranker=reranker.name, rerank_floor=reranker.min_score)
         words = tsquery(query)
         found = (await conn.execute(text(f"""
-            WITH cand AS MATERIALIZED (SELECT * FROM {view})
+            WITH cand AS MATERIALIZED (SELECT * FROM {view}{where})
             SELECT c.anchor AS chunk_id, c.document_id, c.title, c.issuer, c.country AS jurisdiction, c.legal_status, c.authority_level, c.article, c.page, c.text,
                    c.section_path, t.tokens
             FROM cand c JOIN agent_read.kb_chunk_terms t ON t.anchor = c.anchor
             WHERE to_tsvector('simple', t.tokens) @@ to_tsquery('simple', :words)
-        """), {"words": words})).mappings().all() if words else []
+        """), {"words": words, **scope})).mappings().all() if words else []
         kept, top = await _reranked(query, rows, found, candidates, reranker, top_k)
         if kept:
             return Found([_hit({**r, "jurisdiction": r["jurisdiction"] or "-"}, r["score"]) for r in kept], False, filters, candidates)

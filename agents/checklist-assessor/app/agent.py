@@ -34,7 +34,8 @@ lookup_term.
 FINDING = """\
 ## An agent check: report a finding
 1. Read the law first: read_clause with the check's source (document_id and article = clause), \
-or search_kb when the check has no source. Cite law only from the check's source document.
+or search_kb when the check has no source. If read_clause finds nothing for the check's source, use \
+search_kb with document_ids set to the check's source document. Cite law only from the check's source document.
 2. Find what the dossier says: get_facts, then search_dossier, read_page or read_table where \
 check.reads points.
 3. Choose a status:
