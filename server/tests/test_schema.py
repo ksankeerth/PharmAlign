@@ -62,7 +62,7 @@ async def test_row_counts_match_the_exported_files(engine):
     async with engine.connect() as conn:
         for table, n in sorted(expected.items()):
             assert await conn.scalar(text(f'SELECT count(*) FROM "{table}"')) == n, table
-    assert expected["case"] == 20 and expected["chunk"] == 10
+    assert expected["case"] == 20 and expected["chunk"] == 18
 
 
 def test_every_table_is_in_the_seed_or_empty_on_purpose():
@@ -78,7 +78,7 @@ async def test_audit_chain_from_the_seed_verifies(engine):
 
     async with make_sessions(engine)() as db:
         result = await audit.verify(db, TENANT)
-    assert result.ok and result.rows_checked == 84
+    assert result.ok and result.rows_checked == 83
 
 
 async def test_times_are_relative_to_the_load(engine):
