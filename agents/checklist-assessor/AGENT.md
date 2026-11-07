@@ -44,7 +44,7 @@ A broken rule sends the reason back to the model once. A second break fails the 
 | Typed check answers `extraction`, agent check answers `finding` | Contract |
 | Every anchor was returned by a tool in this run, and every quote is in that tool's text (or verified) | Server's citation check |
 | `met` needs a quote from the law (`search_kb`, `read_clause`, `lookup_term`) | Server: no `met` without a law quote |
-| Law quotes come only from `moved_source` (a person moved the check) or else the check's `source` document | Server: law the check names |
+| Law quotes come only from `moved_source` (a person moved the check) or else the check's `source` document, plus its `supporting_sources` | Server: law the check names |
 | Any status but `cannot_tell` needs evidence | No evidence, no claim |
 | `no_source` needs a law search in this run that found nothing; status `cannot_tell` | Contract, server's gap signal |
 | Numbers in `summary` appear in a cited quote (for `met`, quotes only) | Server's number check |

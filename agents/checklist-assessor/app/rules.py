@@ -57,9 +57,10 @@ def _check_finding(request: AssessmentRequest, f: AgentFinding, log: ToolLog) ->
         raise ValueError("met needs a quote from the law, returned by search_kb, read_clause or lookup_term")
     source = request.moved_source or request.check.source  # a person may have moved the check to other law
     if source is not None:
-        other = sorted({log.document_of(e.anchor) for e in law} - {source.doc_id})
+        allowed = {source.doc_id, *(s.doc_id for s in request.check.supporting_sources)}
+        other = sorted({log.document_of(e.anchor) for e in law} - allowed)
         if other:
-            raise ValueError(f"cite law only from {source.doc_id}, the source this check is set to, not {', '.join(other)}")
+            raise ValueError(f"cite law only from {', '.join(sorted(allowed))}, the sources this check is set to, not {', '.join(other)}")
     if f.no_source is not None and not log.empty_searches(KB_TOOLS):
         raise ValueError("no_source needs a search_kb or lookup_term in this run that found nothing")
     quotes = [e.quote for e in f.evidence]

@@ -64,6 +64,13 @@ def test_law_from_the_source_a_person_moved_the_check_to_is_allowed():
     check_result(moved, answer, log)
 
 
+def test_law_from_a_supporting_source_is_allowed():
+    log, answer = other_law()
+    body = request_body()
+    supported = AssessmentRequest.model_validate({**body, "check": {**body["check"], "supporting_sources": [{"doc_id": "G-1", "clause": "2.1"}]}})
+    check_result(supported, answer, log)
+
+
 def test_a_finding_on_a_typed_check_is_refused():
     typed = AssessmentRequest.model_validate(request_body(None, method="typed"))
     with pytest.raises(ValueError, match="typed check"):
