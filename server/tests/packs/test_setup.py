@@ -294,6 +294,10 @@ async def test_a_copied_workspace_simulates_approves_and_activates_its_pack(http
         http.cookies.delete(WORKSPACE_COOKIE)
     first, second = owners
 
+    # The pack is a copy of the UAE pack, and a source clause has to resolve in the country's own library, so the country adopts the documents the pack cites.
+    for doc in ("A-01", "A-03", "B-01", "B-S09", "B-S18", "E-S06", "E-S25", "F-01"):
+        adopted = await http.put(f"/api/v1/workspaces/{wid}/adoptions/{doc}-v1", json={"legal_status": "in_force", "authority_level": 2}, headers=headers(first))
+        assert adopted.status_code == 200, adopted.text
     snapshot = await http.post(f"/api/v1/workspaces/{wid}/kb-snapshots", json={"label": "First freeze"}, headers=headers(first))
     assert snapshot.status_code == 201, snapshot.text
     clean = next(s for s in await scenarios_of(http, first) if s["label"] == "Clean file")

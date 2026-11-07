@@ -6,12 +6,13 @@ model yet can still be opened and its errors listed. The full model is used from
 from pharmalign_contracts.server import models as m
 from pydantic import ValidationError
 from pydantic_core import to_jsonable_python
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 
 from ..domain.fingerprints import fingerprint_of
 from ..domain.guards import FROZEN, guard, pack_activate_guards, pack_approve_guards
-from ..domain.pack_validation import json_diff, locked_step_changes, misplaced_new_steps, validate_pack_document
+from ..domain.pack_validation import SourceCheck, clause_sources, json_diff, locked_step_changes, misplaced_new_steps, validate_pack_document
 from ..jobs import task
+from ..knowledge.search import APPROVED, like_contains
 from ..ops import Loose, op
 from ..paging import paginate
 from ..pipeline import runner
@@ -64,8 +65,40 @@ async def known_documents(ctx) -> set[str]:
     return set((await ctx.db.scalars(select(ROW["document"].id))).all())
 
 
+async def snapshot_of(db, tenant_id: str) -> str | None:
+    """The workspace's active knowledge snapshot, else its newest one: the choice simulate makes."""
+    active = await db.scalar(select(ROW["workspace"].active_kb_snapshot_id).where(ROW["workspace"].id == tenant_id))
+    if active is not None:
+        return active
+    snap = ROW["kb_snapshot"]
+    return await db.scalar(select(snap.id).where(snap.tenant_id == tenant_id).order_by(snap.created_at.desc(), snap.id).limit(1))
+
+
+async def source_check_of(db, tenant_id: str, document: dict) -> SourceCheck:
+    """Which of the pack's source clauses match no passage in the snapshot. A clause matches as the agents' read_clause reads it:
+    the article or the section path holds it, in an approved version that passed the quality gate."""
+    snapshot_id = await snapshot_of(db, tenant_id)
+    pairs = {(doc_id, clause) for _, _, doc_id, clause in clause_sources(document)}
+    if snapshot_id is None or not pairs:
+        return SourceCheck(snapshot_id)
+    chunk, item, version = ROW["chunk"], ROW["kb_snapshot_item"], ROW["document_version"]
+    resolved: set[tuple[str, str]] = set()
+    for doc_id, clause in pairs:
+        pattern = like_contains(clause)
+        hit = await db.scalar(
+            select(chunk.id).join(version, version.id == chunk.document_version_id).join(item, item.document_version_id == chunk.document_version_id)
+            .where(item.snapshot_id == snapshot_id, item.tenant_id == tenant_id, version.document_id == doc_id,
+                   version.review_status.in_(APPROVED), func.coalesce(version.quality_status, "attention") != "fail",
+                   or_(chunk.article.ilike(pattern, escape="\\"), chunk.section_path.ilike(pattern, escape="\\")))
+            .limit(1))
+        if hit is not None:
+            resolved.add((doc_id, clause))
+    return SourceCheck(snapshot_id, frozenset(pairs - resolved))
+
+
 async def validation_of(ctx, row) -> m.PackValidation:
-    return validate_pack_document(row.doc["document"], await known_documents(ctx))
+    document = row.doc["document"]
+    return validate_pack_document(document, await known_documents(ctx), await source_check_of(ctx.db, row.tenant_id, document))
 
 
 async def rows_of(ctx, tenant_id: str, *where):

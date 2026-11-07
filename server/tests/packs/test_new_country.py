@@ -35,6 +35,8 @@ NATIONAL = {
 }
 # The regional and international documents it adopts from the shared library.
 SHARED = {"ctd_structure": "G-03", "stability_guideline": "E-S25", "labelling_guideline": "E-S06", "pv_guideline": "E-S24", "gmp_guideline": "E-S15", "reliance_guidance": "F-01"}
+# The pack is a copy of the UAE pack, which cites these as well. A pack's source clauses have to resolve in the country's own library, so it adopts them too.
+CITED_BY_THE_COPIED_PACK = ("A-01", "A-03", "B-01", "B-S09", "B-S18")
 
 
 async def add_people(http) -> dict[str, str]:
@@ -63,6 +65,8 @@ async def build_library(http, lib: Library, wid: str, owner: str) -> None:
         adoption = ADOPTIONS.get(version, {"authority_level": 2})
         await lib.adopt(version, workspace=wid, person=owner, level=adoption["authority_level"])
         linked[key] = doc
+    for doc in CITED_BY_THE_COPIED_PACK:
+        await lib.adopt(f"{doc}-v1", workspace=wid, person=owner, level=2)
     for key, doc in linked.items():
         filled = await http.patch(f"/api/v1/slots/{slots[key]['id']}", json={"document_id": doc, "status": "filled"}, headers=headers(ADMIN))
         assert filled.status_code == 200, filled.text

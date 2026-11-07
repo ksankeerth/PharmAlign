@@ -2,7 +2,8 @@
 that does not parse as a `PackDocument` can still be checked and its errors listed."""
 import json
 import re
-from typing import Any, Optional
+from dataclasses import dataclass
+from typing import Any, Iterator, Optional
 
 from pharmalign_contracts.server.models import LOCKED_STEP_KINDS, PackChange, PackIssue, PackValidation
 
@@ -16,7 +17,36 @@ def _filled(value: Any) -> bool:
     return value is not None and value is not False and value != 0 and value != ""
 
 
-def validate_pack_document(doc: dict, known_doc_ids: Optional[set[str]] = None) -> PackValidation:
+@dataclass(frozen=True)
+class SourceCheck:
+    """What the knowledge snapshot says about the pack's source clauses. `snapshot_id` is None when the workspace has no snapshot, so nothing could be checked.
+    `unresolved` holds the (doc_id, clause) pairs that match no passage of that document."""
+
+    snapshot_id: Optional[str]
+    unresolved: frozenset[tuple[str, str]] = frozenset()
+
+
+def clause_sources(doc: dict) -> Iterator[tuple[str, Optional[str], str, str]]:
+    """Every source that names a document and a clause, as (path, check id, doc_id, clause). A check's path is `checks[ID]`; any other source gets its JSON path."""
+
+    def walk(node: Any, path: str, check_id: Optional[str]) -> Iterator[tuple[str, Optional[str], str, str]]:
+        if isinstance(node, dict):
+            src = node.get("source")
+            if isinstance(src, dict) and src.get("doc_id") and isinstance(src.get("clause"), str) and src["clause"].strip():
+                yield (path if check_id and path == f"checks[{check_id}]" else f"{path}.source"), check_id, src["doc_id"], src["clause"]
+            for key, value in node.items():
+                if key != "source":
+                    yield from walk(value, f"{path}.{key}" if path else key, check_id)
+        elif isinstance(node, list):
+            for item in node:
+                key = item.get("id") if isinstance(item, dict) else None
+                is_check = path == "checks" and key is not None
+                yield from walk(item, f"{path}[{key}]" if key is not None else path, key if is_check else check_id)
+
+    yield from walk(doc, "", None)
+
+
+def validate_pack_document(doc: dict, known_doc_ids: Optional[set[str]] = None, source_check: Optional[SourceCheck] = None) -> PackValidation:
     issues: list[PackIssue] = []
 
     def add(severity: str, path: str, rule: str, message: str) -> None:
@@ -90,6 +120,17 @@ def validate_pack_document(doc: dict, known_doc_ids: Optional[set[str]] = None) 
                 missing = [i for i in (s.get("check_ids") or []) if i not in ids]
                 if missing:
                     err(sp, "unknown_checks", f"{s['name']} refers to unknown checks: {', '.join(missing)}.")
+    if source_check is not None:
+        sources = [x for x in clause_sources(doc) if known_doc_ids is None or x[2] in known_doc_ids]
+        if source_check.snapshot_id is None:
+            if sources:
+                warn("sources", "sources_unchecked", "Source clauses were not checked against the library: this workspace has no knowledge snapshot yet.")
+        else:
+            for path, check_id, doc_id, clause in sources:
+                if (doc_id, clause) in source_check.unresolved:
+                    who = f"Check {check_id}" if check_id else path
+                    err(path, "source_clause_unresolved",
+                        f'{who}: clause "{clause}" matches no passage of {doc_id} in knowledge snapshot {source_check.snapshot_id}. Point it at a real article or heading.')
     return PackValidation(valid=not any(i.severity == "error" for i in issues), issues=issues)
 
 
