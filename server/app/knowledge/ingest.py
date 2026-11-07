@@ -25,6 +25,7 @@ from ..jobs import task
 from ..stores import STORES
 from ..tables import ROW
 from . import arabic, indexing, parsers, quality
+from .articles import mark_articles
 from .chunking import ChunkRules, apply_table_mode, chunk_blocks, chunk_language, split_long
 from .embedding import EmbedderUnavailable, get_embedder
 from .layout import ArabicNotSupported, Hidden, Options, Raw, stitch
@@ -123,6 +124,7 @@ async def _parse(ctx, job: m.IngestJob) -> None:
     raw = parsers.apply_profile_pages(raw, job.profile.page_range)
     if text_layer:
         raw = arabic.clean_raw(raw)
+    raw = mark_articles(raw)
     out = ROW["ingest_output"]
     await ctx.db.execute(pg_insert(out).values(
         id=f"{job.id}:out", ingest_job_id=job.id, document_version_id=version.id, stage="parse", raw=raw_to_json(raw),

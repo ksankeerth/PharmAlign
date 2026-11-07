@@ -188,8 +188,10 @@ def article_numbers(chunks: Sequence[dict]) -> list[int]:
     for c in chunks:
         for line in (c.get("section_path") or "").split(" > "):
             lvl, art = legal_level(line)
-            if lvl == 3 and art.isdigit():
-                out.add(int(art))
+            if lvl == 3 and art:
+                number = re.match(r"\d+", art)  # "13.2" and "10a" count as article 13 and 10
+                if number:
+                    out.add(int(number.group()))
     return sorted(out)
 
 

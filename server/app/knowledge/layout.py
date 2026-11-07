@@ -18,6 +18,7 @@ from __future__ import annotations
 import csv
 import io
 import re
+import unicodedata
 from collections import Counter
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
@@ -26,29 +27,101 @@ ARABIC_RE = re.compile(r"[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]")
 LATIN_RE = re.compile(r"[A-Za-z]")
 DIGITS_AR = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
 
-# legal structure: name -> heading level (1 = part/chapter, 3 = article)
+# legal structure of a non-Arabic line: pattern -> heading level (1 = part/chapter, 3 = article). Arabic lines go through _legal_level_ar
 _LEGAL = [
     (re.compile(r"^\s*(?:PART|Part|CHAPTER|Chapter|SECTION|Section|TITLE|Title)\b\s*[\(\[]?\s*[\w٠-٩.-]+", re.I), 1),
-    (re.compile(r"^\s*(?:الباب|الفصل|القسم|الجزء)\b"), 1),
+    (re.compile(r"^\s*Schedule\s+No\.?\s*[\(\[]?\s*\d+"), 1),  # "Schedule No. (1) Attached to Cabinet Resolution ...": the title of a fee schedule
     (re.compile(r"^\s*(?:ARTICLE|Article)\s*[\(\[]?\s*([\d٠-٩]+)"), 3),
-    (re.compile(r"^\s*(?:المادة|مادة)\s*[\(\[]?\s*([\d٠-٩]+)"), 3),
 ]
 _CAPTION_RE = re.compile(r"^\s*(?:Table|Figure|Fig\.|Annex(?:ure)?|Appendix)\s*[\dA-Z]+[\s:.\-–]|^\s*(?:جدول|شكل)\s*[\d٠-٩]+", re.I)
 _DOT_LEADER_RE = re.compile(r"(?:\.\s*){8,}|(?:…\s*){4,}")
 _END_PUNCT = tuple(".:;?!)\"'»؛؟۔")
+_BOLD_TITLE_COLON = re.compile(r"^\s*[A-Z][\w'’/&-]*(?:\s+[\w'’/&()-]+){1,5}\s*:\s*$")  # a short bold title that ends in a colon: "The Reference Countries:"
 
 
 def script_stats(text: str) -> tuple[int, int]:
     return len(ARABIC_RE.findall(text)), len(LATIN_RE.findall(text))
 
 
+_EN_FULL = re.compile(r"^\s*(?:ARTICLE|Article)\s*[\(\[]?\s*(\d{1,3}(?:\.\d{1,3})*[a-z]?)\s*[\)\]]?(.*)$")
+# After the number a heading has nothing, a title, a colon or a dash. A reference goes on: "(1) of Regulation", "; or", ", and", "of this Law".
+_EN_REFERENCE = re.compile(r"^\s*(?:\(\d|[;,]|of\b|and\b|or\b|to\b|shall\b|is\b|are\b|has\b|have\b|in\b|which\b|apply\b|applies\b|above\b|below\b)")
+
+_AR_UNITS = {"اول": 1, "اولي": 1, "حاديه": 1, "حادي": 1, "ثانيه": 2, "ثاني": 2, "ثالثه": 3, "ثالث": 3, "رابعه": 4, "رابع": 4, "خامسه": 5, "خامس": 5,
+             "سادسه": 6, "سادس": 6, "سابعه": 7, "سابع": 7, "ثامنه": 8, "ثامن": 8, "تاسعه": 9, "تاسع": 9, "عاشره": 10, "عاشر": 10}
+_AR_TENS = {"عشرون": 20, "عشرين": 20, "ثلاثون": 30, "ثلاثين": 30, "اربعون": 40, "اربعين": 40, "خمسون": 50, "خمسين": 50, "ستون": 60, "ستين": 60,
+            "سبعون": 70, "سبعين": 70, "ثمانون": 80, "ثمانين": 80, "تسعون": 90, "تسعين": 90}
+_AR_HUNDRED = {"مائه": 100, "مئه": 100}
+_AR_FOLD = str.maketrans({"أ": "ا", "إ": "ا", "آ": "ا", "ى": "ي", "ة": "ه", "ـ": None})
+_AR_MARKS = re.compile("[ً-ْٰ]")
+_AR_LEVEL1 = re.compile(r"^[\s:]*(?:الباب|الفصل|القسم|الجزء)\b")
+_AR_HEAD = re.compile(r"^[\s\(\[\{:：\-–—.•]*(?:ال|ا)?ماده\s*[\(\[]?\s*(.*)$")
+_AR_DIGITS = re.compile(r"^[\(\[\s]*([\d٠-٩]{1,3})\s*[\)\]]?")
+_AR_TAIL_PUNCT = re.compile(r"^\s*[\)\]]?\s*[:\-–—.]")
+
+
+def arabic_ordinal(words: list[str]) -> int | None:
+    """Folded Arabic ordinal words to a number: الأولى 1, الحادية عشرة 11, الثانية والعشرون 22, المائة 100, الخامسة بعد المائة 105."""
+    total, seen = 0, False
+    for raw in words:
+        w = re.sub(r"^(وال|ال|و)", "", raw)
+        if w in ("عشره", "عشر") and seen and total < 10:
+            total += 10
+        elif w in _AR_UNITS and (not seen or total >= 10 and total % 10 == 0 or total >= 100):
+            total += _AR_UNITS[w]
+        elif w in _AR_TENS:
+            total += _AR_TENS[w]
+        elif w in _AR_HUNDRED:
+            total += 100
+        elif w == "بعد":
+            continue
+        else:
+            break
+        seen = True
+    return total if seen and total else None
+
+
+def _legal_level_ar(first: str) -> tuple[int | None, str]:
+    from . import arabic  # arabic imports this module, so it is imported here and not at the top
+
+    line = arabic.repair_swapped(arabic.clean_line(first))
+    if _AR_LEVEL1.match(line):
+        return 1, ""
+    line = _AR_MARKS.sub("", unicodedata.normalize("NFKC", line)).translate(_AR_FOLD)
+    m = _AR_HEAD.match(line)
+    if not m:
+        return None, ""
+    rest = m.group(1)
+    d = _AR_DIGITS.match(rest)
+    if d:
+        number = int(d.group(1).translate(DIGITS_AR))
+        tail = rest[d.end():]
+    else:
+        number = arabic_ordinal(re.findall(r"[^\W\d_]+", rest)[:5])
+        tail = ""
+    if not number:
+        return None, ""
+    # A heading, not a reference inside a sentence ("المادة (5) من هذا القانون"): short, or the number is followed by a colon or dash.
+    if len(first.split()) > 8 and not _AR_TAIL_PUNCT.match(tail):
+        return None, ""
+    return 3, str(number)
+
+
 def legal_level(text: str) -> tuple[int | None, str]:
-    """(heading level, article number) if the text starts like a legal heading."""
+    """(heading level, article number) if the text starts like a legal heading. The article is "12", "13.2" or "10a"."""
+    first = text.strip().split("\n")[0][:200]
+    if ARABIC_RE.search(first[:40]):
+        return _legal_level_ar(first)
     for rx, lvl in _LEGAL:
-        m = rx.match(text)
-        if m:
-            art = m.group(1).translate(DIGITS_AR) if lvl == 3 and m.groups() else ""
-            return lvl, art
+        m = rx.match(first)
+        if not m:
+            continue
+        if lvl != 3:
+            return lvl, ""
+        full = _EN_FULL.match(first)
+        if not full or _EN_REFERENCE.match(full.group(2)):
+            return None, ""
+        return 3, full.group(1).translate(DIGITS_AR)
     return None, ""
 
 
@@ -277,7 +350,7 @@ def parse_pdf_pymupdf(data: bytes, opts: Options | None = None) -> Raw:
             blocks.append(_block("heading", text, it["page"], level=lvl))
         elif sz in heading_sizes and nwords <= 25:
             blocks.append(_block("heading", text, it["page"], level=min(heading_sizes.index(sz) + 1, 4)))
-        elif it["bold"] and nwords <= 12 and not text.endswith(_END_PUNCT):
+        elif it["bold"] and nwords <= 12 and (not text.endswith(_END_PUNCT) or _BOLD_TITLE_COLON.match(text)):
             blocks.append(_block("heading", text, it["page"], level=4))
         elif _CAPTION_RE.match(text) and nwords <= 40:
             blocks.append(_block("caption", text, it["page"]))
