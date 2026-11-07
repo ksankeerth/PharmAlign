@@ -1052,7 +1052,7 @@ async def _judge_finding(ctx: Ctx, p: Pinned, work: RunWork, c: CheckDetail, d: 
     failures = check_citations(finding.evidence, context)
     verified = [e for e in finding.evidence if not any(f.anchor == e.anchor for f in failures)]
     cited_laws = [context.chunks[e.anchor].doc_id for e in verified if context.chunks[e.anchor].origin == "kb"]
-    if not rules.agent_law_allowed(c, cited_laws):
+    if not rules.agent_law_allowed(c, cited_laws, supporting=[s.doc_id for s in d.supporting_sources]):
         failures.append(CitationFailure("law", "wrong_law", "The finding cites law other than the source this check is pinned to."))
     if finding.status == "met":
         if not cited_laws:

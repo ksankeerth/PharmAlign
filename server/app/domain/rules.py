@@ -394,12 +394,12 @@ def law_doc_for(source_doc_id: str, transition: Optional[TransitionRule] = None)
     return transition.to_doc_id if moved else source_doc_id
 
 
-def agent_law_allowed(check: CheckDetail, cited_doc_ids: Iterable[str], transition: Optional[TransitionRule] = None) -> bool:
-    """An agent answers from the law the pinned check names, or the one a person moved it to. Refuse anything else."""
+def agent_law_allowed(check: CheckDetail, cited_doc_ids: Iterable[str], transition: Optional[TransitionRule] = None, supporting: Iterable[str] = ()) -> bool:
+    """An agent answers from the law the pinned check names (or the one a person moved it to) and the check's supporting sources. Refuse anything else."""
     if check.source is None:
         return True
-    allowed = law_doc_for(check.source.doc_id, transition)
-    return all(doc_id == allowed for doc_id in cited_doc_ids)
+    allowed = {law_doc_for(check.source.doc_id, transition), *supporting}
+    return all(doc_id in allowed for doc_id in cited_doc_ids)
 
 
 # ---------------------------------------------------------------- the government record

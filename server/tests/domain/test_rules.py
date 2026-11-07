@@ -438,6 +438,13 @@ def test_after_a_persons_transition_the_new_law_is_the_only_one():
     assert R.agent_law_allowed(check(source=LAW), ["law-old"], moved) is False
 
 
+def test_a_checks_supporting_sources_are_allowed_and_nothing_else():
+    pinned = check(source=LAW)
+    assert R.agent_law_allowed(pinned, ["law-old", "guide-1"], supporting=["guide-1"]) is True
+    assert R.agent_law_allowed(pinned, ["guide-2"], supporting=["guide-1"]) is False
+    assert R.agent_law_allowed(pinned, ["guide-1"]) is False
+
+
 # ---------------------------------------------------------------- record outbox, notify, hold
 
 

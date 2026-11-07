@@ -70,6 +70,7 @@ def assessment_request(settings: Settings, run_id: str, case: CaseDetail, tenant
     check = CheckToAssess(
         id=definition.id, version=definition.version, question=definition.question,
         source=CheckSource(doc_id=s.doc_id, clause=s.clause or "Whole document") if s else None,
+        supporting_sources=[CheckSource(doc_id=x.doc_id, clause=x.clause) for x in definition.supporting_sources if x.clause],
         legal_force=definition.legal_force, method=definition.method, reads=definition.reads, extract=definition.extract,
     )
     moved = law_doc_for(s.doc_id, transition) if s else None
