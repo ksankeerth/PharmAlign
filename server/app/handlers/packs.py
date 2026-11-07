@@ -12,7 +12,7 @@ from ..domain.fingerprints import fingerprint_of
 from ..domain.guards import FROZEN, guard, pack_activate_guards, pack_approve_guards
 from ..domain.pack_validation import SourceCheck, clause_sources, json_diff, locked_step_changes, misplaced_new_steps, validate_pack_document
 from ..jobs import task
-from ..knowledge.search import APPROVED, like_contains
+from ..knowledge.search import APPROVED, clause_matches, like_contains
 from ..ops import Loose, op
 from ..paging import paginate
 from ..pipeline import runner
@@ -85,13 +85,13 @@ async def source_check_of(db, tenant_id: str, document: dict) -> SourceCheck:
     resolved: set[tuple[str, str]] = set()
     for doc_id, clause in pairs:
         pattern = like_contains(clause)
-        hit = await db.scalar(
-            select(chunk.id).join(version, version.id == chunk.document_version_id).join(item, item.document_version_id == chunk.document_version_id)
+        found = (await db.execute(
+            select(chunk.article, chunk.section_path).join(version, version.id == chunk.document_version_id).join(item, item.document_version_id == chunk.document_version_id)
             .where(item.snapshot_id == snapshot_id, item.tenant_id == tenant_id, version.document_id == doc_id,
                    version.review_status.in_(APPROVED), func.coalesce(version.quality_status, "attention") != "fail",
                    or_(chunk.article.ilike(pattern, escape="\\"), chunk.section_path.ilike(pattern, escape="\\")))
-            .limit(1))
-        if hit is not None:
+            .limit(200))).all()
+        if any(clause_matches(clause, article, path) for article, path in found):
             resolved.add((doc_id, clause))
     return SourceCheck(snapshot_id, frozenset(pairs - resolved))
 

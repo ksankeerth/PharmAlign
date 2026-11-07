@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, Validation
 from sqlalchemy import text
 
 from ..knowledge.embedding import Embedder, terms
-from ..knowledge.search import agent_search, like_contains
+from ..knowledge.search import agent_search, clause_matches, like_contains
 from ..pipeline.citations import CitationContext, SourceChunk, check_quote
 
 DocId = Field(min_length=1, max_length=128)
@@ -285,8 +285,9 @@ async def read_clause(conn, a: ReadClause, lim: Limits) -> dict:
         rows = await _rows(conn, f"SELECT {CLAUSE_COLUMNS} FROM agent_read.kb_chunk WHERE anchor = :a", a=a.anchor)
     elif a.document_id and a.article:
         rows = await _rows(conn, f"""SELECT {CLAUSE_COLUMNS} FROM agent_read.kb_chunk WHERE document_id = :d
-                                     AND (article ILIKE :p ESCAPE '\\' OR section_path ILIKE :p ESCAPE '\\') ORDER BY document_version_id, "position" LIMIT :n""",
-                           d=a.document_id, p=_like(a.article), n=lim.max_rows + 1)
+                                     AND (article ILIKE :p ESCAPE '\\' OR section_path ILIKE :p ESCAPE '\\') ORDER BY document_version_id, "position" LIMIT 200""",
+                           d=a.document_id, p=_like(a.article))
+        rows = [r for r in rows if clause_matches(a.article, r["article"], r["section_path"])]
     else:
         raise ToolFailure("invalid_arguments", "Give an anchor, or a document_id with an article.")
     if not rows:

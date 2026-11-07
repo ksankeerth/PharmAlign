@@ -10,6 +10,7 @@ the searches tried. A source that exists only outside the filter (superseded, sa
 from __future__ import annotations
 
 import asyncio
+import re
 from dataclasses import dataclass, field
 from typing import Any, Optional, Sequence
 
@@ -28,6 +29,15 @@ APPROVED = ("approved", "approved_with_notes")
 def like_contains(term: str) -> str:
     """An ILIKE pattern that matches `term` anywhere, with the pattern characters in it taken literally. Use with ESCAPE '\\'."""
     return "%" + term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+
+
+def clause_matches(clause: str, *fields: Optional[str]) -> bool:
+    """A field holds the clause as a whole label: "3.2.6.1" is in "3.2.6.1 General case" but not in "3.2.6.10", "Article 6" not in "Article 60"."""
+    want = clause.strip()
+    if not want:
+        return False
+    pattern = re.compile(r"(?<![0-9A-Za-z])" + re.escape(want) + r"(?![0-9])", re.IGNORECASE)
+    return any(f is not None and pattern.search(f) is not None for f in fields)
 
 
 @dataclass

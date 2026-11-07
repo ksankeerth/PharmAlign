@@ -1,4 +1,6 @@
 """Search filters first, ranks second, and says when nothing answers. Legal status belongs to a country's adoption."""
+from app.knowledge.search import clause_matches
+
 from .conftest import OTHER_OWNER, law
 
 
@@ -131,3 +133,13 @@ async def test_an_english_question_is_reranked_too(lib, monkeypatch):
     found = await lib.search("How long must operating licence records be kept?")
     assert fake.calls and found["hits"] and found["filters_applied"]["reranker"] == "fake"
     assert all("five years" in h["text"] for h in found["hits"])
+
+
+def test_a_clause_matches_only_as_a_whole_label():
+    assert clause_matches("3.2.6.1", None, "3.2 Stability > 3.2.6.1 General case")
+    assert not clause_matches("3.2.6.1", None, "3.2.6.10 Other conditions")
+    assert clause_matches("article (6)", "Article (6)", None)
+    assert not clause_matches("Article 6", "Article 60", None)
+    assert not clause_matches("6", "Article (16)", None)
+    assert clause_matches("3.2.6", "3.2.6.1", None)
+    assert not clause_matches("  ", "Article (6)", None)
