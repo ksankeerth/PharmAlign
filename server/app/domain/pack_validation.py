@@ -34,8 +34,11 @@ def clause_sources(doc: dict) -> Iterator[tuple[str, Optional[str], str, str]]:
             src = node.get("source")
             if isinstance(src, dict) and src.get("doc_id") and isinstance(src.get("clause"), str) and src["clause"].strip():
                 yield (path if check_id and path == f"checks[{check_id}]" else f"{path}.source"), check_id, src["doc_id"], src["clause"]
+            for i, ref in enumerate(node.get("supporting_sources") or []):
+                if isinstance(ref, dict) and ref.get("doc_id") and isinstance(ref.get("clause"), str) and ref["clause"].strip():
+                    yield f"{path}.supporting_sources[{i}]", check_id, ref["doc_id"], ref["clause"]
             for key, value in node.items():
-                if key != "source":
+                if key not in ("source", "supporting_sources"):
                     yield from walk(value, f"{path}.{key}" if path else key, check_id)
         elif isinstance(node, list):
             for item in node:
@@ -121,7 +124,8 @@ def validate_pack_document(doc: dict, known_doc_ids: Optional[set[str]] = None, 
                 if missing:
                     err(sp, "unknown_checks", f"{s['name']} refers to unknown checks: {', '.join(missing)}.")
     if source_check is not None:
-        sources = [x for x in clause_sources(doc) if known_doc_ids is None or x[2] in known_doc_ids]
+        # A main source outside the library already has its unknown_source error. A supporting one is checked here: it matches nothing.
+        sources = [x for x in clause_sources(doc) if known_doc_ids is None or x[2] in known_doc_ids or ".supporting_sources[" in x[0]]
         if source_check.snapshot_id is None:
             if sources:
                 warn("sources", "sources_unchecked", "Source clauses were not checked against the library: this workspace has no knowledge snapshot yet.")

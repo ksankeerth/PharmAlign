@@ -117,3 +117,17 @@ def test_no_snapshot_is_a_warning_not_an_error_and_a_source_without_a_clause_is_
     bare = {"final_escalation_holder": "x", "checks": [{"id": "A-01", "method": "code", "rule": {"x": 1}, "source": {"doc_id": "F-01"}}]}
     assert validate_pack_document(bare, {"F-01"}, SourceCheck(None)).issues == []
     assert validate_pack_document(bare, {"F-01"}, SourceCheck("snap-ae-14", frozenset({("F-01", "")}))).issues == []
+
+
+SUPPORTED = {"checks": [{"id": "LEGAL-01", "source": {"doc_id": "A-01", "clause": "Article (6)"},
+                         "supporting_sources": [{"doc_id": "B-01", "clause": "Required documents"}]}]}
+
+
+def test_supporting_sources_are_listed_with_the_main_source():
+    assert [x[1:] for x in clause_sources(SUPPORTED)] == [("LEGAL-01", "A-01", "Article (6)"), ("LEGAL-01", "B-01", "Required documents")]
+    assert [x[0] for x in clause_sources(SUPPORTED)] == ["checks[LEGAL-01]", "checks[LEGAL-01].supporting_sources[0]"]
+
+
+def test_an_unknown_or_unresolved_supporting_source_is_an_error():
+    v = validate_pack_document(SUPPORTED, known_doc_ids={"A-01"}, source_check=SourceCheck("snap-1", frozenset({("B-01", "Required documents")})))
+    assert [i.path for i in v.issues if i.rule == "source_clause_unresolved"] == ["checks[LEGAL-01].supporting_sources[0]"]
