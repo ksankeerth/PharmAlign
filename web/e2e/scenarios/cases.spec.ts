@@ -129,10 +129,7 @@ test.describe("case scenarios", () => {
     await expect(main(page).getByRole("row").filter({ hasText: "Accepted: cites A-01" })).toHaveCount(1);
   });
 
-  test("CASE-1049: no source found, and a gap candidate for the Process Owner", async ({ page }) => {
-    await open(page, "/cases/CASE-1049/checks/cr-1049-pack-01", PEOPLE.alex);
-    await expect(main(page).getByText("No source found", { exact: true })).toBeVisible();
-    await expect(main(page).getByText(/did not guess one/)).toBeVisible();
+  test("A gap candidate for child-resistant closures waits for the Process Owner", async ({ page }) => {
     await open(page, "/owner/gaps", PEOPLE.sam);
     await expect(main(page).getByText(/child-resistant/i).first()).toBeVisible();
   });

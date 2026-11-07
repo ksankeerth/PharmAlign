@@ -38,7 +38,7 @@ const EXTRA: Target[] = [
   { url: "/cases/CASE-1053/signing", as: PEOPLE.noor, title: "Signing as the second Decision Maker" },
   { url: "/cases/CASE-1043/checks/cr-1043-pv-01", as: PEOPLE.alex, title: "Check awaiting confirmation" },
   { url: "/cases/CASE-1046/checks/cr-1046-legal-01", as: PEOPLE.alex, title: "Check with a gate refusal" },
-  { url: "/cases/CASE-1049/checks/cr-1049-qual-07", as: PEOPLE.alex, title: "Check with no source found" },
+  { url: "/cases/CASE-1049/checks/cr-1049-qual-07", as: PEOPLE.alex, title: "Check on a clear case" },
   { url: "/cases/CASE-1050/checks/cr-1050-pv-01", as: PEOPLE.alex, title: "Check in Error" },
   { url: "/cases/CASE-1047/evidence", as: PEOPLE.alex, title: "Hidden text evidence" },
   { url: "/cases/CASE-1042/promote", as: PEOPLE.alex, title: "Promotion with failed guards" },

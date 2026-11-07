@@ -117,7 +117,7 @@ Workspaces: United Arab Emirates (demo, active), Saudi Arabia (demo), United Kin
 
 Packs: UAE v3 active and v4 draft by Sam (needs a simulation and Priya's approval), with a Standard route and a Reliance route (abridged) labelled proposed; QUAL-07 is a typed stability check citing E-S25 clause 3.2.6.1.
 
-Library: 290 documents generated from the public manifest (catalogue fields only; four event or programme pages skipped). A-11 and A-05 (the 2019 law and its Arabic edition) are superseded; A-01 is a non-official copy flagged "replace". Chunk text is a labelled paraphrase for passages the cases cite, otherwise a labelled placeholder.
+Library: 291 documents generated from the public manifest (catalogue fields only; four event or programme pages skipped). A-11 and A-05 (the 2019 law and its Arabic edition) are superseded; A-01 is a non-official copy flagged "replace". Chunk text is a labelled paraphrase for passages the cases cite, otherwise a labelled placeholder.
 
 | Case | Scenario |
 |---|---|
@@ -128,7 +128,7 @@ Library: 290 documents generated from the public manifest (catalogue fields only
 | CASE-1046 | Agent cited the repealed 2019 law: the gate refused it, the retry cites the 2024 law (see the trace's gate decisions) |
 | CASE-1047 | Hidden instruction text on page 14: held, hidden text shown separately |
 | CASE-1048 | Foreign suspension mid-review: recommendation v1 proceed then v2 hold, open watch match, urgent unacknowledged alert |
-| CASE-1049 | No applicable rule: cannot_tell, person confirms, gap candidate |
+| CASE-1049 | Clean file: every blocking check clear, recommendation proceed, in review |
 | CASE-1050 | Model failure: Error (not a failed check), re-run succeeds |
 | CASE-1039 | Signed grant, government record acknowledged |
 | CASE-1037 | Signed grant, record outcome unknown, needs read-back |
