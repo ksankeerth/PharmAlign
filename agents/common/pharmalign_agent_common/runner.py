@@ -102,7 +102,9 @@ def build_model(spec: AgentSpec, settings: Settings) -> BaseLlm:
     if settings.model_mode == "scripted":
         return scripted.unused_model()  # a run or session brings its own scripted model
     settings.apply_model_mode()
-    return Gemini(
+    from .vertex_schema import VertexSchemaGemini  # Vertex rejects union result schemas as written; the API-key path is left as it was
+
+    return (VertexSchemaGemini if settings.model_mode == "vertex" else Gemini)(
         model=settings.model_for(spec.name, spec.default_model),
         retry_options=types.HttpRetryOptions(attempts=3),
     )

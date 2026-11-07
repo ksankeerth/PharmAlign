@@ -198,15 +198,22 @@ async def search(db: AsyncSession, scope: Scope, query: str, embedder: Embedder,
 
 # ------------------------------------------------------------------ agents
 
+def _agent_scope(document_ids: Optional[Sequence[str]], countries: Optional[Sequence[str]]) -> tuple[Optional[list[str]], str, dict[str, Any]]:
+    """The WHERE clause and its parameters for an agent search. `countries` matches the document's country code (AE for the UAE), ignoring case."""
+    docs = list(dict.fromkeys(document_ids)) if document_ids else None
+    places = list(dict.fromkeys(c.strip().lower() for c in countries if c.strip())) if countries else None
+    conditions = (["document_id = ANY(CAST(:docs AS text[]))"] if docs else []) + (["lower(country) = ANY(CAST(:countries AS text[]))"] if places else [])
+    scope: dict[str, Any] = {**({"docs": docs} if docs else {}), **({"countries": places} if places else {})}
+    return docs, (" WHERE " + " AND ".join(conditions)) if conditions else "", scope
+
+
 async def agent_search(conn, query: str, embedder: Embedder, top_k: int = 10, requirement: bool = True,
-                       document_ids: Optional[Sequence[str]] = None) -> Found:
+                       document_ids: Optional[Sequence[str]] = None, countries: Optional[Sequence[str]] = None) -> Found:
     """The same ranking for an agent, through the agent_read views only. The run's tenant and case are set on the connection by the tool server,
     and the views show nothing else: the pinned snapshot, approved versions that passed the gate."""
     qvec = vector_text((await asyncio.to_thread(embedder.embed, [query]))[0])
     view = "agent_read.kb_requirement_chunk" if requirement else "agent_read.kb_chunk"
-    docs = list(dict.fromkeys(document_ids)) if document_ids else None
-    where = " WHERE document_id = ANY(CAST(:docs AS text[]))" if docs else ""
-    scope = {"docs": docs} if docs else {}
+    docs, where, scope = _agent_scope(document_ids, countries)
     sql = f"""
         WITH cand AS MATERIALIZED (SELECT * FROM {view}{where})
         SELECT c.anchor AS chunk_id, c.document_id, c.title, c.issuer, c.country AS jurisdiction, c.legal_status, c.authority_level, c.article, c.page, c.text,
@@ -223,6 +230,8 @@ async def agent_search(conn, query: str, embedder: Embedder, top_k: int = 10, re
     filters: dict[str, Any] = {"source": view, "similarity_floor": embedder.min_score, "applied_before_search": True}
     if docs:
         filters["document_ids"] = docs
+    if "countries" in scope:
+        filters["countries"] = scope["countries"]
     reranker = embedder.reranker
     if reranker and rows:
         filters.update(reranker=reranker.name, rerank_floor=reranker.min_score)

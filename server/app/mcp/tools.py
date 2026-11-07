@@ -268,16 +268,19 @@ class SearchKb(Args):
     top_k: int = Field(5, ge=1, le=20)
     document_ids: Optional[list[Annotated[str, StringConstraints(min_length=1, max_length=128)]]] = Field(
         None, max_length=20, description="Search only inside these knowledge documents, e.g. the check's source document.")
+    countries: Optional[list[Annotated[str, StringConstraints(min_length=2, max_length=8)]]] = Field(
+        None, max_length=12, description="Search only documents of these countries, as the codes the library stores, such as AE for the UAE (case ignored). "
+        "A document with no country code is left out. Use it to look in the home country first, then search again without it if nothing is found.")
 
 
-@tool("Searches the run's pinned knowledge snapshot, optionally only inside given documents. Filters first, then ranks. Says no_source_found when nothing qualifies.", SearchKb, needs_case=False)
+@tool("Searches the run's pinned knowledge snapshot, optionally only inside given documents or countries. Filters first, then ranks. Says no_source_found when nothing qualifies.", SearchKb, needs_case=False)
 async def search_kb(conn, a: SearchKb, lim: Limits) -> dict:
     docs = a.document_ids
     if lim.documents is not None:
         _in_scope(lim, docs or [])
         docs = docs or list(lim.documents)
     found = await agent_search(conn, a.query, lim.embedder, top_k=min(a.top_k, lim.max_rows), requirement=a.purpose == "requirement",
-                               document_ids=docs)
+                               document_ids=docs, countries=a.countries)
     return {"no_source_found": found.no_source_found, "hits": [h.model_dump(mode="json") for h in found.hits], "searched": found.searched,
             "purpose": a.purpose, "searches_tried": found.searches_tried}
 
