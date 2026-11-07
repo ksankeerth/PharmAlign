@@ -36,6 +36,14 @@ class Limits:
     max_rows: int
     embedder: Embedder
     now: datetime
+    documents: Optional[tuple[str, ...]] = None  # a checklist-assessor run: the only knowledge documents it may read. None: the whole snapshot.
+
+
+def _in_scope(lim: Limits, doc_ids: list[str]) -> None:
+    """Refuses a read of a knowledge document outside the run's check documents."""
+    outside = [d for d in doc_ids if lim.documents is not None and d not in lim.documents]
+    if outside:
+        raise ToolFailure("outside_check_sources", f"This check may read only {', '.join(lim.documents)}. {outside[0][:64]} is outside it.")
 
 
 class Args(BaseModel):
@@ -264,8 +272,12 @@ class SearchKb(Args):
 
 @tool("Searches the run's pinned knowledge snapshot, optionally only inside given documents. Filters first, then ranks. Says no_source_found when nothing qualifies.", SearchKb, needs_case=False)
 async def search_kb(conn, a: SearchKb, lim: Limits) -> dict:
+    docs = a.document_ids
+    if lim.documents is not None:
+        _in_scope(lim, docs or [])
+        docs = docs or list(lim.documents)
     found = await agent_search(conn, a.query, lim.embedder, top_k=min(a.top_k, lim.max_rows), requirement=a.purpose == "requirement",
-                               document_ids=a.document_ids)
+                               document_ids=docs)
     return {"no_source_found": found.no_source_found, "hits": [h.model_dump(mode="json") for h in found.hits], "searched": found.searched,
             "purpose": a.purpose, "searches_tried": found.searches_tried}
 
@@ -282,8 +294,10 @@ class ReadClause(Args):
 @tool("Reads a clause of the run's pinned snapshot by anchor, or by document and article, with its legal status.", ReadClause, needs_case=False)
 async def read_clause(conn, a: ReadClause, lim: Limits) -> dict:
     if a.anchor:
+        _in_scope(lim, [a.anchor.split(":")[0]])
         rows = await _rows(conn, f"SELECT {CLAUSE_COLUMNS} FROM agent_read.kb_chunk WHERE anchor = :a", a=a.anchor)
     elif a.document_id and a.article:
+        _in_scope(lim, [a.document_id])
         rows = await _rows(conn, f"""SELECT {CLAUSE_COLUMNS} FROM agent_read.kb_chunk WHERE document_id = :d
                                      AND (article ILIKE :p ESCAPE '\\' OR section_path ILIKE :p ESCAPE '\\') ORDER BY document_version_id, "position" LIMIT 200""",
                            d=a.document_id, p=_like(a.article))
@@ -316,9 +330,13 @@ class LookupTerm(Args):
 
 @tool("Finds where the run's pinned snapshot defines or uses a term. Definitions and in-force sources come first.", LookupTerm, needs_case=False)
 async def lookup_term(conn, a: LookupTerm, lim: Limits) -> dict:
+    scoped = lim.documents is not None
+    only_docs = "AND document_id = ANY(CAST(:docs AS text[]))" if scoped else ""
     rows = await _rows(conn, f"""SELECT {CLAUSE_COLUMNS}, chunk_type FROM agent_read.kb_chunk WHERE text ILIKE :p ESCAPE '\\'
+        {only_docs}
         ORDER BY coalesce(chunk_type = 'definition' OR section_path ILIKE '%definition%' OR article ILIKE '%definition%', false) DESC,
-                 usable_as_requirement DESC, authority_level, anchor LIMIT :n""", p=_like(a.term), n=min(5, lim.max_rows))
+                 usable_as_requirement DESC, authority_level, anchor LIMIT :n""", p=_like(a.term), n=min(5, lim.max_rows),
+                 **({"docs": list(lim.documents)} if scoped else {}))
     return {"term": a.term, "no_source_found": not rows, "passages": rows}
 
 

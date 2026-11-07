@@ -14,10 +14,12 @@ from app.main import UnsafeConfiguration, create_app
 from app.mcp.server import CONTRACT_TOOLS, agent_database_url, not_built
 from app.mcp.token import BadToken, read, run_token as make_run_token
 from app.mcp.tools import TOOLS
+from app.pipeline.records import RunWork
+from app.stores import STORES
 
 from ..conftest import START, TENANT, TEST_URL
 from .conftest import (CASE, OTHER_CASE, SA_CASE, SA_SNAPSHOT, SA_TENANT, SNAPSHOT, add_run, call, connect, http, run_token, session_token,
-                       token)
+                       system, token)
 
 pytestmark = pytest.mark.seeded
 CONTRACT = {a.name: a.tools for a in RUN_AGENTS}
@@ -285,3 +287,43 @@ async def test_mcp_is_not_mounted_when_disabled(make_app):
 def test_the_agent_login_defaults_to_the_development_role_in_simulation():
     url = agent_database_url(Settings(env="simulation", database_url=TEST_URL))
     assert url.startswith("postgresql+asyncpg://pharmalign_agent:pharmalign_agent@")
+
+
+# ---------------------------------------------------------------- a check's documents
+
+async def add_assessor_run(engine, source: dict, supporting: list | None = None, moved: dict | None = None) -> str:
+    """An assessor run with the request the runner stores for it."""
+    run_id = await add_run(engine, "checklist-assessor")
+    request = {"check": {"id": "LEGAL-01", "source": source, "supporting_sources": supporting or []}, "moved_source": moved}
+    async with make_sessions(engine)() as db, db.begin():
+        STORES["agent_run_work"].add(system(db), RunWork(run_id=run_id, agent="checklist-assessor", kind="check", case_id=CASE, pipeline_run_id="pr-test",
+                                                         generation=1, attempt=1, check_id="LEGAL-01", request=request, next_poll_at=START,
+                                                         deadline_at=START + timedelta(hours=1)))
+    return run_id
+
+
+async def test_an_assessor_run_reads_only_its_checks_documents(app, engine):
+    run_id = await add_assessor_run(engine, {"doc_id": "A-01", "clause": "Article (6)"})
+    async with connect(app, token(app, run_id, "checklist-assessor")) as s:
+        hits = (await call(s, "search_kb", query="The Applicant shall be a Pharmaceutical Establishment licensed as a Marketing Office", top_k=10))["hits"]
+        assert hits and {h["document_id"] for h in hits} == {"A-01"}
+        refused = await call(s, "search_kb", query="required documents", document_ids=["B-01"])
+        assert refused.error and refused["code"] == "outside_check_sources"
+        assert (await call(s, "read_clause", document_id="B-01", article="Required documents"))["code"] == "outside_check_sources"
+        assert (await call(s, "read_clause", document_id="A-01", article="Article (6)"))["clauses"]
+        assert all(p["document_id"] == "A-01" for p in (await call(s, "lookup_term", term="applicant"))["passages"])
+
+
+async def test_supporting_sources_widen_the_scope_and_other_agents_are_not_scoped(app, engine):
+    run_id = await add_assessor_run(engine, {"doc_id": "A-01", "clause": "Article (6)"}, [{"doc_id": "B-01", "clause": "Required documents"}])
+    async with connect(app, token(app, run_id, "checklist-assessor")) as s:
+        assert (await call(s, "read_clause", document_id="B-01", article="Required documents"))["clauses"]
+    async with connect(app, await run_token(app, engine, "challenger")) as s:
+        assert (await call(s, "read_clause", document_id="B-01", article="Required documents"))["clauses"]
+
+
+async def test_a_check_moved_to_other_law_reads_that_law_and_not_the_old_one(app, engine):
+    run_id = await add_assessor_run(engine, {"doc_id": "A-01", "clause": "Article (6)"}, moved={"doc_id": "B-01", "clause": "Whole document"})
+    async with connect(app, token(app, run_id, "checklist-assessor")) as s:
+        assert (await call(s, "read_clause", document_id="A-01", article="Article (6)"))["code"] == "outside_check_sources"
+        assert (await call(s, "read_clause", document_id="B-01", article="Required documents"))["clauses"]

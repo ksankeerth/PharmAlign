@@ -45,6 +45,7 @@ log = logging.getLogger(__name__)
 CONTRACT_TOOLS: dict[str, tuple[str, ...]] = {a.name: a.tools for a in RUN_AGENTS} | {ASSISTANT: ASSISTANT_TOOLS}
 CASELESS = {"reliance-watch", "gap-analyst"}  # may run for the whole workspace, with no case
 SLUG = re.compile(r"^[a-z][a-z0-9_-]{0,63}$")
+SCOPED_AGENTS = frozenset({"checklist-assessor"})  # their knowledge tools read only the documents their check names
 DEV_AGENT_PASSWORD = "pharmalign_agent"
 
 
@@ -171,6 +172,22 @@ class ToolServer:
             return "unknown_session", "The token names a session that isn't there."
         return None
 
+    async def check_documents(self, run: RunScope) -> Optional[tuple[str, ...]]:
+        """The knowledge documents an assessor run may read: the source its request names (or the law a person moved the check to) and the
+        check's supporting sources. None means the whole snapshot: other agents, sessions, and a check with no source."""
+        if run.kind != "run" or run.agent not in SCOPED_AGENTS:
+            return None
+        async with self.rt.sessions() as db:
+            row = await db.get(ROW["agent_run_work"], run.id)
+        if row is None or row.tenant_id != run.tenant:
+            return None
+        request = row.doc.get("request") or {}
+        check = request.get("check") or {}
+        main = request.get("moved_source") or check.get("source")
+        if not main:
+            return None
+        return tuple(dict.fromkeys([main["doc_id"], *(s["doc_id"] for s in check.get("supporting_sources") or [])]))
+
     # ------------------------------------------------------------ MCP
 
     async def _list(self, req: types.ListToolsRequest) -> types.ServerResult:
@@ -207,11 +224,12 @@ class ToolServer:
             args = tool.args.model_validate(arguments)
         except ValidationError as e:
             return "error:invalid_arguments", _error(name, "invalid_arguments", f"Invalid arguments: {e.errors()[0]['loc']} {e.errors()[0]['msg']}")
+        documents = await self.check_documents(run)
         try:
             async with self.agent_engine.connect() as conn, conn.begin():
                 await conn.execute(text("SET TRANSACTION READ ONLY"))
                 await self._scope_connection(conn, run)
-                result = await tool.run(conn, args, Limits(self.rt.settings.mcp_max_rows, self.embedder, self.rt.clock.now()))
+                result = await tool.run(conn, args, Limits(self.rt.settings.mcp_max_rows, self.embedder, self.rt.clock.now(), documents))
         except ToolFailure as f:
             return f"error:{f.code}", _error(name, f.code, f.message, f.retryable)
         except Exception:
