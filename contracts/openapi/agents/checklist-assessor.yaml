@@ -662,6 +662,13 @@ components:
           anyOf:
           - $ref: '#/components/schemas/CheckSource'
           - type: 'null'
+        supporting_sources:
+          items:
+            $ref: '#/components/schemas/CheckSource'
+          type: array
+          maxItems: 5
+          title: Supporting Sources
+          description: Other documents the check may read and cite. Law comes only from `source` and these.
         legal_force:
           type: string
           enum:

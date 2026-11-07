@@ -259,6 +259,7 @@ export function newCheck(doc: PackDocument, question: string): CheckDefinition {
     question,
     source: null,
     local_practice: true,
+    supporting_sources: [],
     legal_force: "guidance",
     case_types: [],
     product_types: [],

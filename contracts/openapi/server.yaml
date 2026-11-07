@@ -8959,6 +8959,14 @@ components:
           - type: 'null'
           default: null
           description: Required unless marked local practice.
+        supporting_sources:
+          description: Other documents this check may read and cite, each with its clause, e.g. the guideline that
+            implements the law.
+          items:
+            $ref: '#/components/schemas/SourceRef'
+          maxItems: 5
+          title: Supporting Sources
+          type: array
         local_practice:
           default: false
           title: Local Practice

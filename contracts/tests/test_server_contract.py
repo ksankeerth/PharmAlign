@@ -248,6 +248,22 @@ def test_check_needs_a_source_or_local_practice():
     m.CheckDefinition.model_validate({**CHECK, "source": None, "local_practice": True})
 
 
+def test_supporting_sources_need_a_main_source_a_clause_and_no_repeats():
+    m.CheckDefinition.model_validate({**CHECK, "supporting_sources": [{"doc_id": "G-01", "clause": "2.1.7"}]})
+    for bad in (
+        {**CHECK, "source": None, "local_practice": True, "supporting_sources": [{"doc_id": "G-01", "clause": "2.1.7"}]},
+        {**CHECK, "supporting_sources": [{"doc_id": "G-01"}]},
+        {**CHECK, "supporting_sources": [{"doc_id": "G-01", "clause": "2.1.7"}, {"doc_id": "G-01", "clause": "2.1.7"}]},
+        {**CHECK, "supporting_sources": [{"doc_id": "E-S25", "clause": "3.2.6.1"}]},
+    ):
+        with pytest.raises(ValidationError):
+            m.CheckDefinition.model_validate(bad)
+
+
+def test_a_check_with_no_supporting_sources_has_an_empty_list():
+    assert m.CheckDefinition.model_validate(CHECK).supporting_sources == []
+
+
 def test_agent_check_needs_a_source():
     base = {k: v for k, v in CHECK.items() if k not in ("rule", "extract")}
     with pytest.raises(ValidationError):

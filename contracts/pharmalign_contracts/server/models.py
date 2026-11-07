@@ -599,6 +599,9 @@ class CheckDefinition(Strict):
     version: Annotated[int, Field(ge=1)]
     question: Annotated[str, Field(min_length=1, max_length=1000)]
     source: Optional[SourceRef] = Field(None, description="Required unless marked local practice.")
+    supporting_sources: list[SourceRef] = Field(
+        default_factory=list, max_length=5,
+        description="Other documents this check may read and cite, each with its clause, e.g. the guideline that implements the law.")
     local_practice: bool = False
     legal_force: Literal["binding", "guidance", "none"]
     case_types: list[Slug] = Field(default_factory=list, description="Empty means all.")
@@ -619,6 +622,13 @@ class CheckDefinition(Strict):
     def _rules(self) -> "CheckDefinition":
         if self.source is None and not self.local_practice:
             raise ValueError("a check needs a source, or must be marked local practice")
+        if self.supporting_sources and self.source is None:
+            raise ValueError("supporting sources need a main source")
+        if any(not s.clause for s in self.supporting_sources):
+            raise ValueError("each supporting source needs a clause")
+        pairs = [(s.doc_id, s.clause) for s in self.supporting_sources]
+        if len(set(pairs)) != len(pairs) or (self.source is not None and (self.source.doc_id, self.source.clause) in pairs):
+            raise ValueError("a supporting source repeats another source of this check")
         if self.method == "typed" and (not self.extract or not self.rule):
             raise ValueError("a typed check needs values to extract and a rule")
         if self.method == "code" and not self.rule:

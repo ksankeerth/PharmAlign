@@ -2871,6 +2871,11 @@ export interface components {
              */
             source?: components["schemas"]["SourceRef"] | null;
             /**
+             * Supporting Sources
+             * @description Other documents this check may read and cite, each with its clause, e.g. the guideline that implements the law.
+             */
+            supporting_sources?: components["schemas"]["SourceRef"][];
+            /**
              * Local Practice
              * @default false
              */

@@ -107,6 +107,8 @@ class CheckToAssess(Strict):
     version: Annotated[int, Field(ge=1)]
     question: Annotated[str, Field(min_length=1, max_length=1000)]
     source: Optional[CheckSource] = None
+    supporting_sources: list[CheckSource] = Field(
+        default_factory=list, max_length=5, description="Other documents the check may read and cite. Law comes only from `source` and these.")
     legal_force: Literal["binding", "guidance", "none"]
     method: Literal["agent", "typed"] = Field(
         description="`typed`: extract the listed values and give no verdict. Code applies the rule."

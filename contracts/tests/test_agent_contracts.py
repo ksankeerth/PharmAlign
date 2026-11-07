@@ -328,3 +328,9 @@ def test_nothing_refers_to_internal_planning():
                 if pattern.search(line):
                     hits.append(f"{path.relative_to(ROOT)}:{number}: {line.strip()[:80]}")
     assert not hits, "\n".join(hits)
+
+
+def test_a_check_to_assess_carries_its_supporting_sources():
+    base = dict(id="LEGAL-01", version=1, question="q", source={"doc_id": "A-01", "clause": "Article (6)"}, legal_force="binding", method="agent")
+    assert ag.CheckToAssess(**base, supporting_sources=[{"doc_id": "B-01", "clause": "Required documents"}]).supporting_sources[0].doc_id == "B-01"
+    assert ag.CheckToAssess(**base).supporting_sources == []
