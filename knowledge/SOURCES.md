@@ -1,6 +1,6 @@
 # Document sources
 
-PharmAlign's knowledge library lists the 290 public documents below. **None of them is stored in this repository, and none may be republished from it or from the prototype.** They belong to their publishers, under the publishers' own terms. See [NOTICE](../NOTICE).
+PharmAlign's knowledge library lists the 291 public documents below. **None of them is stored in this repository, and none may be republished from it or from the prototype.** They belong to their publishers, under the publishers' own terms. See [NOTICE](../NOTICE).
 
 The library in the prototype is for showing how the platform works. To read, quote or rely on a document, go to the official source listed here.
 
@@ -38,7 +38,7 @@ Folder: `UAE_Federal_Laws`
 | `D-05` | Cabinet Resolution No. (32) of 2020 Concerning the Executive Regulation of Federal Law No. (2) of 2019 | UAE Cabinet | [uaelegislation.gov.ae](https://uaelegislation.gov.ae/en/legislations/1444/download) |
 | `D-18` | Federal Decree by Law No. (44) of 2021 on the Establishment of the UAE Data Office | UAE Government | [uaelegislation.gov.ae](https://uaelegislation.gov.ae/en/legislations/2433/download) |
 
-## UAE medicines authority guidance (34)
+## UAE medicines authority guidance (35)
 
 Folder: `UAE_EDE_MOHAP_Guidance`
 
@@ -78,6 +78,15 @@ Folder: `UAE_EDE_MOHAP_Guidance`
 | `B-S15` | Drugs and controlled medicines: travellers bringing medicines into the UAE (u.ae guidance) | UAE Government (u.ae) | [u.ae](https://u.ae/en/information-and-services/health-and-fitness/Health-and-wellbeing/drugs-and-controlled-medicines) |
 | `B-S16` | List of controlled medicines (UAE, 2022) | UAE Government (u.ae) | [assets.u.ae](https://assets.u.ae/api/public/content/7344def481c54a4684aa3a2d1968a4f5?v=6018e94e) |
 | `B-S17` | UAE Government portal page (Arabic edition) | UAE Government (u.ae) | [u.ae](https://u.ae/ar/information-and-services/health-and-fitness/health-and-wellbeing/drugs-and-controlled-medicines) |
+| `B-S18` | MOHAP Reference Country List (2023) | MOHAP | [mohap.gov.ae](https://mohap.gov.ae/assets/download/fdb1c746/Reference%20Country%20List%20-%20PDF%2021KB_638193238967131216.pdf.aspx) |
+
+Note on `B-S18`. The copy in the library was retrieved from the Internet Archive's copy of the MOHAP file
+(`http://web.archive.org/web/20230924095606id_/https://mohap.gov.ae/assets/download/fdb1c746/Reference%20Country%20List%20-%20PDF%2021KB_638193238967131216.pdf.aspx`),
+not from the MOHAP site. The list dates from 10 May 2023 and so predates the move of registration to the Emirates Drug Establishment (29 December 2025).
+Confirm with EDE that it is still current. EDE has also designated Korea's MFDS as a reference authority (UAE Ministry of Foreign Affairs statement of 3 November 2025,
+https://www.mofa.gov.ae/en/mediahub/news/2025/11/3/3-11-2025-uae-south-korea), and Korea is not in this list.
+The country pack uses route A of the list only (21 reference countries and bodies). Route B (registered in at least 4 of 16 further EU/EEA states) is not modelled yet.
+The two "Reference Agency (synthetic)" entries in the pack's trusted regulators are demo stand-ins for the fictional demo cases.
 
 ## UAE emirate health authorities (27)
 

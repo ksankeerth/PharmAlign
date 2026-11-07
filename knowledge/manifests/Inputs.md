@@ -1,6 +1,6 @@
 # Inputs
 
-Documents: 294. Full metadata: `../Inputs.csv`.
+Documents: 295. Full metadata: `../Inputs.csv`.
 
 The documents are not stored in this repository: they belong to their publishers (see `NOTICE`). Download each one from its source link, or use the prebuilt knowledge base shared with the organisers.
 
@@ -63,6 +63,7 @@ The documents are not stored in this repository: they belong to their publishers
 | B-S15__drugs-and-controlled-medicines-travellers-bringing-medic__en.html | policy_document | Drugs and controlled medicines: travellers bringing medicines into the UAE (u.ae guidance) | en | 2 | in_force | https://u.ae/en/information-and-services/health-and-fitness/Health-and-wellbeing/drugs-and-controlled-medicines |
 | B-S16__list-of-controlled-medicines-uae-2022__en.pdf | policy_document | List of controlled medicines (UAE, 2022) | en | 2 | in_force | https://assets.u.ae/api/public/content/7344def481c54a4684aa3a2d1968a4f5?v=6018e94e |
 | B-S17__uae-government-u-ae-web-page__ar.html | policy_document | المواد المخدرة والأدوية الخاضعة للرقابة (u.ae) | ar | 2 | in_force | https://u.ae/ar/information-and-services/health-and-fitness/health-and-wellbeing/drugs-and-controlled-medicines |
+| B-S18__mohap-reference-country-list__en.pdf | policy_document | MOHAP Reference Country List (2023) | en | 2 | in_force | https://mohap.gov.ae/assets/download/fdb1c746/Reference%20Country%20List%20-%20PDF%2021KB_638193238967131216.pdf.aspx |
 
 ## UAE_Emirate_Health_Authorities
 

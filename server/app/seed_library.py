@@ -26,8 +26,8 @@ UPLOADER, REVIEWER = "p-jordan", "p-sam"  # two distinct people: nobody approves
 ALWAYS = ("A-01", "A-03", "A-12")
 ARABIC = ("E-S01", "E-S14", "E-S17", "E-S21", "B-06", "A-S06", "E-S08", "E-S09", "E-S18", "E-02", "B-S17", "B-S04", "C-11")
 ALSO = ("D-03", "C-19")
-# Seeded cases cite short excerpts of these documents, so their first version stays in force beside the full text.
-CITED_EXCERPTS = frozenset({"A-01", "A-11", "B-S09", "E-S06", "E-S25", "F-01"})
+# Seeded cases and packs cite short excerpts of these documents, so their first version stays in force beside the full text.
+CITED_EXCERPTS = frozenset({"A-01", "A-11", "B-S09", "B-S18", "E-S06", "E-S25", "F-01"})
 LIBRARY_DIR = Path(os.environ.get("PHARMALIGN_LIBRARY_DIR") or Path(__file__).resolve().parents[2] / "knowledge" / "documents")
 PRESET_FOR = {"law": "law", "cabinet_resolution": "law", "executive_regulation": "law", "service_card": "web_page", "procedure": "web_page"}
 EXTENSIONS = (".pdf", ".html", ".txt")
