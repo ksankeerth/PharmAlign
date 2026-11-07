@@ -121,12 +121,13 @@ async def test_when_the_reranker_trusts_nothing_the_answer_is_no_source(lib, mon
     assert found["searches_tried"][0]["floor"] == 0.5
 
 
-async def test_an_english_question_is_not_reranked(lib, monkeypatch):
-    fake = FakeReranker()
+async def test_an_english_question_is_reranked_too(lib, monkeypatch):
+    fake = FakeReranker(known="five years")
     monkeypatch.setattr("app.knowledge.rerank.get_reranker", lambda settings: fake)
     doc = await lib.register("Operating licences")
     version = (await lib.upload(doc, law("operating licences")))["id"]
     await lib.process(version)
     await lib.adopt(version, "in_force")
-    await lib.search("operating licences records")
-    assert fake.calls == []
+    found = await lib.search("How long must operating licence records be kept?")
+    assert fake.calls and found["hits"] and found["filters_applied"]["reranker"] == "fake"
+    assert all("five years" in h["text"] for h in found["hits"])

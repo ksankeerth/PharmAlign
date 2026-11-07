@@ -1,4 +1,4 @@
-"""Keyword search for Arabic questions: stemmed words stored beside each chunk, and BM25 over the chunks a filter let through.
+"""Keyword search for every question: stemmed words stored beside each chunk, and BM25 over the chunks a filter let through.
 
 Scoring happens here and not in Postgres, whose ranking has no idea how rare a word is. Arabic attaches short words to the front of a
 word and endings to the back, so one light stem makes المنتجات and للمنتج the same word. Pure, with no database.

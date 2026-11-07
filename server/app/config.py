@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     # Knowledge. `auto` is bge-m3 when installed, else the deterministic embedder in simulation. The floor is the least similarity that counts as a source.
     embedder: Literal["auto", "hash", "bge-m3"] = "auto"
     similarity_floor: Optional[float] = None
-    # Arabic questions only: bge-reranker-v2-m3 reorders the best of vector and keyword search. It needs the bge-m3 extra.
+    # Every question: bge-reranker-v2-m3 reorders the best of vector and keyword search. It needs the bge-m3 extra.
     reranker: Literal["off", "bge-reranker-v2-m3"] = "off"
     rerank_candidates: int = 15
     rerank_floor: float = 0.0

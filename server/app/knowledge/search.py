@@ -147,7 +147,7 @@ async def search(db: AsyncSession, scope: Scope, query: str, embedder: Embedder,
         "applied_before_search": True, "embedder": embedder.name, "similarity_floor": embedder.min_score,
     }
     rows, searched = await _ranked(db, scope, not requirement, embedder, qvec, top_k + 25)
-    reranker = embedder.reranker if query_arabic else None
+    reranker = embedder.reranker
     if reranker and rows:
         filters.update(reranker=reranker.name, rerank_floor=reranker.min_score)
         kept, top = await _reranked(query, rows, await _keyword_rows(db, scope, not requirement, query), searched, reranker, top_k)
@@ -213,7 +213,7 @@ async def agent_search(conn, query: str, embedder: Embedder, top_k: int = 10, re
     filters: dict[str, Any] = {"source": view, "similarity_floor": embedder.min_score, "applied_before_search": True}
     if docs:
         filters["document_ids"] = docs
-    reranker = embedder.reranker if query_arabic else None
+    reranker = embedder.reranker
     if reranker and rows:
         filters.update(reranker=reranker.name, rerank_floor=reranker.min_score)
         words = tsquery(query)
