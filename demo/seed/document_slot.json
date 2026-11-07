@@ -12,5 +12,5 @@
 {"tenant_id":"ws-ae","doc":{"id":"sl-11","key":"variations_guideline","label":"Variations","importance":"nice","status":"filled","document_id":"E-S03","gap_id":null,"notes":null}},
 {"tenant_id":"ws-ae","doc":{"id":"sl-12","key":"recall_policy","label":"Recall procedure","importance":"nice","status":"filled","document_id":"C-19","gap_id":null,"notes":null}},
 {"tenant_id":"ws-ae","doc":{"id":"sl-13","key":"pricing_rules","label":"Pricing rules","importance":"nice","status":"bad_copy","document_id":"B-S01","gap_id":null,"notes":"Scanned edition: 6 pages have no text layer."}},
-{"tenant_id":"ws-ae","doc":{"id":"sl-14","key":"child_resistant_packaging","label":"Child-resistant packaging","importance":"nice","status":"missing","document_id":null,"gap_id":"gap-02","notes":"No source found during PACK-01."}}
+{"tenant_id":"ws-ae","doc":{"id":"sl-14","key":"child_resistant_packaging","label":"Child-resistant packaging","importance":"nice","status":"missing","document_id":null,"gap_id":"gap-02","notes":"No source found."}}
 ]
