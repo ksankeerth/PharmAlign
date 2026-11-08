@@ -26,10 +26,13 @@ scripts/dev.sh status
 scripts/dev.sh stop              # add --all to stop the database too
 scripts/dev.sh restart --reseed  # empty the database and load the demo data again
 scripts/dev.sh start --no-agents # the server answers from recordings instead
+scripts/dev.sh restart --live-assistant # the Knowledge Assistant answers live (needs a Google login, see below)
 scripts/dev.sh logs [server|web|<agent name>]
 ```
 
 The demo is reset from Platform Admin › Demo in the app, or with `scripts/dev.sh restart --reseed`.
+
+`--live-assistant` swaps the Knowledge Assistant's recorded answers for the chat pipeline with Gemini on Vertex AI. It needs a Google login (`gcloud auth application-default login`) and `agents/knowledge-assistant/.env` (copy `.env.example`: a Google Cloud project and `GOOGLE_CLOUD_LOCATION=global`, no API key). Each question costs a fraction of a cent. The other seven agents stay scripted, and chats opened on a case run live too. Without the option nothing changes, and the stack needs no key.
 
 The steps below do the same by hand.
 

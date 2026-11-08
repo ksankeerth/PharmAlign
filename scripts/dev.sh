@@ -10,7 +10,8 @@
 #   --reseed       empty the database and load the demo data again (with the real law text when found)
 #   --no-agents    don't start the agents: the server answers from recordings (replay)
 #   --no-web       don't start the web UI
-# The database is seeded on the first start, when it is empty. The agents use the scripted model (no key).
+#   --live-assistant  run the Knowledge Assistant live (chat pipeline, Gemini on Vertex AI with your Google login) instead of scripted
+# The database is seeded on the first start, when it is empty. The agents use the scripted model (no key), except with --live-assistant.
 set -euo pipefail
 unset VIRTUAL_ENV
 cd "$(dirname "$0")/.."
@@ -25,12 +26,13 @@ AGENT_PORT_BASE=8101
 
 cmd="${1:-start}"
 [ $# -gt 0 ] && shift
-RESEED=0 AGENTS_ON=1 WEB_ON=1 STOP_DB=0
+RESEED=0 AGENTS_ON=1 WEB_ON=1 STOP_DB=0 LIVE_ASSISTANT=0
 for arg in "$@"; do
   case "$arg" in
     --reseed) RESEED=1 ;;
     --no-agents) AGENTS_ON=0 ;;
     --no-web) WEB_ON=0 ;;
+    --live-assistant) LIVE_ASSISTANT=1 ;;
     --all) STOP_DB=1 ;;
     *) [ "$cmd" = "logs" ] || { echo "Unknown option: $arg" >&2; exit 2; } ;;
   esac
@@ -112,8 +114,11 @@ do_start() {
   if [ "$AGENTS_ON" = 1 ]; then
     if curl -fs "http://127.0.0.1:$AGENT_PORT_BASE/health" >/dev/null 2>&1; then
       echo "Agents already running."
+      if [ "$LIVE_ASSISTANT" = 1 ] && [ ! -f "$RUN_DIR/agents/knowledge-assistant.live" ]; then
+        echo "They are not running with the live assistant. Run: scripts/dev.sh restart --live-assistant" >&2
+      fi
     else
-      PHARMALIGN_RUN_DIR="$RUN_DIR/agents" scripts/run-local-agents.sh start || { do_stop; exit 1; }
+      PHARMALIGN_KA_LIVE="$LIVE_ASSISTANT" PHARMALIGN_RUN_DIR="$RUN_DIR/agents" scripts/run-local-agents.sh start || { do_stop; exit 1; }
     fi
   fi
 
@@ -140,7 +145,8 @@ show_status() {
   printf '  %-20s %-8s %s\n' web "$(curl -fs "http://127.0.0.1:$WEB_PORT/" >/dev/null 2>&1 && echo up || echo down)" "http://127.0.0.1:$WEB_PORT"
   for i in "${!AGENTS[@]}"; do
     name=${AGENTS[$i]}; port=$((AGENT_PORT_BASE + i))
-    printf '  %-20s %-8s %s\n' "$name" "$(curl -fs "http://127.0.0.1:$port/health" >/dev/null 2>&1 && echo up || echo down)" "http://127.0.0.1:$port"
+    printf '  %-20s %-8s %s%s\n' "$name" "$(curl -fs "http://127.0.0.1:$port/health" >/dev/null 2>&1 && echo up || echo down)" "http://127.0.0.1:$port" \
+      "$([ "$name" = knowledge-assistant ] && [ -f "$RUN_DIR/agents/knowledge-assistant.live" ] && echo '  (live)')"
   done
   echo
 }
