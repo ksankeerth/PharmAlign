@@ -13,6 +13,7 @@ import { humanize } from "../../lib/labels";
 import { pickFields, type FieldMap } from "../../lib/fillJson";
 import { DOC_TYPE_LABEL, LEGAL_LABEL, LegalPill, Metric, REVIEW_LABEL, ReviewPill } from "./shared";
 import { actsAs } from "../../lib/roles";
+import { LibraryOverview } from "./LibraryOverview";
 
 const REVIEW_STATUSES = ["unreviewed", "approved", "approved_with_notes", "rejected", "needs_update"] as const;
 const PAGE = 40;
@@ -238,7 +239,7 @@ async function loadAll(workspaceId: string): Promise<Row[]> {
     const l = legal.get(doc.latest_version_id ?? "") ?? null;
     const slot = slotOf.get(doc.id) ?? null;
     const flags: Row["flags"] = [];
-    if (slot?.status === "replace") flags.push({ key: "nonofficial", label: "Non-official copy", tone: "held", title: slot.notes ?? "Replace with the official text." });
+    if (slot?.status === "replace") flags.push({ key: "nonofficial", label: "Unofficial copy", tone: "look", title: slot.notes ?? "Replace with the official text." });
     if (slot?.status === "bad_copy") flags.push({ key: "badcopy", label: "Bad copy", tone: "held", title: slot.notes ?? "The copy is unusable." });
     if (l === "superseded") flags.push({ key: "superseded", label: "Superseded", tone: "held", title: "Replaced by a newer text. Cannot back a requirement." });
     if (l === "review_needed") flags.push({ key: "review", label: "Status under review", tone: "look", title: "Legal status needs a decision." });
@@ -309,7 +310,7 @@ export default function LibraryPage() {
     <div className="stack">
       <PageHeader
         title="Document library"
-        subtitle="Public documents only. Company dossiers are never stored here, so this screen shows catalogue facts and health, not case content."
+        subtitle="The public laws and guidance the AI agents rely on. Company application files are never stored here."
         actions={
           canManage ? (
             <Button variant="primary" icon="plus" onClick={() => setRegisterOpen(true)}>
@@ -319,14 +320,17 @@ export default function LibraryPage() {
         }
       />
       <RegisterDocumentModal open={registerOpen} onClose={() => setRegisterOpen(false)} />
+      <LibraryOverview items={data ?? null} />
+      <details className="lo-upkeep">
+        <summary>Library upkeep: reviews, checks and rights</summary>
+        <div className="adm-metrics">
+          <Metric label="Awaiting review" value={data ? all.filter((r) => r.review === "unreviewed").length : "..."} tone="look" note="Agents never see these" />
+          <Metric label="Due for a check" value={data ? all.filter((r) => r.due).length : "..."} tone="look" />
+          <Metric label="Need replacing" value={data ? all.filter((r) => r.flags.some((f) => f.key === "nonofficial" || f.key === "badcopy" || f.key === "superseded")).length : "..."} tone="held" note="Unofficial, bad copy or superseded" />
+          <Metric label="Rights unknown" value={data ? all.filter((r) => r.doc.sharing_rights === "unknown").length : "..."} />
+        </div>
+      </details>
       <PrototypeNotice />
-      <div className="adm-metrics">
-        <Metric label="Documents" value={data ? all.length : "..."} note={data ? `${all.filter((r) => r.doc.shelf === "shared").length} shared, ${all.filter((r) => r.doc.shelf === "country").length} country` : undefined} />
-        <Metric label="Awaiting review" value={data ? all.filter((r) => r.review === "unreviewed").length : "..."} tone="look" note="Agents never see these" />
-        <Metric label="Due for a check" value={data ? all.filter((r) => r.due).length : "..."} tone="look" />
-        <Metric label="Need replacing" value={data ? all.filter((r) => r.flags.some((f) => f.key === "nonofficial" || f.key === "badcopy" || f.key === "superseded")).length : "..."} tone="held" note="Non-official, bad copy or superseded" />
-        <Metric label="Rights unknown" value={data ? all.filter((r) => r.doc.sharing_rights === "unknown").length : "..."} />
-      </div>
 
       <Panel padded>
         <form className="adm-toolbar" role="search" aria-label="Filter documents" onSubmit={(e) => e.preventDefault()}>

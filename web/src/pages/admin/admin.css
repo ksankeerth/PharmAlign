@@ -273,3 +273,145 @@
     border-left: 0;
   }
 }
+
+/* What the agents know: the library overview. Calm, like the case journey: figures, two bar lists, one line. */
+.lo {
+  display: grid;
+  gap: var(--sp-4);
+  padding: var(--sp-5) var(--sp-6);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.lo h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.lo header p {
+  margin: 4px 0 0;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+}
+.lo-figures {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+.lo-figures > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.lo-figures strong {
+  color: var(--ink);
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.lo-figures strong.lo-pass {
+  color: var(--pass);
+}
+.lo-figures span {
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+}
+.lo-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-6);
+}
+.lo-bars h3 {
+  margin: 0 0 var(--sp-2);
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.lo-bars ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+.lo-bars li {
+  display: grid;
+  grid-template-columns: minmax(0, 15rem) minmax(0, 1fr) 2.5rem;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+}
+.lo-label {
+  color: var(--ink-2);
+}
+.lo-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--neutral-soft);
+  overflow: hidden;
+}
+.lo-track span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+}
+.lo-n {
+  color: var(--ink);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.lo-how {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+}
+.lo-how .icon {
+  flex: none;
+  margin-top: 2px;
+  color: var(--pass);
+}
+.lo-upkeep > summary {
+  cursor: pointer;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+  padding: var(--sp-1) 0;
+}
+.lo-upkeep[open] > summary {
+  margin-bottom: var(--sp-2);
+}
+@media (max-width: 1000px) {
+  .lo-figures {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .lo-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .lo {
+    padding: var(--sp-4);
+  }
+  .lo-figures {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lo-bars li {
+    grid-template-columns: minmax(0, 1fr) 2.5rem;
+  }
+  .lo-track {
+    display: none;
+  }
+}
+
