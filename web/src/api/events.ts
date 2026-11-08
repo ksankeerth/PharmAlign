@@ -7,12 +7,20 @@ export interface ApiChange {
 type Listener = (change: ApiChange) => void;
 const listeners = new Set<Listener>();
 
-// Work finishes in the background with no way to tell the page, so open views ask again every few seconds.
-const POLL_MS = 2000;
+// Work finishes in the background with no way to tell the page, so open views can ask again every few seconds.
+// VITE_AUTO_REFRESH_MS sets how often: 2000 by default, 0 for never. The cloud build uses 0, because a page that
+// asks every few seconds keeps the server and database from going idle, and that is billed. The Refresh button in
+// the top bar asks once instead.
+const POLL_MS = Number(import.meta.env.VITE_AUTO_REFRESH_MS ?? 2000);
 let timer: ReturnType<typeof setInterval> | null = null;
 
+/** Every open view asks the server again, once. */
+export function refreshAll(): void {
+  emitApiChange({ op: "http.refresh" });
+}
+
 function startPolling(): void {
-  if (timer) return;
+  if (timer || !(POLL_MS > 0)) return;
   timer = setInterval(() => {
     if (!document.hidden) emitApiChange({ op: "http.poll" });
   }, POLL_MS);

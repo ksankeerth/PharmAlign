@@ -1,7 +1,7 @@
 // The top bar: wordmark, workspace name, mode badge, Ask, notifications, View as, and
 // a settings menu (theme).
 import { Link, useNavigate } from "react-router-dom";
-import { api } from "../api";
+import { api, refreshAll } from "../api";
 import { Icon, Menu, MenuDivider, MenuItem, MenuLabel, useToast } from "../components";
 import { useApi } from "../hooks/useApi";
 import { formatRelative } from "../lib/format";
@@ -39,6 +39,15 @@ export function Wordmark() {
       </svg>
       <span>PharmAlign</span>
     </Link>
+  );
+}
+
+/** Asks the server again for everything on screen. The cloud build doesn't refresh by itself (see api/events.ts). */
+function RefreshButton() {
+  return (
+    <button type="button" className="topbar-icon-btn" aria-label="Refresh" title="Refresh" onClick={refreshAll}>
+      <Icon name="refresh" size={18} />
+    </button>
   );
 }
 
@@ -167,6 +176,7 @@ export function TopBar({ onToggleNav }: { onToggleNav: () => void }) {
       <div className="topbar-spacer" />
 
       <AskButton />
+      <RefreshButton />
       <NotificationBell />
 
       <Menu
