@@ -1,0 +1,103 @@
+{
+ "id": "missing-pv-summary",
+ "title": "Agent check, the law asks for a document the dossier lacks",
+ "angles": [
+  9
+ ],
+ "about": "There is no pharmacovigilance system summary in the dossier. Missing, with the law quoted.",
+ "request": {
+  "profile": "safety",
+  "check": {
+   "id": "PV-01",
+   "version": 1,
+   "question": "Is a pharmacovigilance system summary given, with a named qualified person?",
+   "source": {
+    "doc_id": "SYN-PV-1",
+    "clause": "Pharmacovigilance system summary"
+   },
+   "legal_force": "guidance",
+   "method": "agent",
+   "reads": [
+    "1.8 Pharmacovigilance"
+   ]
+  }
+ },
+ "documents": [
+  {
+   "doc_id": "d-01",
+   "filename": "cover-letter.pdf",
+   "module": "1.0",
+   "language": "en",
+   "pages": [
+    "Cover letter\n\nHalden Biotech FZ-LLC submits an application to register Corvane 500 mg film-coated tablets, containing corvanidine hydrochloride. The enclosed files are the application form, the quality overall summary, the stability report and the leaflet. The product is a generic of a reference product registered in another country. Please contact the regulatory affairs office for any question."
+   ]
+  },
+  {
+   "doc_id": "d-02",
+   "filename": "application-form.pdf",
+   "module": "1.2",
+   "language": "en",
+   "pages": [
+    "Application form\n\nApplicant: Halden Biotech FZ-LLC. Product: Corvane 500 mg film-coated tablets. Dosage form: tablet. Route: oral."
+   ]
+  },
+  {
+   "doc_id": "d-03",
+   "filename": "leaflet-en.pdf",
+   "module": "1.3",
+   "language": "en",
+   "pages": [
+    "Patient information leaflet\n\nCorvane 500 mg film-coated tablets\nRead all of this leaflet carefully before you start taking this medicine.\nWhat Corvane is and what it is used for: Corvane lowers high blood pressure in adults.",
+    "Before you take Corvane\n\nDo not take Corvane if you are allergic to corvanidine or any other ingredient of this medicine. Tell your doctor about all other medicines you take.",
+    "How to take Corvane\n\nAlways take this medicine exactly as your doctor has told you. The usual adult dose is one tablet (500 mg) twice daily with food. Do not exceed the prescribed dose.",
+    "How to store Corvane\n\nKeep out of the sight and reach of children. Store below 30 °C in the original package. Do not use after the expiry date on the carton."
+   ]
+  }
+ ],
+ "law": [
+  {
+   "doc_id": "SYN-PV-1",
+   "title": "Example Guideline on Pharmacovigilance Systems",
+   "issuer": "Example Medicines Authority",
+   "country": "AE",
+   "doc_type": "guideline",
+   "versions": [
+    {
+     "version": "v1",
+     "legal_status": "in_force",
+     "authority_level": 2,
+     "published_on": "2025-01-01",
+     "effective_on": "2025-03-01",
+     "clauses": [
+      {
+       "article": "4.1",
+       "text": "Summary of the system. The application shall include a summary of the applicant's pharmacovigilance system. The summary shall state where the pharmacovigilance master file is kept.",
+       "section_path": "4 Applications > Pharmacovigilance system summary > 4.1 Summary of the system"
+      },
+      {
+       "article": "4.2",
+       "text": "Qualified person. The summary shall name the qualified person responsible for pharmacovigilance and give that person's telephone number and email address.",
+       "section_path": "4 Applications > Pharmacovigilance system summary > 4.2 Qualified person"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "case_facts": [],
+ "applicant": null,
+ "expect": {
+  "kind": "finding",
+  "limits": {
+   "model_calls": 20
+  },
+  "status": "missing",
+  "never_status": [
+   "met"
+  ],
+  "law_quote_from": [
+   "SYN-PV-1"
+  ],
+  "dossier_quote": false
+ }
+}

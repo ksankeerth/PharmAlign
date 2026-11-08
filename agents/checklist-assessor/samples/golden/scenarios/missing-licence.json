@@ -1,0 +1,98 @@
+{
+ "id": "missing-licence",
+ "title": "Agent check, no establishment licence",
+ "angles": [
+  9
+ ],
+ "about": "The application form says the licence number is pending and no licence file is given. Missing (or attention), never met.",
+ "request": {
+  "profile": "safety",
+  "check": {
+   "id": "LEGAL-01",
+   "version": 1,
+   "question": "Is the marketing authorisation holder a licensed pharmaceutical establishment under the medicines law in force?",
+   "source": {
+    "doc_id": "SYN-EST-1",
+    "clause": "Pharmaceutical establishments"
+   },
+   "legal_force": "binding",
+   "method": "agent",
+   "reads": [
+    "1.2 Establishment licence"
+   ]
+  }
+ },
+ "documents": [
+  {
+   "doc_id": "d-01",
+   "filename": "cover-letter.pdf",
+   "module": "1.0",
+   "language": "en",
+   "pages": [
+    "Cover letter\n\nHalden Biotech FZ-LLC submits an application to register Corvane 500 mg film-coated tablets, containing corvanidine hydrochloride. The enclosed files are the application form, the quality overall summary, the stability report and the leaflet. The product is a generic of a reference product registered in another country. Please contact the regulatory affairs office for any question."
+   ]
+  },
+  {
+   "doc_id": "d-02",
+   "filename": "application-form.pdf",
+   "module": "1.2",
+   "language": "en",
+   "pages": [
+    "Application form\n\nApplicant: Halden Biotech FZ-LLC. Product: Corvane 500 mg film-coated tablets.\nEstablishment licence number: pending. The applicant has applied for the licence and expects it next quarter."
+   ]
+  }
+ ],
+ "law": [
+  {
+   "doc_id": "SYN-EST-1",
+   "title": "Example Law on Pharmaceutical Establishments",
+   "issuer": "Example Medicines Authority",
+   "country": "AE",
+   "doc_type": "guideline",
+   "versions": [
+    {
+     "version": "v1",
+     "legal_status": "in_force",
+     "authority_level": 2,
+     "published_on": "2025-01-01",
+     "effective_on": "2025-03-01",
+     "clauses": [
+      {
+       "article": "Article (6)",
+       "text": "No person may place a medicinal product on the market unless that person holds a valid establishment licence issued by the Authority.",
+       "section_path": "Chapter 2 > Pharmaceutical establishments > Article (6)"
+      },
+      {
+       "article": "Article (7)",
+       "text": "An establishment licence shall name the licence holder, the activities it permits and the address of each establishment. A licence is valid for the period stated on it.",
+       "section_path": "Chapter 2 > Pharmaceutical establishments > Article (7)"
+      },
+      {
+       "article": "Article (9)",
+       "text": "The Authority may suspend a licence when the holder no longer meets the conditions of the licence.",
+       "section_path": "Chapter 3 > Suspension > Article (9)"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "case_facts": [],
+ "applicant": null,
+ "expect": {
+  "kind": "finding",
+  "limits": {
+   "model_calls": 20
+  },
+  "status_in": [
+   "missing",
+   "attention"
+  ],
+  "never_status": [
+   "met"
+  ],
+  "law_quote_from": [
+   "SYN-EST-1"
+  ]
+ }
+}

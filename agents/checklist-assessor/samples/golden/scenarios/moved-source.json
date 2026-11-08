@@ -1,0 +1,155 @@
+{
+ "id": "moved-source",
+ "title": "Agent check, a person moved the check to other law",
+ "angles": [
+  12
+ ],
+ "about": "The check names SYN-OLD-1 (store below 30 °C). A person moved it to SYN-NEW-1 (below 25 °C), with SYN-DEF-1 as a supporting source. The leaflet says below 30 °C. Attention. Law is cited only from SYN-NEW-1 and SYN-DEF-1, and the tools never get a call on the old source.",
+ "request": {
+  "profile": "label_language",
+  "check": {
+   "id": "LBL-09",
+   "version": 1,
+   "question": "Does the leaflet storage statement follow the labelling rule?",
+   "source": {
+    "doc_id": "SYN-OLD-1",
+    "clause": "Storage statement"
+   },
+   "legal_force": "guidance",
+   "method": "agent",
+   "reads": [
+    "1.3 Product information"
+   ],
+   "supporting_sources": [
+    {
+     "doc_id": "SYN-DEF-1",
+     "clause": "2"
+    }
+   ]
+  },
+  "moved_source": {
+   "doc_id": "SYN-NEW-1",
+   "clause": "Whole document"
+  }
+ },
+ "documents": [
+  {
+   "doc_id": "d-01",
+   "filename": "cover-letter.pdf",
+   "module": "1.0",
+   "language": "en",
+   "pages": [
+    "Cover letter\n\nHalden Biotech FZ-LLC submits an application to register Corvane 500 mg film-coated tablets, containing corvanidine hydrochloride. The enclosed files are the application form, the quality overall summary, the stability report and the leaflet. The product is a generic of a reference product registered in another country. Please contact the regulatory affairs office for any question."
+   ]
+  },
+  {
+   "doc_id": "d-02",
+   "filename": "leaflet-en.pdf",
+   "module": "1.3",
+   "language": "en",
+   "pages": [
+    "Patient information leaflet\n\nCorvane 500 mg film-coated tablets\nRead all of this leaflet carefully before you start taking this medicine.",
+    "How to store Corvane\n\nKeep out of the sight and reach of children. Store below 30 °C. Keep the tablets in the original package."
+   ]
+  }
+ ],
+ "law": [
+  {
+   "doc_id": "SYN-OLD-1",
+   "title": "Example Guideline on Storage Statements (earlier)",
+   "issuer": "Example Medicines Authority",
+   "country": "AE",
+   "doc_type": "guideline",
+   "versions": [
+    {
+     "version": "v1",
+     "legal_status": "in_force",
+     "authority_level": 2,
+     "published_on": "2025-01-01",
+     "effective_on": "2025-03-01",
+     "clauses": [
+      {
+       "article": "2.1",
+       "text": "Storage statement. The leaflet shall tell the patient to store the medicine below 30 °C.",
+       "section_path": "2 Labelling > Storage statement > 2.1"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "doc_id": "SYN-NEW-1",
+   "title": "Example Guideline on Storage Statements",
+   "issuer": "Example Medicines Authority",
+   "country": "AE",
+   "doc_type": "guideline",
+   "versions": [
+    {
+     "version": "v1",
+     "legal_status": "in_force",
+     "authority_level": 2,
+     "published_on": "2025-01-01",
+     "effective_on": "2025-03-01",
+     "clauses": [
+      {
+       "article": "2.1",
+       "text": "Storage statement. The leaflet shall tell the patient to store the medicine below 25 °C and to keep it in the original package.",
+       "section_path": "2 Labelling > Storage statement > 2.1"
+      },
+      {
+       "article": "2.2",
+       "text": "Language. The storage statement shall be written in every language of the leaflet.",
+       "section_path": "2 Labelling > Storage statement > 2.2"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "doc_id": "SYN-DEF-1",
+   "title": "Example Glossary for Labelling",
+   "issuer": "Example Medicines Authority",
+   "country": "AE",
+   "doc_type": "guideline",
+   "versions": [
+    {
+     "version": "v1",
+     "legal_status": "in_force",
+     "authority_level": 2,
+     "published_on": "2025-01-01",
+     "effective_on": "2025-03-01",
+     "clauses": [
+      {
+       "article": "2",
+       "text": "Definitions. In this glossary, a leaflet means the printed information for the patient that is packed with the medicine.",
+       "section_path": "Definitions > 2",
+       "chunk_type": "definition"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "case_facts": [],
+ "applicant": null,
+ "expect": {
+  "kind": "finding",
+  "limits": {
+   "model_calls": 20,
+   "max_tool_errors": 1
+  },
+  "status": "attention",
+  "never_status": [
+   "met"
+  ],
+  "law_quote_from": [
+   "SYN-NEW-1"
+  ],
+  "never_cite": [
+   "SYN-OLD-1"
+  ],
+  "dossier_quote_from": [
+   "d-02"
+  ]
+ }
+}

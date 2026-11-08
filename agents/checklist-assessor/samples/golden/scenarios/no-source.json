@@ -1,0 +1,140 @@
+{
+ "id": "no-source",
+ "title": "Agent check with no source",
+ "angles": [
+  10
+ ],
+ "about": "The check names no law. The library holds only unrelated law, so search_kb finds nothing. Cannot tell, with the searches listed and no answer from memory.",
+ "request": {
+  "profile": "quality",
+  "check": {
+   "id": "QUAL-99",
+   "version": 1,
+   "question": "Is the cold chain validated for the whole transport route of the product?",
+   "source": null,
+   "legal_force": "guidance",
+   "method": "agent",
+   "reads": [
+    "3.2.P.8"
+   ]
+  }
+ },
+ "documents": [
+  {
+   "doc_id": "d-01",
+   "filename": "cover-letter.pdf",
+   "module": "1.0",
+   "language": "en",
+   "pages": [
+    "Cover letter\n\nHalden Biotech FZ-LLC submits an application to register Corvane 500 mg film-coated tablets, containing corvanidine hydrochloride. The enclosed files are the application form, the quality overall summary, the stability report and the leaflet. The product is a generic of a reference product registered in another country. Please contact the regulatory affairs office for any question."
+   ]
+  },
+  {
+   "doc_id": "d-02",
+   "filename": "quality-overall-summary.pdf",
+   "module": "2.3",
+   "language": "en",
+   "pages": [
+    "2.3 Quality Overall Summary\n\nThis summary follows the structure of Module 3 for Corvane 500 mg film-coated tablets. The finished product is manufactured at Halden Biotech FZ-LLC, Plant 3, Ajman.",
+    "2.3.P.8 Stability\n\nThe stability data in Module 3.2.P.8 support the shelf life and the storage statement proposed for the product."
+   ]
+  },
+  {
+   "doc_id": "d-03",
+   "filename": "stability-report.pdf",
+   "module": "3.2.P.8",
+   "language": "en",
+   "pages": [
+    "Stability report: Corvane 500 mg film-coated tablets\n\nPrepared by Halden Biotech FZ-LLC, Quality Unit. Report number STB-2026-014.\nThis report gives stability data on three commercial-scale batches (batch numbers CV2601, CV2602 and CV2603) packed in the proposed PVC/PVDC-aluminium blister.",
+    "Study design\n\nLong-term studies: 30 °C ± 2 °C / 65% RH ± 5% RH. Data cover 12 months for all three batches.\nAccelerated studies: 40 °C ± 2 °C / 75% RH ± 5% RH for 6 months.\nTablets were tested for appearance, assay, dissolution, related substances and water content at each time point.",
+    "Results\n\n| Test | Specification | Start | End of long-term data |\n| Assay | 95.0 to 105.0 % | 99.8 | 99.1 |\n| Dissolution | not less than 80 % in 30 minutes | 94 | 92 |\n| Related substances | not more than 0.5 % | 0.12 | 0.18 |\n\nAll results stayed within specification.",
+    "Conclusion\n\nOn the basis of the data, a shelf life of 36 months is proposed for the product in the proposed pack, with the storage statement given in the leaflet."
+   ]
+  },
+  {
+   "doc_id": "d-04",
+   "filename": "leaflet-en.pdf",
+   "module": "1.3",
+   "language": "en",
+   "pages": [
+    "Patient information leaflet\n\nCorvane 500 mg film-coated tablets\nRead all of this leaflet carefully before you start taking this medicine.\nWhat Corvane is: Corvane lowers high blood pressure in adults.",
+    "How to take Corvane\n\nThe usual adult dose is one tablet (500 mg) twice daily with food.\nStore below 30 °C. Keep the tablets in the original package."
+   ]
+  }
+ ],
+ "law": [
+  {
+   "doc_id": "SYN-ADV-1",
+   "title": "Example Guideline on Advertising of Medicines",
+   "issuer": "Example Medicines Authority",
+   "country": "AE",
+   "doc_type": "guideline",
+   "versions": [
+    {
+     "version": "v1",
+     "legal_status": "in_force",
+     "authority_level": 2,
+     "published_on": "2025-01-01",
+     "effective_on": "2025-03-01",
+     "clauses": [
+      {
+       "article": "1.1",
+       "text": "Advertising. Advertising of a prescription medicine to the public is not permitted.",
+       "section_path": "1 Advertising > 1.1"
+      },
+      {
+       "article": "1.2",
+       "text": "Samples. Free samples may be given only to licensed prescribers on written request.",
+       "section_path": "1 Advertising > 1.2"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "doc_id": "SYN-EST-1",
+   "title": "Example Law on Pharmaceutical Establishments",
+   "issuer": "Example Medicines Authority",
+   "country": "AE",
+   "doc_type": "guideline",
+   "versions": [
+    {
+     "version": "v1",
+     "legal_status": "in_force",
+     "authority_level": 2,
+     "published_on": "2025-01-01",
+     "effective_on": "2025-03-01",
+     "clauses": [
+      {
+       "article": "Article (6)",
+       "text": "No person may place a medicinal product on the market unless that person holds a valid establishment licence issued by the Authority.",
+       "section_path": "Chapter 2 > Pharmaceutical establishments > Article (6)"
+      },
+      {
+       "article": "Article (7)",
+       "text": "An establishment licence shall name the licence holder, the activities it permits and the address of each establishment. A licence is valid for the period stated on it.",
+       "section_path": "Chapter 2 > Pharmaceutical establishments > Article (7)"
+      },
+      {
+       "article": "Article (9)",
+       "text": "The Authority may suspend a licence when the holder no longer meets the conditions of the licence.",
+       "section_path": "Chapter 3 > Suspension > Article (9)"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "case_facts": [],
+ "applicant": null,
+ "expect": {
+  "kind": "finding",
+  "limits": {
+   "model_calls": 12
+  },
+  "status": "cannot_tell",
+  "no_source": true,
+  "law_quote": false,
+  "dossier_quote": false
+ }
+}

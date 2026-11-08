@@ -1,0 +1,101 @@
+{
+ "id": "safety-narrower",
+ "title": "Agent check, a kidney warning limited to fewer patients",
+ "angles": [
+  16
+ ],
+ "about": "Children and pregnancy are as the law requires, but the kidney warning applies only below 15 mL/min, not below 30. Attention, never met. The numbers are compared with compute.",
+ "request": {
+  "profile": "safety",
+  "check": {
+   "id": "SAFE-01",
+   "version": 1,
+   "question": "Does the leaflet carry the safety statements the guideline requires for children, kidney disease and pregnancy?",
+   "source": {
+    "doc_id": "SYN-SAF-1",
+    "clause": "Safety statements"
+   },
+   "legal_force": "guidance",
+   "method": "agent",
+   "reads": [
+    "1.3 Product information"
+   ]
+  }
+ },
+ "documents": [
+  {
+   "doc_id": "d-01",
+   "filename": "cover-letter.pdf",
+   "module": "1.0",
+   "language": "en",
+   "pages": [
+    "Cover letter\n\nHalden Biotech FZ-LLC submits an application to register Corvane 500 mg film-coated tablets, containing corvanidine hydrochloride. The enclosed files are the application form, the quality overall summary, the stability report and the leaflet. The product is a generic of a reference product registered in another country. Please contact the regulatory affairs office for any question."
+   ]
+  },
+  {
+   "doc_id": "d-02",
+   "filename": "leaflet-en.pdf",
+   "module": "1.3",
+   "language": "en",
+   "pages": [
+    "Patient information leaflet\n\nCorvane 500 mg film-coated tablets\nRead all of this leaflet carefully before you start taking this medicine.",
+    "Before you take Corvane\n\nDo not give this medicine to children under 12 years of age. Do not use it if you have severe kidney disease (creatinine clearance below 15 mL/min). Do not use it in the first trimester of pregnancy.",
+    "How to take Corvane\n\nThe usual adult dose is one tablet (500 mg) twice daily with food."
+   ]
+  }
+ ],
+ "law": [
+  {
+   "doc_id": "SYN-SAF-1",
+   "title": "Example Guideline on Safety Statements in Leaflets",
+   "issuer": "Example Medicines Authority",
+   "country": "AE",
+   "doc_type": "guideline",
+   "versions": [
+    {
+     "version": "v1",
+     "legal_status": "in_force",
+     "authority_level": 2,
+     "published_on": "2025-01-01",
+     "effective_on": "2025-03-01",
+     "clauses": [
+      {
+       "article": "4.1",
+       "text": "Children. The leaflet shall state that the medicine must not be given to children under 12 years of age.",
+       "section_path": "4 Warnings > Safety statements > 4.1 Children"
+      },
+      {
+       "article": "4.2",
+       "text": "Kidney disease. The leaflet shall tell patients with severe renal impairment, that is a creatinine clearance below 30 mL/min, not to use the medicine.",
+       "section_path": "4 Warnings > Safety statements > 4.2 Kidney disease"
+      },
+      {
+       "article": "4.3",
+       "text": "Pregnancy. The leaflet shall advise women not to use the medicine in the first trimester of pregnancy.",
+       "section_path": "4 Warnings > Safety statements > 4.3 Pregnancy"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "case_facts": [],
+ "applicant": null,
+ "expect": {
+  "kind": "finding",
+  "limits": {
+   "model_calls": 20
+  },
+  "law_quote_from": [
+   "SYN-SAF-1"
+  ],
+  "dossier_quote_from": [
+   "d-02"
+  ],
+  "status": "attention",
+  "never_status": [
+   "met"
+  ],
+  "compute": true
+ }
+}

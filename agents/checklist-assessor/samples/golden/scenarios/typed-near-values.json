@@ -1,0 +1,167 @@
+{
+ "id": "typed-near-values",
+ "title": "Typed check, values in a table that miss the rule",
+ "angles": [
+  1,
+  5
+ ],
+ "about": "The long-term row is a table row: 25 °C / 60% RH for 12 months. The Assessor reports the values, and code finds the rule is not met. The accelerated row is a decoy.",
+ "request": {
+  "check": {
+   "id": "QUAL-07",
+   "version": 3,
+   "question": "Is long-term stability data given at 30 C / 65% RH for 12 months?",
+   "source": {
+    "doc_id": "SYN-STAB-1",
+    "clause": "3.2"
+   },
+   "legal_force": "guidance",
+   "method": "typed",
+   "reads": [
+    "3.2.P.8"
+   ],
+   "extract": [
+    {
+     "key": "long_term_temp_c",
+     "description": "Long-term storage temperature",
+     "value_type": "number",
+     "unit": "C",
+     "look_in": [
+      "3.2.P.8"
+     ]
+    },
+    {
+     "key": "long_term_rh_pct",
+     "description": "Long-term relative humidity",
+     "value_type": "number",
+     "unit": "%",
+     "look_in": [
+      "3.2.P.8"
+     ]
+    },
+    {
+     "key": "long_term_months",
+     "description": "Months of long-term data",
+     "value_type": "number",
+     "unit": "months",
+     "look_in": [
+      "3.2.P.8"
+     ]
+    }
+   ]
+  }
+ },
+ "documents": [
+  {
+   "doc_id": "d-01",
+   "filename": "cover-letter.pdf",
+   "module": "1.0",
+   "language": "en",
+   "pages": [
+    "Cover letter\n\nHalden Biotech FZ-LLC submits an application to register Corvane 500 mg film-coated tablets, containing corvanidine hydrochloride. The enclosed files are the application form, the quality overall summary, the stability report and the leaflet. The product is a generic of a reference product registered in another country. Please contact the regulatory affairs office for any question."
+   ]
+  },
+  {
+   "doc_id": "d-02",
+   "filename": "quality-overall-summary.pdf",
+   "module": "2.3",
+   "language": "en",
+   "pages": [
+    "2.3 Quality Overall Summary\n\nThis summary follows the structure of Module 3 for Corvane 500 mg film-coated tablets. The finished product is manufactured at Halden Biotech FZ-LLC, Plant 3, Ajman.",
+    "2.3.P.8 Stability\n\nThe stability data in Module 3.2.P.8 support the shelf life and the storage statement proposed for the product."
+   ]
+  },
+  {
+   "doc_id": "d-03",
+   "filename": "stability-report.pdf",
+   "module": "3.2.P.8",
+   "language": "en",
+   "pages": [
+    "Stability report: Corvane 500 mg film-coated tablets\n\nPrepared by Halden Biotech FZ-LLC, Quality Unit. Three commercial-scale batches were placed on stability in the proposed blister.",
+    "Study design\n\n| Study | Storage condition | Months of data |\n| Long-term | 25 °C ± 2 °C / 60% RH ± 5% RH | 12 months |\n| Accelerated | 40 °C ± 2 °C / 75% RH ± 5% RH | 6 months |\n\nAll results stayed within specification.",
+    "Conclusion\n\nA shelf life of 36 months is proposed for the product in the proposed pack."
+   ]
+  }
+ ],
+ "law": [
+  {
+   "doc_id": "SYN-STAB-1",
+   "title": "Example Guideline on Stability Data for Registration",
+   "issuer": "Example Medicines Authority",
+   "country": "AE",
+   "doc_type": "guideline",
+   "versions": [
+    {
+     "version": "v1",
+     "legal_status": "in_force",
+     "authority_level": 2,
+     "published_on": "2025-01-01",
+     "effective_on": "2025-03-01",
+     "clauses": [
+      {
+       "article": "3.1",
+       "text": "Scope. This guideline applies to applications to register a finished pharmaceutical product that will be stored and sold in climatic zone IVb, a hot and humid zone.",
+       "section_path": "3 Data requirements > 3.1 Scope"
+      },
+      {
+       "article": "3.2",
+       "text": "Long-term data. The applicant shall provide long-term stability data generated at 30 °C ± 2 °C and 65% RH ± 5% RH, covering at least 12 months at the time of submission, on at least three batches.",
+       "section_path": "3 Data requirements > 3.2 Long-term data"
+      },
+      {
+       "article": "3.3",
+       "text": "Accelerated data. Accelerated data shall be generated at 40 °C ± 2 °C and 75% RH ± 5% RH for 6 months. Accelerated data do not replace long-term data.",
+       "section_path": "3 Data requirements > 3.3 Accelerated data"
+      },
+      {
+       "article": "3.4",
+       "text": "Shelf life. The proposed shelf life shall not be longer than the period covered by real-time data unless a written extrapolation is given and justified.",
+       "section_path": "3 Data requirements > 3.4 Shelf life"
+      },
+      {
+       "article": "5.1",
+       "text": "Reporting. A stability report shall give the batch numbers, the pack, the storage conditions, the time points and the results in tables.",
+       "section_path": "5 Reports > 5.1 Reporting"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "case_facts": [],
+ "applicant": null,
+ "expect": {
+  "kind": "extraction",
+  "limits": {
+   "model_calls": 10
+  },
+  "rule": "long_term_temp_c == 30 and long_term_rh_pct == 65 and long_term_months >= 12",
+  "rule_passed": false,
+  "facts": {
+   "long_term_temp_c": {
+    "status": "found",
+    "number": 25,
+    "unit": "C",
+    "evidence_in": [
+     "d-03"
+    ]
+   },
+   "long_term_rh_pct": {
+    "status": "found",
+    "number": 60,
+    "unit": "%",
+    "evidence_in": [
+     "d-03"
+    ]
+   },
+   "long_term_months": {
+    "status": "found",
+    "number": 12,
+    "unit": "months",
+    "evidence_in": [
+     "d-03"
+    ]
+   }
+  }
+ }
+}

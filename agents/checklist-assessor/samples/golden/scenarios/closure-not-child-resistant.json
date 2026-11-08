@@ -1,0 +1,98 @@
+{
+ "id": "closure-not-child-resistant",
+ "title": "Agent check, a quality check on a closure",
+ "angles": [
+  7,
+  16
+ ],
+ "about": "The oral liquid has a screw cap with a tamper-evident ring and no child-resistant feature or standard. Attention or missing, never met. This is the quality profile on a packaging check.",
+ "request": {
+  "profile": "quality",
+  "check": {
+   "id": "PACK-01",
+   "version": 1,
+   "question": "Does the container closure for an oral liquid meet child-resistant packaging requirements?",
+   "source": {
+    "doc_id": "SYN-CLO-1",
+    "clause": "Closures and child resistance"
+   },
+   "legal_force": "guidance",
+   "method": "agent",
+   "reads": [
+    "3.2.P.7"
+   ]
+  }
+ },
+ "documents": [
+  {
+   "doc_id": "d-01",
+   "filename": "cover-letter.pdf",
+   "module": "1.0",
+   "language": "en",
+   "pages": [
+    "Cover letter\n\nHalden Biotech FZ-LLC submits an application to register Corvane 50 mg/5 mL oral solution."
+   ]
+  },
+  {
+   "doc_id": "d-02",
+   "filename": "container-closure.pdf",
+   "module": "3.2.P.7",
+   "language": "en",
+   "pages": [
+    "3.2.P.7 Container closure system\n\nThe oral solution is filled in 100 mL amber glass bottles.",
+    "3.2.P.7.2 Closure\n\nThe bottle is closed with a plastic screw cap with a tamper-evident ring. The cap liner is polyethylene. The closure supplier's certificate is in Module 3.2.P.7."
+   ]
+  }
+ ],
+ "law": [
+  {
+   "doc_id": "SYN-CLO-1",
+   "title": "Example Guideline on Closures",
+   "issuer": "Example Medicines Authority",
+   "country": "AE",
+   "doc_type": "guideline",
+   "versions": [
+    {
+     "version": "v1",
+     "legal_status": "in_force",
+     "authority_level": 2,
+     "published_on": "2025-01-01",
+     "effective_on": "2025-03-01",
+     "clauses": [
+      {
+       "article": "2.1",
+       "text": "Child-resistant closures. An oral liquid for which an accidental overdose by a child is a risk shall be supplied in a child-resistant closure that meets a recognised standard. The dossier shall name the standard.",
+       "section_path": "2 Packaging > Closures and child resistance > 2.1 Child-resistant closures"
+      },
+      {
+       "article": "2.2",
+       "text": "Tamper evidence. A closure shall show when the pack has been opened.",
+       "section_path": "2 Packaging > Closures and child resistance > 2.2 Tamper evidence"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "case_facts": [],
+ "applicant": null,
+ "expect": {
+  "kind": "finding",
+  "limits": {
+   "model_calls": 20
+  },
+  "status_in": [
+   "attention",
+   "missing"
+  ],
+  "never_status": [
+   "met"
+  ],
+  "law_quote_from": [
+   "SYN-CLO-1"
+  ],
+  "dossier_quote_from": [
+   "d-02"
+  ]
+ }
+}

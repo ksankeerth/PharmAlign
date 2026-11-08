@@ -1,0 +1,542 @@
+{
+ "id": "large-label",
+ "title": "Agent check on a 15-file dossier: leaflet doses differ",
+ "angles": [
+  8,
+  17
+ ],
+ "about": "The English and Arabic leaflets are two of 15 files. The doses differ (500 mg and 1000 mg). Attention in 20 model calls or fewer, and 150 000 input tokens or fewer.",
+ "request": {
+  "profile": "label_language",
+  "check": {
+   "id": "LBL-02",
+   "version": 1,
+   "question": "Is the leaflet dose consistent with the approved text in every language?",
+   "source": {
+    "doc_id": "SYN-LBL-1",
+    "clause": "Patient information leaflet"
+   },
+   "legal_force": "guidance",
+   "method": "agent",
+   "reads": [
+    "1.3 Product information"
+   ]
+  }
+ },
+ "documents": [
+  {
+   "doc_id": "d-01",
+   "filename": "cover-letter.pdf",
+   "module": "1.0",
+   "language": "en",
+   "pages": [
+    "Cover letter\n\nHalden Biotech FZ-LLC submits an application to register Corvane 500 mg film-coated tablets, containing corvanidine hydrochloride. The enclosed files are listed by module on the following pages.",
+    "Letter, page 2. The applicant thanks the Authority for the pre-submission meeting and lists the contents of the submission by module.",
+    "Letter, page 3. The applicant thanks the Authority for the pre-submission meeting and lists the contents of the submission by module."
+   ]
+  },
+  {
+   "doc_id": "d-02",
+   "filename": "application-form.pdf",
+   "module": "1.2",
+   "language": "en",
+   "pages": [
+    "Application form\n\nApplicant: Halden Biotech FZ-LLC. Product: Corvane 500 mg film-coated tablets. Dosage form: tablet. Route: oral.",
+    "Section 2. Declarations. The applicant confirms that the information in this form is correct and that the samples supplied match the product described in Module 3.",
+    "Section 3. Fee and payment details. The fee was paid by bank transfer and the receipt is filed separately. The applicant's finance office keeps the original.",
+    "Section 4 of the application form. Applicant details are entered as registered with the commercial licensing office. Contact persons are listed with their office address and mobile number.",
+    "Section 5. The product is a prescription-only medicine in tablet form. The proposed pack is a carton of 28 tablets. The applicant requests review by the abridged route.",
+    "Section 6. Declarations. The applicant confirms that the information in this form is correct and that the samples supplied match the product described in Module 3.",
+    "Section 7. Fee and payment details. The fee was paid by bank transfer and the receipt is filed separately. The applicant's finance office keeps the original.",
+    "Section 8 of the application form. Applicant details are entered as registered with the commercial licensing office. Contact persons are listed with their office address and mobile number."
+   ]
+  },
+  {
+   "doc_id": "d-03",
+   "filename": "fee-receipt.pdf",
+   "module": "1.2",
+   "language": "en",
+   "pages": [
+    "Fee receipt\n\nReceived from Halden Biotech FZ-LLC the registration fee for one product. Receipt number FR-77120."
+   ]
+  },
+  {
+   "doc_id": "d-04",
+   "filename": "quality-overall-summary.pdf",
+   "module": "2.3",
+   "language": "en",
+   "pages": [
+    "2.3.P.1 Description and composition. Each tablet contains the active ingredient with microcrystalline cellulose, croscarmellose sodium and magnesium stearate. The film coat is a standard polymer coat.",
+    "2.3.P.2 Pharmaceutical development. The formulation was developed by direct compression. Dissolution was compared with the reference product in three media and the profiles were similar.",
+    "2.3.P.3 Manufacture. The process has four steps: blending, compression, film coating and blister packing. Critical steps are controlled in process. The batch size for the commercial scale is 400 000 tablets.",
+    "2.3.P.5 Control of the finished product. The specification includes appearance, identity, assay, dissolution, uniformity of dosage units and related substances. Methods were validated.",
+    "2.3.P.7 Container closure system. The tablets are packed in PVC/PVDC-aluminium blisters. Compatibility was shown by the stability data.",
+    "2.3.S Drug substance. The drug substance corvanidine hydrochloride is a white crystalline powder. It is made by an approved supplier whose site is described in Module 3.2.S. The specification covers appearance, identity, assay and impurities.",
+    "2.3.P.8 Stability\n\nThe stability data in Module 3.2.P.8 support the shelf life of 36 months and the storage statement in the leaflet.",
+    "2.3.P.2 Pharmaceutical development. The formulation was developed by direct compression. Dissolution was compared with the reference product in three media and the profiles were similar."
+   ]
+  },
+  {
+   "doc_id": "d-05",
+   "filename": "stability-report.pdf",
+   "module": "3.2.P.8",
+   "language": "en",
+   "pages": [
+    "Stability report: Corvane 500 mg film-coated tablets\n\nPrepared by Halden Biotech FZ-LLC, Quality Unit. Report number STB-2026-014. Three commercial-scale batches (CV2601, CV2602 and CV2603) were packed in the proposed blister.",
+    "Contents\n\n3.2.P.8.1 Summary and conclusion\n3.2.P.8.2 Post-approval protocol\n3.2.P.8.3 Stability data",
+    "Section 3. Statistical evaluation. The regression of assay against time shows no significant slope for any batch. The evaluation supports the proposed retest of the batches at the stated intervals.",
+    "Table 4. Results for batch CV2601. Appearance remained unchanged. Assay stayed between 98.5 and 100.4 percent. Related substances stayed below the reporting threshold at all time points reported.",
+    "Section 5. Analytical methods. Assay and related substances were determined by liquid chromatography. Dissolution was tested in a paddle apparatus at 50 rpm in 900 mL of buffer.",
+    "3.2.P.8.3 Study design\n\nLong-term studies were run at 25 °C ± 2 °C / 60% RH ± 5% RH. Data cover 12 months for all three batches.\nAccelerated studies: 40 °C ± 2 °C / 75% RH ± 5% RH for 6 months.",
+    "Section 7. Statistical evaluation. The regression of assay against time shows no significant slope for any batch. The evaluation supports the proposed retest of the batches at the stated intervals.",
+    "Table 8. Results for batch CV2602. Appearance remained unchanged. Assay stayed between 98.5 and 100.4 percent. Related substances stayed below the reporting threshold at all time points reported.",
+    "3.2.P.8.1 Summary and conclusion\n\nAll results stayed within specification. A shelf life of 36 months is proposed for the product in the proposed pack.",
+    "Section 10. Photostability. One batch was exposed to light as described in the applicant's protocol. No change in appearance or assay was seen in the protected pack."
+   ]
+  },
+  {
+   "doc_id": "d-06",
+   "filename": "stability-addendum.pdf",
+   "module": "3.2.P.8",
+   "language": "en",
+   "pages": [
+    "Addendum to the stability report\n\nThis addendum gives the post-approval stability protocol. One commercial batch per year will be placed on long-term stability and tested at 0, 12, 24 and 36 months.",
+    "Commitment\n\nThe applicant commits to report any out-of-specification result to the Authority within 15 working days.",
+    "Responsibilities\n\nThe Quality Unit of the applicant is responsible for the protocol."
+   ],
+   "sequence": 2
+  },
+  {
+   "doc_id": "d-07",
+   "filename": "manufacture.pdf",
+   "module": "3.2.P.3",
+   "language": "en",
+   "pages": [
+    "3.2.P.3.1 Manufacturer\n\nThe finished product is manufactured, packed, tested and released at Halden Biotech FZ-LLC, Plant 3, Ajman.",
+    "3.2.P.3.2 Validation. Three consecutive commercial batches were made and met all in-process limits. The validation report is available at the site.",
+    "3.2.P.3.3 Process description. The blend is prepared in a high-shear mixer and passed through a 1.0 mm screen. The blend is compressed on a rotary press to a target hardness set in the batch record.",
+    "3.2.P.3.4 Controls. In-process controls include weight variation, hardness, thickness and friability. Limits and sampling frequency are given in the master batch record.",
+    "3.2.P.3.5 Validation. Three consecutive commercial batches were made and met all in-process limits. The validation report is available at the site.",
+    "3.2.P.3.6 Process description. The blend is prepared in a high-shear mixer and passed through a 1.0 mm screen. The blend is compressed on a rotary press to a target hardness set in the batch record."
+   ]
+  },
+  {
+   "doc_id": "d-08",
+   "filename": "specifications.pdf",
+   "module": "3.2.P.5",
+   "language": "en",
+   "pages": [
+    "3.2.P.5.1 Analytical procedures. Each procedure is described with its system suitability criteria. Reference standards are qualified against the primary standard.",
+    "3.2.P.5.2 Batch analyses. Results for three batches are given in the table. All batches comply with the release specification.",
+    "3.2.P.5.3 Specification. The release specification lists the tests, the methods and the limits. The shelf-life specification differs only in the limits for related substances and water.",
+    "3.2.P.5.4 Analytical procedures. Each procedure is described with its system suitability criteria. Reference standards are qualified against the primary standard.",
+    "3.2.P.5.5 Batch analyses. Results for three batches are given in the table. All batches comply with the release specification."
+   ]
+  },
+  {
+   "doc_id": "d-09",
+   "filename": "container-closure.pdf",
+   "module": "3.2.P.7",
+   "language": "en",
+   "pages": [
+    "3.2.P.7.1 Suitability. Extractables were not expected for a solid dose in a blister. Water vapour transmission of the film is controlled by the film specification.",
+    "3.2.P.7.2 Container closure system. The blister uses PVC/PVDC film with aluminium foil lidding. Specifications for the film and the foil are given with the supplier's certificate.",
+    "3.2.P.7.3 Suitability. Extractables were not expected for a solid dose in a blister. Water vapour transmission of the film is controlled by the film specification."
+   ]
+  },
+  {
+   "doc_id": "d-10",
+   "filename": "leaflet-en.pdf",
+   "module": "1.3",
+   "language": "en",
+   "pages": [
+    "Patient information leaflet\n\nCorvane 500 mg film-coated tablets\nRead all of this leaflet carefully before you start taking this medicine.\nWhat Corvane is and what it is used for: Corvane lowers high blood pressure in adults.",
+    "Before you take Corvane\n\nDo not take Corvane if you are allergic to corvanidine or any other ingredient of this medicine. Tell your doctor about all other medicines you take.",
+    "How to take Corvane\n\nAlways take this medicine exactly as your doctor has told you. The usual adult dose is one tablet (500 mg) twice daily with food. Do not exceed the prescribed dose.",
+    "How to store Corvane\n\nKeep out of the sight and reach of children. Store below 30 °C in the original package. Do not use after the expiry date on the carton."
+   ]
+  },
+  {
+   "doc_id": "d-11",
+   "filename": "leaflet-ar.pdf",
+   "module": "1.3",
+   "language": "ar",
+   "pages": [
+    "نشرة المعلومات للمريض\n\nكورفان 500 ملغ أقراص مغلفة بالفيلم\nاقرأ هذه النشرة بعناية قبل البدء باستخدام هذا الدواء.\nما هو كورفان وما هي دواعي استعماله: يستخدم كورفان لخفض ضغط الدم المرتفع عند البالغين.",
+    "قبل استعمال كورفان\n\nلا تستعمل كورفان إذا كنت تعاني من حساسية تجاه كورفانيدين أو أي من مكونات هذا الدواء. أخبر طبيبك عن جميع الأدوية الأخرى التي تتناولها.",
+    "كيفية استعمال كورفان\n\nاستعمل هذا الدواء دائما كما وصفه لك الطبيب. الجرعة المعتادة للبالغين هي قرص واحد (1000 ملغ) مرتين يوميا مع الطعام. لا تتجاوز الجرعة الموصوفة.",
+    "كيفية تخزين كورفان\n\nيحفظ بعيدا عن متناول الأطفال ونظرهم. يحفظ في درجة حرارة أقل من 30 درجة مئوية في العبوة الأصلية. لا تستعمل الدواء بعد تاريخ انتهاء الصلاحية المطبوع على العلبة."
+   ]
+  },
+  {
+   "doc_id": "d-12",
+   "filename": "carton-artwork.pdf",
+   "module": "1.3",
+   "language": "en",
+   "pages": [
+    "Outer carton text\n\nCorvane 500 mg film-coated tablets. 28 tablets. Store below 30 °C. Keep in the original package.",
+    "نص العلبة الخارجية\n\nكورفان 500 ملغ أقراص مغلفة بالفيلم. 28 قرصا. يحفظ في درجة حرارة أقل من 30 درجة مئوية. يحفظ في العبوة الأصلية."
+   ]
+  },
+  {
+   "doc_id": "d-13",
+   "filename": "pv-system-summary.pdf",
+   "module": "1.8",
+   "language": "en",
+   "pages": [
+    "Pharmacovigilance system summary\n\nApplicant: Halden Biotech FZ-LLC. This document summarises the pharmacovigilance system of the applicant. The pharmacovigilance master file is kept at the regulatory affairs office in Ajman.",
+    "Qualified person for pharmacovigilance\n\nThe qualified person responsible for pharmacovigilance is Dr Selene Marwick. Telephone: +971 6 555 0142. Email: pv@halden-biotech.example.",
+    "Section 3. Periodic review. Safety data are reviewed at fixed intervals by the safety team. Signals are reviewed in a monthly meeting and recorded in the minutes.",
+    "Section 4. The pharmacovigilance system of the applicant collects reports from healthcare professionals and patients. Reports are assessed and entered in the safety database within the same working week."
+   ]
+  },
+  {
+   "doc_id": "d-14",
+   "filename": "establishment-licence.pdf",
+   "module": "1.2",
+   "language": "en",
+   "pages": [
+    "Establishment licence\n\nLicence holder: Halden Biotech FZ-LLC. Activities permitted: import, storage and distribution of human medicines. Address: Industrial Area 4, Ajman. The licence is valid until 31 March 2028.",
+    "Licence conditions\n\nThe holder shall keep records of every batch received and distributed."
+   ]
+  },
+  {
+   "doc_id": "d-15",
+   "filename": "reference-approval.pdf",
+   "module": "1.10",
+   "language": "en",
+   "pages": [
+    "Reference approval, section 1. The approval remains valid. The regulator's register shows no suspension or withdrawal for this product.",
+    "Reference approval, section 2. The reference product was approved by a foreign regulator on the date stated in the approval letter. The letter lists the product name, strength and holder.",
+    "Reference approval, section 3. The approval remains valid. The regulator's register shows no suspension or withdrawal for this product.",
+    "Reference approval, section 4. The reference product was approved by a foreign regulator on the date stated in the approval letter. The letter lists the product name, strength and holder."
+   ]
+  }
+ ],
+ "law": [
+  {
+   "doc_id": "SYN-LBL-1",
+   "title": "Example Guideline on Leaflets and Labels",
+   "issuer": "Example Medicines Authority",
+   "country": "AE",
+   "doc_type": "guideline",
+   "versions": [
+    {
+     "version": "v1",
+     "legal_status": "in_force",
+     "authority_level": 2,
+     "published_on": "2025-01-01",
+     "effective_on": "2025-03-01",
+     "clauses": [
+      {
+       "article": "3.1",
+       "text": "Leaflet language. The patient information leaflet shall be provided in Arabic and in English. The two versions shall carry the same information.",
+       "section_path": "Part 3 > Patient information leaflet > 3.1 Leaflet language"
+      },
+      {
+       "article": "3.2",
+       "text": "Leaflet dose statement. The dose, the strength, the units and the frequency of administration shall be stated clearly, and shall be the same in every language version of the leaflet.",
+       "section_path": "Part 3 > Patient information leaflet > 3.2 Leaflet dose statement"
+      },
+      {
+       "article": "3.3",
+       "text": "Leaflet warnings. Warnings shall be given in the same order and with the same force in every language version of the leaflet.",
+       "section_path": "Part 3 > Patient information leaflet > 3.3 Leaflet warnings"
+      },
+      {
+       "article": "4.1",
+       "text": "Outer carton text. The outer carton shall state the storage conditions in Arabic and in English. The maximum storage temperature shall be given in degrees Celsius.",
+       "section_path": "Part 4 > Outer packaging > 4.1 Outer carton text"
+      },
+      {
+       "article": "9.1",
+       "text": "General provisions. The provisions of this guideline apply to every application submitted to the Authority after the date on which it takes effect. An application already under review when the guideline takes effect continues under the rules that applied when it was submitted, unless the applicant asks in writing to be assessed under this guideline. The Authority may issue notes that explain how a provision is applied. A note does not change a provision, and where a note and a provision differ, the provision applies. The applicant remains responsible for the accuracy of every statement in the application.",
+       "section_path": "9 General provisions > 9.1 General provisions"
+      },
+      {
+       "article": "9.2",
+       "text": "Format of documents. Documents shall be submitted in a searchable electronic format. Each document shall carry a title, a version number and a date, and shall show the name of the applicant and the product. Pages shall be numbered in sequence within a document. Where a document is a translation, the translation shall say so and shall name the language of the original. A document that cannot be read, or whose pages are out of order, may be returned to the applicant with a request to submit it again.",
+       "section_path": "9 General provisions > 9.2 Format of documents"
+      },
+      {
+       "article": "9.3",
+       "text": "Declarations. The application shall include a declaration signed by a person authorised to act for the applicant. The declaration shall confirm that the information in the application is complete and correct, and that the samples supplied are representative of the product described. The Authority may ask for the declaration to be notarised. A false declaration is a ground for refusing or withdrawing a registration, without prejudice to any other measure the law provides.",
+       "section_path": "9 General provisions > 9.3 Declarations"
+      },
+      {
+       "article": "9.4",
+       "text": "Supporting information. The applicant may include supporting information that explains a choice made in the application, such as a literature review or a comparison with a reference product. Supporting information is considered with the rest of the application, but it does not replace a requirement of this guideline. Where supporting information is given in a language other than Arabic or English, a translation shall be provided.",
+       "section_path": "9 General provisions > 9.4 Supporting information"
+      },
+      {
+       "article": "9.5",
+       "text": "Requests for information. Where the Authority needs more information to assess an application, it shall send the applicant a written request that states what is needed and the period for the reply. The applicant shall answer within that period. An answer shall be complete and shall refer to the request it replies to. If the applicant does not reply in time, the Authority may decide on the information it has or may close the application.",
+       "section_path": "9 General provisions > 9.5 Requests for information"
+      },
+      {
+       "article": "9.6",
+       "text": "Changes during review. The applicant shall tell the Authority without delay of any change that affects the application while it is under review, such as a new manufacturing site, a change in the name or address of the applicant, or new data that bear on the safety or quality of the product. The Authority may ask for the documents to be updated. A change made without notice may be treated as a failure to provide complete information.",
+       "section_path": "9 General provisions > 9.6 Changes during review"
+      },
+      {
+       "article": "9.7",
+       "text": "Confidentiality. Information supplied in an application is treated as confidential, except where the law requires it to be published. The applicant may mark a part of a document as commercially confidential and shall give the reason. The Authority decides whether the mark is justified, and shall tell the applicant before it publishes any part that was marked. Staff of the Authority are bound by a duty not to disclose confidential information.",
+       "section_path": "9 General provisions > 9.7 Confidentiality"
+      },
+      {
+       "article": "9.8",
+       "text": "Transitional provisions. A product registered before this guideline takes effect need not be re-submitted to meet its requirements. The first renewal of such a registration after the guideline takes effect shall comply with it. The Authority may set a later date for a particular requirement where compliance needs a long preparation, and shall publish the date and the reason.",
+       "section_path": "9 General provisions > 9.8 Transitional provisions"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "doc_id": "SYN-STAB-1",
+   "title": "Example Guideline on Stability Data for Registration",
+   "issuer": "Example Medicines Authority",
+   "country": "AE",
+   "doc_type": "guideline",
+   "versions": [
+    {
+     "version": "v1",
+     "legal_status": "in_force",
+     "authority_level": 2,
+     "published_on": "2025-01-01",
+     "effective_on": "2025-03-01",
+     "clauses": [
+      {
+       "article": "3.1",
+       "text": "Scope. This guideline applies to applications to register a finished pharmaceutical product that will be stored and sold in climatic zone IVb, a hot and humid zone.",
+       "section_path": "3 Data requirements > 3.1 Scope"
+      },
+      {
+       "article": "3.2",
+       "text": "Long-term data. The applicant shall provide long-term stability data generated at 30 °C ± 2 °C and 65% RH ± 5% RH, covering at least 12 months at the time of submission, on at least three batches.",
+       "section_path": "3 Data requirements > 3.2 Long-term data"
+      },
+      {
+       "article": "3.3",
+       "text": "Accelerated data. Accelerated data shall be generated at 40 °C ± 2 °C and 75% RH ± 5% RH for 6 months. Accelerated data do not replace long-term data.",
+       "section_path": "3 Data requirements > 3.3 Accelerated data"
+      },
+      {
+       "article": "3.4",
+       "text": "Shelf life. The proposed shelf life shall not be longer than the period covered by real-time data unless a written extrapolation is given and justified.",
+       "section_path": "3 Data requirements > 3.4 Shelf life"
+      },
+      {
+       "article": "5.1",
+       "text": "Reporting. A stability report shall give the batch numbers, the pack, the storage conditions, the time points and the results in tables.",
+       "section_path": "5 Reports > 5.1 Reporting"
+      },
+      {
+       "article": "9.1",
+       "text": "General provisions. The provisions of this guideline apply to every application submitted to the Authority after the date on which it takes effect. An application already under review when the guideline takes effect continues under the rules that applied when it was submitted, unless the applicant asks in writing to be assessed under this guideline. The Authority may issue notes that explain how a provision is applied. A note does not change a provision, and where a note and a provision differ, the provision applies. The applicant remains responsible for the accuracy of every statement in the application.",
+       "section_path": "9 General provisions > 9.1 General provisions"
+      },
+      {
+       "article": "9.2",
+       "text": "Format of documents. Documents shall be submitted in a searchable electronic format. Each document shall carry a title, a version number and a date, and shall show the name of the applicant and the product. Pages shall be numbered in sequence within a document. Where a document is a translation, the translation shall say so and shall name the language of the original. A document that cannot be read, or whose pages are out of order, may be returned to the applicant with a request to submit it again.",
+       "section_path": "9 General provisions > 9.2 Format of documents"
+      },
+      {
+       "article": "9.3",
+       "text": "Declarations. The application shall include a declaration signed by a person authorised to act for the applicant. The declaration shall confirm that the information in the application is complete and correct, and that the samples supplied are representative of the product described. The Authority may ask for the declaration to be notarised. A false declaration is a ground for refusing or withdrawing a registration, without prejudice to any other measure the law provides.",
+       "section_path": "9 General provisions > 9.3 Declarations"
+      },
+      {
+       "article": "9.4",
+       "text": "Supporting information. The applicant may include supporting information that explains a choice made in the application, such as a literature review or a comparison with a reference product. Supporting information is considered with the rest of the application, but it does not replace a requirement of this guideline. Where supporting information is given in a language other than Arabic or English, a translation shall be provided.",
+       "section_path": "9 General provisions > 9.4 Supporting information"
+      },
+      {
+       "article": "9.5",
+       "text": "Requests for information. Where the Authority needs more information to assess an application, it shall send the applicant a written request that states what is needed and the period for the reply. The applicant shall answer within that period. An answer shall be complete and shall refer to the request it replies to. If the applicant does not reply in time, the Authority may decide on the information it has or may close the application.",
+       "section_path": "9 General provisions > 9.5 Requests for information"
+      },
+      {
+       "article": "9.6",
+       "text": "Changes during review. The applicant shall tell the Authority without delay of any change that affects the application while it is under review, such as a new manufacturing site, a change in the name or address of the applicant, or new data that bear on the safety or quality of the product. The Authority may ask for the documents to be updated. A change made without notice may be treated as a failure to provide complete information.",
+       "section_path": "9 General provisions > 9.6 Changes during review"
+      },
+      {
+       "article": "9.7",
+       "text": "Confidentiality. Information supplied in an application is treated as confidential, except where the law requires it to be published. The applicant may mark a part of a document as commercially confidential and shall give the reason. The Authority decides whether the mark is justified, and shall tell the applicant before it publishes any part that was marked. Staff of the Authority are bound by a duty not to disclose confidential information.",
+       "section_path": "9 General provisions > 9.7 Confidentiality"
+      },
+      {
+       "article": "9.8",
+       "text": "Transitional provisions. A product registered before this guideline takes effect need not be re-submitted to meet its requirements. The first renewal of such a registration after the guideline takes effect shall comply with it. The Authority may set a later date for a particular requirement where compliance needs a long preparation, and shall publish the date and the reason.",
+       "section_path": "9 General provisions > 9.8 Transitional provisions"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "doc_id": "SYN-PV-1",
+   "title": "Example Guideline on Pharmacovigilance Systems",
+   "issuer": "Example Medicines Authority",
+   "country": "AE",
+   "doc_type": "guideline",
+   "versions": [
+    {
+     "version": "v1",
+     "legal_status": "in_force",
+     "authority_level": 2,
+     "published_on": "2025-01-01",
+     "effective_on": "2025-03-01",
+     "clauses": [
+      {
+       "article": "4.1",
+       "text": "Summary of the system. The application shall include a summary of the applicant's pharmacovigilance system. The summary shall state where the pharmacovigilance master file is kept.",
+       "section_path": "4 Applications > Pharmacovigilance system summary > 4.1 Summary of the system"
+      },
+      {
+       "article": "4.2",
+       "text": "Qualified person. The summary shall name the qualified person responsible for pharmacovigilance and give that person's telephone number and email address.",
+       "section_path": "4 Applications > Pharmacovigilance system summary > 4.2 Qualified person"
+      },
+      {
+       "article": "9.1",
+       "text": "General provisions. The provisions of this guideline apply to every application submitted to the Authority after the date on which it takes effect. An application already under review when the guideline takes effect continues under the rules that applied when it was submitted, unless the applicant asks in writing to be assessed under this guideline. The Authority may issue notes that explain how a provision is applied. A note does not change a provision, and where a note and a provision differ, the provision applies. The applicant remains responsible for the accuracy of every statement in the application.",
+       "section_path": "9 General provisions > 9.1 General provisions"
+      },
+      {
+       "article": "9.2",
+       "text": "Format of documents. Documents shall be submitted in a searchable electronic format. Each document shall carry a title, a version number and a date, and shall show the name of the applicant and the product. Pages shall be numbered in sequence within a document. Where a document is a translation, the translation shall say so and shall name the language of the original. A document that cannot be read, or whose pages are out of order, may be returned to the applicant with a request to submit it again.",
+       "section_path": "9 General provisions > 9.2 Format of documents"
+      },
+      {
+       "article": "9.3",
+       "text": "Declarations. The application shall include a declaration signed by a person authorised to act for the applicant. The declaration shall confirm that the information in the application is complete and correct, and that the samples supplied are representative of the product described. The Authority may ask for the declaration to be notarised. A false declaration is a ground for refusing or withdrawing a registration, without prejudice to any other measure the law provides.",
+       "section_path": "9 General provisions > 9.3 Declarations"
+      },
+      {
+       "article": "9.4",
+       "text": "Supporting information. The applicant may include supporting information that explains a choice made in the application, such as a literature review or a comparison with a reference product. Supporting information is considered with the rest of the application, but it does not replace a requirement of this guideline. Where supporting information is given in a language other than Arabic or English, a translation shall be provided.",
+       "section_path": "9 General provisions > 9.4 Supporting information"
+      },
+      {
+       "article": "9.5",
+       "text": "Requests for information. Where the Authority needs more information to assess an application, it shall send the applicant a written request that states what is needed and the period for the reply. The applicant shall answer within that period. An answer shall be complete and shall refer to the request it replies to. If the applicant does not reply in time, the Authority may decide on the information it has or may close the application.",
+       "section_path": "9 General provisions > 9.5 Requests for information"
+      },
+      {
+       "article": "9.6",
+       "text": "Changes during review. The applicant shall tell the Authority without delay of any change that affects the application while it is under review, such as a new manufacturing site, a change in the name or address of the applicant, or new data that bear on the safety or quality of the product. The Authority may ask for the documents to be updated. A change made without notice may be treated as a failure to provide complete information.",
+       "section_path": "9 General provisions > 9.6 Changes during review"
+      },
+      {
+       "article": "9.7",
+       "text": "Confidentiality. Information supplied in an application is treated as confidential, except where the law requires it to be published. The applicant may mark a part of a document as commercially confidential and shall give the reason. The Authority decides whether the mark is justified, and shall tell the applicant before it publishes any part that was marked. Staff of the Authority are bound by a duty not to disclose confidential information.",
+       "section_path": "9 General provisions > 9.7 Confidentiality"
+      },
+      {
+       "article": "9.8",
+       "text": "Transitional provisions. A product registered before this guideline takes effect need not be re-submitted to meet its requirements. The first renewal of such a registration after the guideline takes effect shall comply with it. The Authority may set a later date for a particular requirement where compliance needs a long preparation, and shall publish the date and the reason.",
+       "section_path": "9 General provisions > 9.8 Transitional provisions"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "doc_id": "SYN-EST-1",
+   "title": "Example Law on Pharmaceutical Establishments",
+   "issuer": "Example Medicines Authority",
+   "country": "AE",
+   "doc_type": "guideline",
+   "versions": [
+    {
+     "version": "v1",
+     "legal_status": "in_force",
+     "authority_level": 2,
+     "published_on": "2025-01-01",
+     "effective_on": "2025-03-01",
+     "clauses": [
+      {
+       "article": "Article (6)",
+       "text": "No person may place a medicinal product on the market unless that person holds a valid establishment licence issued by the Authority.",
+       "section_path": "Chapter 2 > Pharmaceutical establishments > Article (6)"
+      },
+      {
+       "article": "Article (7)",
+       "text": "An establishment licence shall name the licence holder, the activities it permits and the address of each establishment. A licence is valid for the period stated on it.",
+       "section_path": "Chapter 2 > Pharmaceutical establishments > Article (7)"
+      },
+      {
+       "article": "Article (9)",
+       "text": "The Authority may suspend a licence when the holder no longer meets the conditions of the licence.",
+       "section_path": "Chapter 3 > Suspension > Article (9)"
+      },
+      {
+       "article": "9.1",
+       "text": "General provisions. The provisions of this guideline apply to every application submitted to the Authority after the date on which it takes effect. An application already under review when the guideline takes effect continues under the rules that applied when it was submitted, unless the applicant asks in writing to be assessed under this guideline. The Authority may issue notes that explain how a provision is applied. A note does not change a provision, and where a note and a provision differ, the provision applies. The applicant remains responsible for the accuracy of every statement in the application.",
+       "section_path": "9 General provisions > 9.1 General provisions"
+      },
+      {
+       "article": "9.2",
+       "text": "Format of documents. Documents shall be submitted in a searchable electronic format. Each document shall carry a title, a version number and a date, and shall show the name of the applicant and the product. Pages shall be numbered in sequence within a document. Where a document is a translation, the translation shall say so and shall name the language of the original. A document that cannot be read, or whose pages are out of order, may be returned to the applicant with a request to submit it again.",
+       "section_path": "9 General provisions > 9.2 Format of documents"
+      },
+      {
+       "article": "9.3",
+       "text": "Declarations. The application shall include a declaration signed by a person authorised to act for the applicant. The declaration shall confirm that the information in the application is complete and correct, and that the samples supplied are representative of the product described. The Authority may ask for the declaration to be notarised. A false declaration is a ground for refusing or withdrawing a registration, without prejudice to any other measure the law provides.",
+       "section_path": "9 General provisions > 9.3 Declarations"
+      },
+      {
+       "article": "9.4",
+       "text": "Supporting information. The applicant may include supporting information that explains a choice made in the application, such as a literature review or a comparison with a reference product. Supporting information is considered with the rest of the application, but it does not replace a requirement of this guideline. Where supporting information is given in a language other than Arabic or English, a translation shall be provided.",
+       "section_path": "9 General provisions > 9.4 Supporting information"
+      },
+      {
+       "article": "9.5",
+       "text": "Requests for information. Where the Authority needs more information to assess an application, it shall send the applicant a written request that states what is needed and the period for the reply. The applicant shall answer within that period. An answer shall be complete and shall refer to the request it replies to. If the applicant does not reply in time, the Authority may decide on the information it has or may close the application.",
+       "section_path": "9 General provisions > 9.5 Requests for information"
+      },
+      {
+       "article": "9.6",
+       "text": "Changes during review. The applicant shall tell the Authority without delay of any change that affects the application while it is under review, such as a new manufacturing site, a change in the name or address of the applicant, or new data that bear on the safety or quality of the product. The Authority may ask for the documents to be updated. A change made without notice may be treated as a failure to provide complete information.",
+       "section_path": "9 General provisions > 9.6 Changes during review"
+      },
+      {
+       "article": "9.7",
+       "text": "Confidentiality. Information supplied in an application is treated as confidential, except where the law requires it to be published. The applicant may mark a part of a document as commercially confidential and shall give the reason. The Authority decides whether the mark is justified, and shall tell the applicant before it publishes any part that was marked. Staff of the Authority are bound by a duty not to disclose confidential information.",
+       "section_path": "9 General provisions > 9.7 Confidentiality"
+      },
+      {
+       "article": "9.8",
+       "text": "Transitional provisions. A product registered before this guideline takes effect need not be re-submitted to meet its requirements. The first renewal of such a registration after the guideline takes effect shall comply with it. The Authority may set a later date for a particular requirement where compliance needs a long preparation, and shall publish the date and the reason.",
+       "section_path": "9 General provisions > 9.8 Transitional provisions"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "case_facts": [],
+ "applicant": null,
+ "expect": {
+  "kind": "finding",
+  "limits": {
+   "model_calls": 20,
+   "tokens": 150000
+  },
+  "status": "attention",
+  "never_status": [
+   "met"
+  ],
+  "law_quote_from": [
+   "SYN-LBL-1"
+  ],
+  "dossier_quote_from": [
+   "d-10",
+   "d-11"
+  ],
+  "verbatim": true,
+  "translation_marked": true
+ }
+}

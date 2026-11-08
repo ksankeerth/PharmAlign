@@ -1,0 +1,103 @@
+{
+ "id": "carton-both-languages",
+ "title": "Agent check, the carton states the storage in both languages",
+ "angles": [
+  6,
+  8
+ ],
+ "about": "English and Arabic carton text both say below 30 °C. Met. The Arabic quote is exact.",
+ "request": {
+  "profile": "label_language",
+  "check": {
+   "id": "LBL-04",
+   "version": 1,
+   "question": "Does the outer carton state storage below 30 C in every language?",
+   "source": {
+    "doc_id": "SYN-LBL-1",
+    "clause": "Outer packaging"
+   },
+   "legal_force": "guidance",
+   "method": "agent",
+   "reads": [
+    "1.3 Product information"
+   ]
+  }
+ },
+ "documents": [
+  {
+   "doc_id": "d-01",
+   "filename": "cover-letter.pdf",
+   "module": "1.0",
+   "language": "en",
+   "pages": [
+    "Cover letter\n\nHalden Biotech FZ-LLC submits an application to register Corvane 500 mg film-coated tablets."
+   ]
+  },
+  {
+   "doc_id": "d-02",
+   "filename": "carton-artwork.pdf",
+   "module": "1.3",
+   "language": "en",
+   "pages": [
+    "Outer carton text\n\nCorvane 500 mg film-coated tablets. 28 tablets. Store below 30 °C. Keep in the original package.",
+    "نص العلبة الخارجية\n\nكورفان 500 ملغ أقراص مغلفة بالفيلم. 28 قرصا. يحفظ في درجة حرارة أقل من 30 درجة مئوية. يحفظ في العبوة الأصلية."
+   ]
+  }
+ ],
+ "law": [
+  {
+   "doc_id": "SYN-LBL-1",
+   "title": "Example Guideline on Leaflets and Labels",
+   "issuer": "Example Medicines Authority",
+   "country": "AE",
+   "doc_type": "guideline",
+   "versions": [
+    {
+     "version": "v1",
+     "legal_status": "in_force",
+     "authority_level": 2,
+     "published_on": "2025-01-01",
+     "effective_on": "2025-03-01",
+     "clauses": [
+      {
+       "article": "3.1",
+       "text": "Leaflet language. The patient information leaflet shall be provided in Arabic and in English. The two versions shall carry the same information.",
+       "section_path": "Part 3 > Patient information leaflet > 3.1 Leaflet language"
+      },
+      {
+       "article": "3.2",
+       "text": "Leaflet dose statement. The dose, the strength, the units and the frequency of administration shall be stated clearly, and shall be the same in every language version of the leaflet.",
+       "section_path": "Part 3 > Patient information leaflet > 3.2 Leaflet dose statement"
+      },
+      {
+       "article": "3.3",
+       "text": "Leaflet warnings. Warnings shall be given in the same order and with the same force in every language version of the leaflet.",
+       "section_path": "Part 3 > Patient information leaflet > 3.3 Leaflet warnings"
+      },
+      {
+       "article": "4.1",
+       "text": "Outer carton text. The outer carton shall state the storage conditions in Arabic and in English. The maximum storage temperature shall be given in degrees Celsius.",
+       "section_path": "Part 4 > Outer packaging > 4.1 Outer carton text"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "case_facts": [],
+ "applicant": null,
+ "expect": {
+  "kind": "finding",
+  "limits": {
+   "model_calls": 20
+  },
+  "status": "met",
+  "law_quote_from": [
+   "SYN-LBL-1"
+  ],
+  "dossier_quote_from": [
+   "d-02"
+  ],
+  "verbatim": true
+ }
+}

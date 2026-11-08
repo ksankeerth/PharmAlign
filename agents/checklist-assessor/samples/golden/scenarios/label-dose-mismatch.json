@@ -1,0 +1,121 @@
+{
+ "id": "label-dose-mismatch",
+ "title": "Agent check, English and Arabic doses differ",
+ "angles": [
+  8
+ ],
+ "about": "The English leaflet says one tablet (500 mg) twice daily. The Arabic leaflet says one tablet (1000 mg) twice daily. Attention. The Arabic is quoted exactly as written. Any translation is in the reasoning and marked as the agent's own.",
+ "request": {
+  "profile": "label_language",
+  "check": {
+   "id": "LBL-02",
+   "version": 1,
+   "question": "Is the leaflet dose consistent with the approved text in every language?",
+   "source": {
+    "doc_id": "SYN-LBL-1",
+    "clause": "Patient information leaflet"
+   },
+   "legal_force": "guidance",
+   "method": "agent",
+   "reads": [
+    "1.3 Product information"
+   ]
+  }
+ },
+ "documents": [
+  {
+   "doc_id": "d-01",
+   "filename": "cover-letter.pdf",
+   "module": "1.0",
+   "language": "en",
+   "pages": [
+    "Cover letter\n\nHalden Biotech FZ-LLC submits an application to register Corvane 500 mg film-coated tablets. The leaflets are enclosed in English and Arabic."
+   ]
+  },
+  {
+   "doc_id": "d-02",
+   "filename": "leaflet-en.pdf",
+   "module": "1.3",
+   "language": "en",
+   "pages": [
+    "Patient information leaflet\n\nCorvane 500 mg film-coated tablets\nRead all of this leaflet carefully before you start taking this medicine.\nWhat Corvane is and what it is used for: Corvane lowers high blood pressure in adults.",
+    "Before you take Corvane\n\nDo not take Corvane if you are allergic to corvanidine or any other ingredient of this medicine. Tell your doctor about all other medicines you take.",
+    "How to take Corvane\n\nAlways take this medicine exactly as your doctor has told you. The usual adult dose is one tablet (500 mg) twice daily with food. Do not exceed the prescribed dose.",
+    "How to store Corvane\n\nKeep out of the sight and reach of children. Store below 30 °C in the original package. Do not use after the expiry date on the carton."
+   ]
+  },
+  {
+   "doc_id": "d-03",
+   "filename": "leaflet-ar.pdf",
+   "module": "1.3",
+   "language": "ar",
+   "pages": [
+    "نشرة المعلومات للمريض\n\nكورفان 500 ملغ أقراص مغلفة بالفيلم\nاقرأ هذه النشرة بعناية قبل البدء باستخدام هذا الدواء.\nما هو كورفان وما هي دواعي استعماله: يستخدم كورفان لخفض ضغط الدم المرتفع عند البالغين.",
+    "قبل استعمال كورفان\n\nلا تستعمل كورفان إذا كنت تعاني من حساسية تجاه كورفانيدين أو أي من مكونات هذا الدواء. أخبر طبيبك عن جميع الأدوية الأخرى التي تتناولها.",
+    "كيفية استعمال كورفان\n\nاستعمل هذا الدواء دائما كما وصفه لك الطبيب. الجرعة المعتادة للبالغين هي قرص واحد (1000 ملغ) مرتين يوميا مع الطعام. لا تتجاوز الجرعة الموصوفة.",
+    "كيفية تخزين كورفان\n\nيحفظ بعيدا عن متناول الأطفال ونظرهم. يحفظ في درجة حرارة أقل من 30 درجة مئوية في العبوة الأصلية. لا تستعمل الدواء بعد تاريخ انتهاء الصلاحية المطبوع على العلبة."
+   ]
+  }
+ ],
+ "law": [
+  {
+   "doc_id": "SYN-LBL-1",
+   "title": "Example Guideline on Leaflets and Labels",
+   "issuer": "Example Medicines Authority",
+   "country": "AE",
+   "doc_type": "guideline",
+   "versions": [
+    {
+     "version": "v1",
+     "legal_status": "in_force",
+     "authority_level": 2,
+     "published_on": "2025-01-01",
+     "effective_on": "2025-03-01",
+     "clauses": [
+      {
+       "article": "3.1",
+       "text": "Leaflet language. The patient information leaflet shall be provided in Arabic and in English. The two versions shall carry the same information.",
+       "section_path": "Part 3 > Patient information leaflet > 3.1 Leaflet language"
+      },
+      {
+       "article": "3.2",
+       "text": "Leaflet dose statement. The dose, the strength, the units and the frequency of administration shall be stated clearly, and shall be the same in every language version of the leaflet.",
+       "section_path": "Part 3 > Patient information leaflet > 3.2 Leaflet dose statement"
+      },
+      {
+       "article": "3.3",
+       "text": "Leaflet warnings. Warnings shall be given in the same order and with the same force in every language version of the leaflet.",
+       "section_path": "Part 3 > Patient information leaflet > 3.3 Leaflet warnings"
+      },
+      {
+       "article": "4.1",
+       "text": "Outer carton text. The outer carton shall state the storage conditions in Arabic and in English. The maximum storage temperature shall be given in degrees Celsius.",
+       "section_path": "Part 4 > Outer packaging > 4.1 Outer carton text"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "case_facts": [],
+ "applicant": null,
+ "expect": {
+  "kind": "finding",
+  "limits": {
+   "model_calls": 20
+  },
+  "status": "attention",
+  "never_status": [
+   "met"
+  ],
+  "law_quote_from": [
+   "SYN-LBL-1"
+  ],
+  "dossier_quote_from": [
+   "d-02",
+   "d-03"
+  ],
+  "verbatim": true,
+  "translation_marked": true
+ }
+}
