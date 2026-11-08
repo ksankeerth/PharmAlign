@@ -9,7 +9,7 @@ from app.config import Settings
 from app.db import make_sessions
 from app.knowledge.embedding import get_embedder
 from app.knowledge.indexing import embed_missing
-from app.pipeline.assistant import AssistantUnavailable
+from app.pipeline.assistant import ASSISTANT_TOO_SLOW, AssistantTimedOut, AssistantUnavailable
 from app.tables import ROW
 
 from ..conftest import client_for, load_placeholder_chunks
@@ -30,8 +30,8 @@ async def embedded(engine, seeded):
 class Scripted:
     """An assistant that says exactly what the test tells it to."""
 
-    def __init__(self, events=(), fail_open=False, fail_turn=False):
-        self.events, self.fail_open, self.fail_turn = list(events), fail_open, fail_turn
+    def __init__(self, events=(), fail_open=False, fail_turn=False, time_out=False):
+        self.events, self.fail_open, self.fail_turn, self.time_out = list(events), fail_open, fail_turn, time_out
         self.opened = []
 
     async def open(self, session):
@@ -45,6 +45,8 @@ class Scripted:
             yield event
         if self.fail_turn:
             raise AssistantUnavailable("dropped")
+        if self.time_out:
+            raise AssistantTimedOut("no bytes for 60 s")
 
 
 @pytest.fixture
@@ -175,6 +177,12 @@ async def test_a_dropped_stream_ends_with_a_retryable_error(chat):
     async with chat(Scripted([{"type": "text_delta", "text": "Hello."}], fail_turn=True)) as (client, made):
         _, events = await ask(client, made.json()["id"], "Hi.")
         assert events[-1]["type"] == "error" and events[-1]["code"] == "assistant_unavailable" and events[-1]["retryable"] is True
+
+
+async def test_a_turn_that_goes_silent_says_it_took_too_long(chat):
+    async with chat(Scripted(time_out=True)) as (client, made):
+        _, events = await ask(client, made.json()["id"], "Hi.")
+        assert events[-1]["code"] == "assistant_unavailable" and events[-1]["message"] == ASSISTANT_TOO_SLOW and events[-1]["retryable"] is True
 
 
 async def test_with_no_assistant_the_session_is_refused_with_a_503(chat):

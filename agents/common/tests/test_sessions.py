@@ -107,3 +107,167 @@ def test_the_spec_hash_covers_the_variants():
     knowledge = SessionCreate.model_validate({**KNOWLEDGE_SESSION_EXAMPLE, "run_token": "token-12345"})
     on_case = SessionCreate.model_validate({**SESSION_EXAMPLE, "run_token": "token-12345"})
     assert SPEC.tools_for(knowledge) == ("read_clause",) and SPEC.tools_for(on_case) == ("read_clause", "read_page")
+
+
+# ---- opt-in controls for an agent whose model works in a loop of tool calls (all off in SPEC above)
+import asyncio  # noqa: E402
+
+from google.genai import types  # noqa: E402
+from pharmalign_agent_common import sessions as sessions_module  # noqa: E402
+from pharmalign_agent_common.sessions import ANSWER_NOW, KEEPALIVE_LINE, keepalive  # noqa: E402
+
+READ = call_tool("read_clause", anchor="E-S25:v3:c1")
+
+
+def tuned(**changes) -> SessionSpec:
+    return SessionSpec(**{**SPEC.__dict__, "max_tool_calls": 6, **changes})
+
+
+async def talk_with(spec, script, *messages):
+    model = FakeModel(script=script)
+    with FakeMcpServer(TOOLS) as mcp:
+        app = FastAPI()
+        app.include_router(build_session_router(spec, Settings(mcp_url=mcp.url), model=model))
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://agent") as client:
+            sid = (await client.post("/sessions", json={**KNOWLEDGE_SESSION_EXAMPLE, "run_token": "token-12345"}, headers=HEADERS)).json()["agent_session_id"]
+            texts = [(await client.post(f"/sessions/{sid}/turns", json={"message": m}, headers=HEADERS)).text for m in messages]
+    return texts, model, mcp
+
+
+def asked_to_answer_now(request) -> bool:
+    return any(ANSWER_NOW in (p.text or "") for c in request.contents for p in (c.parts or []))
+
+
+async def test_keepalive_sends_comment_lines_while_the_task_works_and_none_when_off():
+    async def work():
+        await asyncio.sleep(0.35)
+        return "done"
+
+    task = asyncio.ensure_future(work())
+    beats = [b async for b in keepalive(task, 0.1)]
+    assert beats and set(beats) == {KEEPALIVE_LINE} and task.result() == "done"
+    quiet = asyncio.ensure_future(work())
+    assert [b async for b in keepalive(quiet, None)] == []
+
+
+async def test_a_caller_that_goes_away_cancels_the_work():
+    task = asyncio.ensure_future(asyncio.sleep(30))
+    gen = keepalive(task, 0.05)
+    assert await gen.__anext__() == KEEPALIVE_LINE
+    await gen.aclose()
+    await asyncio.sleep(0)
+    assert task.cancelled()
+
+
+async def test_a_slow_turn_streams_comment_lines_between_its_events(monkeypatch):
+    real = sessions_module.run_turn
+
+    async def slow(spec, held, request):
+        await asyncio.sleep(0.3)
+        return await real(spec, held, request)
+
+    monkeypatch.setattr(sessions_module, "run_turn", slow)
+    [text], _, _ = await talk_with(tuned(keepalive_seconds=0.1), [READ, say_json(GOOD)], "Hi")
+    assert text.count(": keepalive") >= 2 and text.startswith(": keepalive")
+    assert [e["type"] for e in sse(text)] == ["text_delta", "message", "usage"]  # the comment lines are not events
+    [plain], _, _ = await talk_with(tuned(), [READ, say_json(GOOD)], "Hi")
+    assert ": keepalive" not in plain  # off by default
+
+
+async def test_the_model_is_told_to_answer_now_after_the_soft_number_of_rounds():
+    [text], model, _ = await talk_with(tuned(soft_rounds=1), [READ, call_tool("read_clause", anchor="E-S25:v3:c1", extra=1), say_json(GOOD)], "Hi")
+    assert not asked_to_answer_now(model.requests[0]) and asked_to_answer_now(model.requests[1])
+    assert sse(text)[-2]["type"] == "message"
+
+
+async def test_the_model_is_told_to_answer_now_once_the_soft_time_has_passed():
+    _, model, _ = await talk_with(tuned(soft_seconds=0.0), [READ, say_json(GOOD)], "Hi")
+    assert asked_to_answer_now(model.requests[0])
+    _, model, _ = await talk_with(tuned(), [READ, say_json(GOOD)], "Hi")
+    assert not asked_to_answer_now(model.requests[0])
+
+
+async def test_a_call_repeated_in_one_turn_is_not_sent_again():
+    script = [READ, READ, say_json(GOOD)]
+    _, model, mcp = await talk_with(tuned(repeat_answer="You already have this result."), script, "Hi")
+    assert len(mcp.calls) == 1
+    _, _, every = await talk_with(tuned(), script, "Hi")
+    assert len(every.calls) == 2  # off by default
+    # a new turn may read it again: the guard is per turn
+    _, _, mcp = await talk_with(tuned(repeat_answer="x"), [READ, say_json(GOOD), READ, say_json(GOOD)], "One?", "Two?")
+    assert len(mcp.calls) == 2
+
+
+async def test_the_thinking_level_is_set_on_every_model_request():
+    _, model, _ = await talk_with(tuned(thinking_level="low"), [READ, say_json(GOOD)], "Hi")
+    assert model.requests[0].config.thinking_config.thinking_level == types.ThinkingLevel.LOW
+    _, model, _ = await talk_with(tuned(), [READ, say_json(GOOD)], "Hi")
+    assert getattr(model.requests[0].config.thinking_config, "thinking_level", None) is None
+
+
+from google.adk.models.llm_response import LlmResponse  # noqa: E402
+from pharmalign_agent_common.runner import RunTracker  # noqa: E402
+from pharmalign_agent_common.sessions import TOO_SLOW, TimedModel  # noqa: E402
+
+
+class Hangs:
+    """A model whose first calls hang, then answers like the one it wraps."""
+
+    def __init__(self, inner, hang_first: int):
+        self.inner, self.hang_first, self.calls = inner, hang_first, 0
+
+    def __getattr__(self, name):
+        return getattr(self.inner, name)
+
+    async def generate_content_async(self, llm_request, stream=False):
+        self.calls += 1
+        if self.calls <= self.hang_first:
+            await asyncio.sleep(30)
+        async for response in self.inner.generate_content_async(llm_request, stream=stream):
+            yield response
+
+
+class _Plain(__import__("google.adk.models.base_llm", fromlist=["BaseLlm"]).BaseLlm):
+    """Gives a duck-typed model the BaseLlm shape the wrapper needs."""
+
+    model: str = "m"
+    source: object = None
+
+    def __init__(self, source):
+        super().__init__(model="m", source=source)
+
+    async def generate_content_async(self, llm_request, stream=False):
+        async for r in self.source.generate_content_async(llm_request, stream=stream):
+            yield r
+
+
+async def test_a_hung_model_call_is_cancelled_and_tried_once_more():
+    inner = FakeModel(script=[say_json(GOOD)])
+    hung = Hangs(inner, 1)
+    request = type("R", (), {"contents": [], "config": None})()
+    responses = [r async for r in TimedModel(model="m", inner=_Plain(hung), seconds=0.2).generate_content_async(request)]
+    assert hung.calls == 2 and len(responses) == 1  # the first call hung and was cancelled, the second answered
+    with pytest.raises(TimeoutError):  # two hung calls end the turn: the common error mapping turns it into the plain message
+        _ = [r async for r in TimedModel(model="m", inner=_Plain(Hangs(inner, 5)), seconds=0.1).generate_content_async(request)]
+    assert sessions_module._failure(TimeoutError("x"), RunTracker(1, 1)).message == TOO_SLOW
+    wrapped = RuntimeError("model error TimeoutError: the model did not answer within 25 seconds, 2 times")  # how ADK re-raises it
+    assert sessions_module._failure(wrapped, RunTracker(1, 1)).message == TOO_SLOW
+    assert sessions_module._failure(ValueError("x"), RunTracker(1, 1)).code == "internal_error"
+
+
+async def test_a_turn_that_runs_out_of_time_says_so_in_plain_words(monkeypatch):
+    async def slow(spec, held, request):
+        await asyncio.sleep(5)
+
+    monkeypatch.setattr(sessions_module, "run_turn", slow)
+    [text], _, _ = await talk_with(tuned(turn_seconds=1), [say_json(GOOD)], "Hi")
+    error = sse(text)[-1]
+    assert error["type"] == "error" and error["code"] == "deadline_exceeded" and error["message"] == TOO_SLOW
+    assert "Saved traces" not in TOO_SLOW
+
+
+async def test_the_output_cap_is_set_on_every_model_request_when_asked():
+    _, model, _ = await talk_with(tuned(max_output_tokens=1234), [READ, say_json(GOOD)], "Hi")
+    assert model.requests[0].config.max_output_tokens == 1234
+    _, model, _ = await talk_with(tuned(), [READ, say_json(GOOD)], "Hi")
+    assert model.requests[0].config.max_output_tokens is None

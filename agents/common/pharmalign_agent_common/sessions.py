@@ -17,6 +17,7 @@ import asyncio
 import hashlib
 import json
 import re
+import time
 import uuid
 from collections.abc import AsyncIterator, Callable, Mapping
 from dataclasses import dataclass, field
@@ -28,8 +29,10 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from google.adk.agents import LlmAgent
 from google.adk.models.base_llm import BaseLlm
+from google.adk.planners import BuiltInPlanner
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
+from google.genai import types
 from pharmalign_contracts.agents.knowledge_assistant import (
     EVENT_ADAPTER,
     ErrorEvent,
@@ -85,6 +88,14 @@ class SessionSpec:
     max_model_calls: int = TURN_MAX_MODEL_CALLS  # per turn, as the contract sets it
     max_tool_calls: int = TURN_MAX_TOOL_CALLS
     turn_seconds: int = TURN_SECONDS
+    # Opt-in controls for an agent whose model works in a loop of tool calls (all off by default, so other agents run as before):
+    keepalive_seconds: float | None = None  # a comment line every this many seconds while a turn works, so the caller's idle limit is not hit
+    thinking_level: str | None = None  # "minimal", "low", "medium" or "high": the model's thinking in each round (a long default makes rounds slow)
+    soft_seconds: float | None = None  # this long into a turn, every model call is told to answer now with what it has
+    model_call_seconds: float | None = None  # one model call that takes longer is cancelled and tried once more (a hung call must not use up the turn)
+    max_output_tokens: int | None = None  # a cap on one model call's output (thinking included), so a call that runs on without end is cut short
+    soft_rounds: int | None = None  # from this many model calls into a turn, every model call is told to answer now
+    repeat_answer: str | None = None  # a tool call the same as an earlier one in the turn is not sent again: the model gets this text
 
     @property
     def path(self) -> str:
@@ -121,8 +132,16 @@ def build_session_agent(
     if model is None and settings.model_mode == "scripted":
         model = scripted.model_for_session(spec.name)
     model = model or build_model(spec, settings)  # type: ignore[arg-type]
+    if spec.model_call_seconds:
+        model = TimedModel(model=model.model, inner=model, seconds=spec.model_call_seconds)
     text = spec.instruction_for(session)
-    callbacks = _callbacks(tracker, getattr(model, "model", "")) if tracker is not None else {}
+    callbacks = _tuned(spec, _callbacks(tracker, getattr(model, "model", "")), tracker) if tracker is not None else {}
+    extra: dict[str, Any] = {}
+    if spec.thinking_level:
+        level = types.ThinkingLevel(spec.thinking_level.upper())
+        extra["planner"] = BuiltInPlanner(thinking_config=types.ThinkingConfig(thinking_level=level))
+    if spec.max_output_tokens:
+        extra["generate_content_config"] = types.GenerateContentConfig(max_output_tokens=spec.max_output_tokens)
     return LlmAgent(
         name=spec.adk_name,
         model=model,
@@ -130,7 +149,62 @@ def build_session_agent(
         output_schema=spec.answer_model,
         tools=[toolset_for(spec.tools_for(session), settings, session.run_token)] if settings.mcp_url else [],
         **callbacks,
+        **extra,
     )
+
+
+class TimedModel(BaseLlm):
+    """Wraps a model so that one call that hangs is cancelled after `seconds` and tried once more, then fails with a TimeoutError."""
+
+    inner: BaseLlm
+    seconds: float
+    attempts: int = 2
+
+    async def generate_content_async(self, llm_request, stream: bool = False):
+        for _ in range(self.attempts):
+            try:
+                async with asyncio.timeout(self.seconds):
+                    responses = [r async for r in self.inner.generate_content_async(llm_request, stream=stream)]
+            except TimeoutError:
+                continue
+            for response in responses:
+                yield response
+            return
+        raise TimeoutError(f"the model did not answer within {self.seconds:g} seconds, {self.attempts} times")
+
+
+ANSWER_NOW = (
+    "Time for this answer is nearly up. Call no more tools. Answer now, with the result JSON, from what the tools have already "
+    "returned. If that is not enough, say so with a no_source or not_available event instead of guessing."
+)
+
+
+def _tuned(spec: SessionSpec, callbacks: dict[str, Any], tracker: RunTracker) -> dict[str, Any]:
+    """Adds the spec's opt-in controls to the common callbacks: the answer-now nudge and the repeated-call guard."""
+    if spec.soft_seconds is None and spec.soft_rounds is None and spec.repeat_answer is None:
+        return callbacks
+    before_model, before_tool = callbacks["before_model_callback"], callbacks["before_tool_callback"]
+
+    def tuned_before_model(callback_context, llm_request):
+        out = before_model(callback_context, llm_request)
+        started = getattr(tracker, "turn_started", None)
+        slow = spec.soft_seconds is not None and started is not None and time.monotonic() - started > spec.soft_seconds
+        many = spec.soft_rounds is not None and tracker.started > spec.soft_rounds
+        if slow or many:
+            llm_request.contents.append(types.Content(role="user", parts=[types.Part(text=ANSWER_NOW)]))
+        return out
+
+    def tuned_before_tool(tool, args, tool_context):
+        if spec.repeat_answer is not None and tool.name != "set_model_response":
+            seen = getattr(tracker, "turn_calls", None)
+            if seen is not None:
+                key = (tool.name, json.dumps(args, sort_keys=True, default=str))
+                if key in seen:
+                    return {"repeated_call": True, "message": spec.repeat_answer}  # a returned dict replaces the call: nothing is sent
+                seen.add(key)
+        return before_tool(tool, args, tool_context)
+
+    return {**callbacks, "before_model_callback": tuned_before_model, "before_tool_callback": tuned_before_tool}
 
 
 def parse_answer(spec: SessionSpec, turn: Turn, text: str, log: ToolLog) -> Any:
@@ -194,6 +268,7 @@ def _new_turn(spec: SessionSpec, tracker: RunTracker) -> int:
     tracker.model_calls, tracker.tool_errors = [], []
     tracker.tool_calls = tracker.started = 0
     tracker.truncated, tracker.exceeded = False, None
+    tracker.turn_started, tracker.turn_calls = time.monotonic(), set()  # for the opt-in controls of SessionSpec
     return len(tracker.log.calls)
 
 
@@ -210,6 +285,24 @@ async def run_turn(spec: SessionSpec, held: _Session, request: TurnRequest) -> A
         return parse_answer(spec, turn, text, tracker.log)  # a second failure ends the turn
 
 
+TOO_SLOW = "The assistant took too long to answer. Please try again."
+KEEPALIVE_LINE = ": keepalive\n\n"  # an SSE comment: a reader that takes only `data:` lines skips it, and it still resets an idle timer
+
+
+async def keepalive(task: "asyncio.Future", every: float | None) -> AsyncIterator[str]:
+    """Waits for `task`, yielding a comment line every `every` seconds meanwhile (none when `every` is None).
+
+    If the caller goes away first (the generator is closed), the task is cancelled, so no work goes on for nobody."""
+    try:
+        while not task.done():
+            await asyncio.wait({task}, timeout=every)
+            if every is not None and not task.done():
+                yield KEEPALIVE_LINE
+    finally:
+        if not task.done():
+            task.cancel()
+
+
 def _sse(event: dict) -> str:
     return f"data: {json.dumps(EVENT_ADAPTER.validate_python(event).model_dump(mode='json'), ensure_ascii=False)}\n\n"
 
@@ -217,6 +310,8 @@ def _sse(event: dict) -> str:
 def _failure(exc: BaseException, tracker: RunTracker) -> ErrorEvent:
     if isinstance(exc, BudgetExceeded) or tracker.exceeded:
         return ErrorEvent(code="budget_exceeded", message=tracker.exceeded or str(exc) or "budget used", retryable=True)
+    if isinstance(exc, TimeoutError) or "TimeoutError" in str(exc):  # ADK re-raises a model's timeout as a RuntimeError with its text
+        return ErrorEvent(code="deadline_exceeded", message=TOO_SLOW, retryable=True)
     if isinstance(exc, OutputTruncated):
         return ErrorEvent(code="output_truncated", message=str(exc), retryable=True)
     if isinstance(exc, OutputInvalid):
@@ -287,19 +382,26 @@ def build_session_router(
         except ValueError as exc:
             return _problem(422, "contract_violation", "The request breaks the contract.", str(exc))
 
+        async def work() -> tuple[list[dict], ErrorEvent | None]:
+            error: ErrorEvent | None = None
+            out: list[dict] = []
+            try:
+                async with asyncio.timeout(spec.turn_seconds):
+                    out = stream_events(await run_turn(spec, held, turn_request))
+            except asyncio.CancelledError:
+                raise
+            except TimeoutError:
+                error = ErrorEvent(code="deadline_exceeded", message=TOO_SLOW, retryable=True)
+            except Exception as exc:  # an honest error event, never half an answer
+                error = _failure(exc, held.tracker)
+            return out, error
+
         async def events() -> AsyncIterator[str]:
             async with held.lock:  # one turn at a time per session
-                error: ErrorEvent | None = None
-                out: list[dict] = []
-                try:
-                    async with asyncio.timeout(spec.turn_seconds):
-                        out = stream_events(await run_turn(spec, held, turn_request))
-                except asyncio.CancelledError:
-                    raise
-                except TimeoutError:
-                    error = ErrorEvent(code="deadline_exceeded", message=f"the turn took more than {spec.turn_seconds} seconds", retryable=True)
-                except Exception as exc:  # an honest error event, never half an answer
-                    error = _failure(exc, held.tracker)
+                task = asyncio.ensure_future(work())
+                async for beat in keepalive(task, spec.keepalive_seconds):
+                    yield beat
+                out, error = task.result()
                 for event in out:
                     yield _sse(event)
                 usage = held.tracker.usage()

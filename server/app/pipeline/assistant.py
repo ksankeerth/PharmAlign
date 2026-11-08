@@ -28,10 +28,16 @@ from .sources import kb_chunks, notice_chunks
 CHECKS = STORES["check_result"]
 TRACES = STORES["check_trace"]
 ASSISTANT_UNAVAILABLE = "The assistant isn't available. Saved traces still work."
+ASSISTANT_TOO_SLOW = "The assistant took too long to answer. Please try again."
+ASSISTANT_DROPPED = "The assistant stopped answering. Please try again."
 
 
 class AssistantUnavailable(Exception):
     """The agent can't be reached or sent something unusable."""
+
+
+class AssistantTimedOut(AssistantUnavailable):
+    """The agent sent nothing for longer than the read limit."""
 
 
 class AssistantClient(Protocol):
@@ -84,8 +90,10 @@ class HttpAssistantClient:
                 if response.status_code != 200:
                     raise AssistantUnavailable(f"the agent answered {response.status_code}")
                 async for line in response.aiter_lines():
-                    if line.startswith("data:"):
+                    if line.startswith("data:"):  # anything else, such as the agent's ": keepalive" comment, only keeps the connection from going idle
                         yield json.loads(line.removeprefix("data:").strip())
+        except httpx.TimeoutException as e:
+            raise AssistantTimedOut(str(e)) from e
         except (httpx.TransportError, ValueError) as e:
             raise AssistantUnavailable(str(e)) from e
 
@@ -228,9 +236,10 @@ async def relay_turn(rt: Runtime, actor: Actor, chat: Chat, request: TurnRequest
             if part:
                 said.append(part)
             yield event
-    except AssistantUnavailable:
+    except AssistantUnavailable as e:
         failed = "assistant_unavailable"
-        yield {"type": "error", "code": "assistant_unavailable", "message": ASSISTANT_UNAVAILABLE, "retryable": True}
+        message = ASSISTANT_TOO_SLOW if isinstance(e, AssistantTimedOut) else ASSISTANT_DROPPED if said else ASSISTANT_UNAVAILABLE
+        yield {"type": "error", "code": "assistant_unavailable", "message": message, "retryable": True}
     finally:
         async with _as_person(rt, actor) as ctx:
             ctx.db.add(ROW["assistant_exchange"](

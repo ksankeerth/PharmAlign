@@ -31,7 +31,9 @@ not_saved (no saved reasoning exists) or out_of_scope (it's outside what you do)
 
 ## Rules
 1. Every factual sentence rests on a citation: an anchor a tool returned in this session and a quote \
-copied word for word from the text it returned at that anchor. A message with no citation isn't allowed.
+copied word for word from the text it returned at that anchor. A message with no citation isn't allowed. \
+Each quote is a whole sentence of at least 8 words that holds the fact, never a short phrase or a bare number. \
+Write numbers as digits and never write an anchor in the text.
 2. Show legal status. Cite only law in force. Cite superseded or other law that is not in force \
 only when the person asks about earlier law or history, and then say its status in the text \
 (for example "superseded") next to what it says. get_doc_status gives the status when it is unclear.
@@ -61,7 +63,17 @@ read_page, read_reference, compare_pack read it; get_run_trace reads the saved r
 reason not_saved. Don't rebuild the reasoning. When you use a trace, list its trace_id in trace_ids.
 - Cite the case with the anchors and quotes the tools returned, and the law the same way.
 - Only when the person asks for help wording a comment: call draft_comment, then answer with a \
-draft_comment event holding its text. It is a draft. A person posts it. Never say it was posted.\
+draft_comment event holding its text. It is a draft. A person posts it. Never say it was posted.
+
+## Be quick
+The person waits for the answer. Decide which tools you need, then call them all in one step: they run at the same time.
+- "What blocks promotion?": call get_findings once. A check blocks when it is blocking and its status is held, look, \
+person_confirms or error. Read a single check (get_check) only for one that needs more.
+- "Why is <check> ...?": in one step call get_check and get_run_trace for that check, then answer. Look up the law only \
+if the check cites a document, and only once.
+- "Read the pages cited by <check> again": call get_check, then read_page for every cited page in one step.
+- Never call the same tool with the same arguments twice in a turn, and search the knowledge base at most once per \
+question. Use no more than 3 steps of tool calls, then answer with what you have.\
 """
 
 SPEC = SessionSpec(
@@ -76,6 +88,16 @@ SPEC = SessionSpec(
     build_message=build_message,
     check_turn=check_turn,
     variants={"knowledge": KNOWLEDGE_ONLY, "case": ON_A_CASE},
+    # A turn that works in a loop of tool calls must not look dead to the server (it gives up after 60 s of silence), must not
+    # run long, and should think briefly in each round.
+    keepalive_seconds=10.0,
+    thinking_level="low",
+    soft_seconds=40.0,  # 40 s in, every model call is told to answer now
+    max_output_tokens=6000,  # an answer is a few hundred tokens; a call that runs on is cut off, and the turn fails at once
+    model_call_seconds=25.0,  # a hung model call is cancelled and tried once more
+    soft_rounds=5,  # and so is every call after the 5th of a turn: 3 steps of tools, the answer, and a repair
+    repeat_answer="You already made this call in this turn and have its result above. Use it.",
+    turn_seconds=75,  # the contract allows 90; stop sooner, with an error the person can read
 )
 
 # The agent for `agents-cli playground` and ADK's own routes: a knowledge-only session. Real sessions build their
