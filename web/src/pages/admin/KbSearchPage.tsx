@@ -11,6 +11,15 @@ import { formatPercent } from "../../lib/format";
 import { humanize } from "../../lib/labels";
 import { LegalPill } from "./shared";
 
+/** One-click searches that show what the library holds, including one it has no source for. */
+const EXAMPLES: { label: string; query: string; purpose: "requirement" | "context" }[] = [
+  { label: "Stability tests for a hot climate", query: "long-term stability testing conditions for a hot climate zone", purpose: "requirement" },
+  { label: "Who may own a pharmacy business", query: "who may own or operate a pharmaceutical establishment", purpose: "requirement" },
+  { label: "Arabic on labels and leaflets", query: "Arabic language on the label and patient leaflet", purpose: "requirement" },
+  { label: "Is Federal Law No. 8 of 2019 in force?", query: "Federal Law No. 8 of 2019 repealed", purpose: "context" },
+  { label: "Nicotine vaping liquids (no source)", query: "nicotine vaping liquids", purpose: "requirement" },
+];
+
 const LEVEL: Record<number, string> = { 1: "Binding law", 2: "National guidance", 3: "International standard", 4: "Other regulators", 5: "Context only" };
 
 function renderFilter(v: unknown): string {
@@ -39,21 +48,33 @@ export default function KbSearchPage() {
   const search = useMutation((body: Parameters<typeof api.searchKb>[0]) => api.searchKb(body));
   const [result, setResult] = useState<KbSearchResponse | null>(null);
 
-  const run = async () => {
-    if (!query.trim()) return;
+  const run = async (q = query, p = purpose) => {
+    if (!q.trim()) return;
     try {
-      const r = await search.run({ query: query.trim(), purpose, snapshot_id: snapshot || null, top_k: topK });
+      const r = await search.run({ query: q.trim(), purpose: p, snapshot_id: snapshot || null, top_k: topK });
       setResult(r);
-      setAsked({ query: query.trim(), purpose });
+      setAsked({ query: q.trim(), purpose: p });
     } catch {
       setResult(null);
     }
   };
+  const tryExample = (e: (typeof EXAMPLES)[number]) => {
+    setQuery(e.query);
+    setPurpose(e.purpose);
+    void run(e.query, e.purpose);
+  };
 
   return (
     <div className="stack">
-      <PageHeader title="Knowledge search" subtitle="Test what an agent would find. The same filters apply: a source must be adopted and, for a requirement, in force." />
-      <PrototypeNotice />
+      <PageHeader title="Knowledge search" subtitle="See exactly what an agent finds when it looks something up. The same rules apply: a requirement can only be backed by law in force." />
+      <div className="kb-examples" role="group" aria-label="Try an example">
+        <span className="muted small">Try:</span>
+        {EXAMPLES.map((e) => (
+          <button key={e.label} type="button" className="kb-example" onClick={() => tryExample(e)} disabled={search.pending}>
+            {e.label}
+          </button>
+        ))}
+      </div>
       <Panel>
         <form className="stack-sm" onSubmit={(e) => { e.preventDefault(); void run(); }}>
           <Field label="Question or phrase" required>
@@ -78,10 +99,7 @@ export default function KbSearchPage() {
 
       {result && asked ? (
         <div className="stack" aria-live="polite">
-          <Panel title="Filters applied">
-            <KeyValue columns={3} items={Object.entries(result.filters_applied).map(([k, v]) => ({ label: FILTER_LABEL[k] ?? humanize(k), value: k === "workspace_id" && v === workspace?.id && workspace ? workspace.name : renderFilter(v) }))} />
-            <p className="xsmall muted" style={{ marginTop: 8 }}>For "{asked.query}" as a {asked.purpose}.</p>
-          </Panel>
+
 
           {result.no_source_found ? (
             <div className="adm-silence" style={{ borderRadius: "var(--r-lg)" }}>
@@ -118,10 +136,16 @@ export default function KbSearchPage() {
               ))}
             </div>
           )}
+          <details className="kb-filters">
+            <summary>How this search was filtered: the same rules an agent gets</summary>
+            <KeyValue columns={3} items={Object.entries(result.filters_applied).map(([k, v]) => ({ label: FILTER_LABEL[k] ?? humanize(k), value: k === "workspace_id" && v === workspace?.id && workspace ? workspace.name : renderFilter(v) }))} />
+            <p className="xsmall muted" style={{ marginTop: 8 }}>For "{asked.query}" as a {asked.purpose}.</p>
+          </details>
         </div>
       ) : null}
 
       <RetrievalTest snapshots={snaps.data?.items ?? []} />
+      <PrototypeNotice />
     </div>
   );
 }
