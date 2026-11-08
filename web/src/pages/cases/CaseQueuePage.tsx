@@ -11,6 +11,7 @@ import { formatDate, formatRelative } from "../../lib/format";
 import { humanize } from "../../lib/labels";
 import { useNames } from "./shared";
 import { actsAs } from "../../lib/roles";
+import { CaseJourney } from "./CaseJourney";
 
 /** What a case is waiting for, in the words the queue uses. */
 type QueueState = "held" | "ready" | "review" | "running" | "company" | "awaiting" | "on_hold" | "unknown" | "rejected" | "recording" | "recorded" | "closed" | "intake";
@@ -30,9 +31,6 @@ const STATE: Record<QueueState, { label: string; tone: Tone; icon: IconName; spi
   recorded: { label: "Recorded", tone: "pass", icon: "check-double" },
   closed: { label: "Closed", tone: "neutral", icon: "check" },
 };
-
-/** Shown as tiles that filter the queue. */
-const TILES: QueueState[] = ["held", "ready", "awaiting", "unknown", "on_hold", "recorded"];
 
 function stateOf(c: CaseSummary, canPromote: boolean | null, decision: Decision | null): QueueState {
   if (decision) {
@@ -136,7 +134,6 @@ export default function CaseQueuePage() {
     [data, status, assignee, caseType, search],
   );
 
-  const count = (s: QueueState) => data?.filter((r) => r.state === s).length ?? 0;
   const assignees = [...new Set((data ?? []).map((r) => r.assigned_to).filter((x): x is string => Boolean(x)))];
   const types = [...new Set((data ?? []).map((r) => r.case_type))];
   const present = [...new Set((data ?? []).map((r) => r.state))];
@@ -218,17 +215,7 @@ export default function CaseQueuePage() {
 
       {error ? <ErrorState error={error} onRetry={reload} /> : null}
 
-      <div className="cw-tiles" role="group" aria-label="Filter by state">
-        {TILES.map((s) => (
-          <button key={s} type="button" className={`cw-tile cw-tile-${STATE[s].tone}`} aria-pressed={status === s} onClick={() => setParam("status", status === s ? "" : s)}>
-            <span className="cw-tile-head">
-              <Icon name={STATE[s].icon} size={13} />
-              {STATE[s].label}
-            </span>
-            <strong>{data ? count(s) : "..."}</strong>
-          </button>
-        ))}
-      </div>
+      <CaseJourney cases={data ?? null} active={status} onPick={(s) => setParam("status", status === s ? "" : s)} />
 
       <div className="cw-filters">
         <Field label="Search">{(id) => <TextInput id={id} type="search" placeholder="Case, product or company" value={params.get("q") ?? ""} onChange={(e) => setParam("q", e.target.value)} />}</Field>
