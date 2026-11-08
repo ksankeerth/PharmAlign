@@ -7,7 +7,7 @@
 set -euo pipefail
 A=$(cd "$(dirname "$0")/.." && pwd)                # agents/knowledge-assistant
 W=$(cd "$A/../.." && pwd)                            # the worktree
-M=${PHARMALIGN_MAIN_TREE:-/Users/sankeerthan/Documents/prj/itu/PharmAlign}   # only for its server venv
+M=${PHARMALIGN_MAIN_TREE:-$W}   # whose server/.venv to use: this tree, or set it to the main tree when running from a worktree
 RUNS=$A/eval/runs
 PIDS=$RUNS/stack.pids
 mkdir -p "$RUNS"
