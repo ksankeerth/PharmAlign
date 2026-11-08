@@ -5,6 +5,7 @@ import { api } from "../../api";
 import type { AssistantEvent } from "../../api/types";
 import { Button, Callout, ErrorState, Icon, Pill, Select, TextArea } from "../../components";
 import { useApi } from "../../hooks/useApi";
+import { checkStarters } from "../../lib/assistantStarters";
 import { CHECK_STATUS_LABEL } from "../../lib/labels";
 import { useSession } from "../session";
 import { type ChatKey, type Turn, useAssistant } from "./AssistantContext";
@@ -177,7 +178,8 @@ export function AssistantDock() {
 
   if (!open) return null;
 
-  const send = async (text: string) => {
+  // The check a question is about. A starter that names the check sends it (the check's code, which the tools take), as does the "About" choice.
+  const send = async (text: string, about?: string) => {
     const trimmed = text.trim();
     if (!trimmed || busy) return;
     const id = nextId.current++;
@@ -191,7 +193,9 @@ export function AssistantDock() {
         session = (await api.startAssistantSession({ case_id: caseId, language: "en" })).id;
         updateChat(here, (c) => ({ ...c, session }));
       }
-      const asked = here !== "knowledge" && focus ? { check_id: focus, finding_id: null } : null;
+      const chosen = items.find((c) => c.id === focus)?.check_id;
+      const checkCode = about ?? chosen;
+      const asked = here !== "knowledge" && checkCode ? { check_id: checkCode, finding_id: null } : null;
       for await (const ev of api.sendAssistantTurn(session, { message: trimmed, focus: asked })) {
         update((t) => ({ ...t, events: [...t.events, ev] }));
       }
@@ -208,9 +212,7 @@ export function AssistantDock() {
     }
   };
 
-  const caseStarters = subject
-    ? [`Why is ${subject.check_id} ${CHECK_STATUS_LABEL[subject.status].toLowerCase()}?`, `Read the pages cited by ${subject.check_id} again`, `Draft a comment on ${subject.check_id}`]
-    : [];
+  const caseStarters = subject ? checkStarters(subject.check_id, subject.status) : [];
   const starters = inCase ? ["What blocks promotion?", ...caseStarters, STARTERS[0]] : STARTERS;
 
   return (
@@ -253,7 +255,7 @@ export function AssistantDock() {
             </p>
             <div className="as-starters" role="group" aria-label="Suggested questions">
               {starters.map((s) => (
-                <button key={s} type="button" className="as-starter" onClick={() => void send(s)}>
+                <button key={s} type="button" className="as-starter" onClick={() => void send(s, caseStarters.includes(s) ? subject?.check_id : undefined)}>
                   <span>{s}</span>
                   <Icon name="send" size={13} />
                 </button>
