@@ -21,6 +21,7 @@ from ..identity import Actor
 from ..stores import STORES
 from ..tables import ROW
 from .citations import CitationContext, SourceChunk, check_quote
+from .client import TokenProvider, google_id_token, static_bearer
 from .runner import citation_context
 from .sources import kb_chunks, notice_chunks
 
@@ -46,25 +47,28 @@ class AssistantClient(Protocol):
 
 class HttpAssistantClient:
     def __init__(self, base_url: Optional[str], token: Optional[str] = None, *, transport: Optional[httpx.AsyncBaseTransport] = None,
-                 connect_seconds: float = 5.0, read_seconds: float = 60.0):
+                 connect_seconds: float = 5.0, read_seconds: float = 60.0, token_provider: Optional[TokenProvider] = None):
+        """`token_provider` gives the bearer for the agent's address, as for the run agents: a Google ID token on Cloud Run,
+        where the agent is private. Without one, `token` is sent as it is."""
         self.base_url = base_url.rstrip("/") if base_url else None
-        self.token = token
+        self.token_provider = token_provider or static_bearer(token)
         self.http = httpx.AsyncClient(transport=transport, timeout=httpx.Timeout(read_seconds, connect=connect_seconds))
 
     async def aclose(self) -> None:
         await self.http.aclose()
 
-    def _headers(self, accept: str) -> dict:
+    async def _headers(self, accept: str) -> dict:
         headers = {CONTRACT_HEADER: CONTRACT_VERSION, "Content-Type": "application/json", "Accept": accept}
-        if self.token:
-            headers["Authorization"] = f"Bearer {self.token}"
+        token = await self.token_provider(self.base_url or "")
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
         return headers
 
     async def open(self, session: SessionCreate) -> str:
         if not self.base_url:
             raise AssistantUnavailable("no URL is set for the Knowledge Assistant")
         try:
-            response = await self.http.post(f"{self.base_url}/sessions", headers=self._headers("application/json"), content=session.model_dump_json())
+            response = await self.http.post(f"{self.base_url}/sessions", headers=await self._headers("application/json"), content=session.model_dump_json())
             if response.status_code not in (200, 201):
                 raise AssistantUnavailable(f"the agent answered {response.status_code}")
             return SessionCreated.model_validate_json(response.content).agent_session_id
@@ -75,7 +79,7 @@ class HttpAssistantClient:
         if not self.base_url:
             raise AssistantUnavailable("no URL is set for the Knowledge Assistant")
         try:
-            async with self.http.stream("POST", f"{self.base_url}/sessions/{agent_session_id}/turns", headers=self._headers("text/event-stream"),
+            async with self.http.stream("POST", f"{self.base_url}/sessions/{agent_session_id}/turns", headers=await self._headers("text/event-stream"),
                                         content=request.model_dump_json()) as response:
                 if response.status_code != 200:
                     raise AssistantUnavailable(f"the agent answered {response.status_code}")
@@ -96,7 +100,9 @@ def make_assistant_client(settings, sessions: async_sessionmaker[AsyncSession]) 
         from .assistant_replay import ReplayAssistantClient  # it imports this module
 
         return ReplayAssistantClient(sessions, settings)
-    return HttpAssistantClient(settings.agent_url_knowledge_assistant, settings.agent_token, connect_seconds=settings.agent_connect_seconds)
+    provider = google_id_token() if settings.agent_auth == "google_id_token" else None
+    return HttpAssistantClient(settings.agent_url_knowledge_assistant, settings.agent_token, connect_seconds=settings.agent_connect_seconds,
+                               token_provider=provider)
 
 
 # ---------------------------------------------------------------- the relay
