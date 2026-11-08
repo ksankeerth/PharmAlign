@@ -24,7 +24,7 @@ from google.adk.tools.mcp_tool import McpToolset
 from pharmalign_agent_common import SessionSpec, Settings, ToolLog, build_session_router
 from pharmalign_agent_common import scripted
 from pharmalign_agent_common.routes import _json, _problem
-from pharmalign_agent_common.sessions import MAX_SESSIONS, SESSION_TTL, _sse
+from pharmalign_agent_common.sessions import MAX_SESSIONS, SESSION_TTL, TOO_SLOW, _sse, keepalive
 from pharmalign_contracts.agents.knowledge_assistant import (
     ErrorEvent,
     SessionCreate,
@@ -145,23 +145,30 @@ def build_pipeline_router(
         except ValueError as exc:
             return _problem(422, "contract_violation", "The request breaks the contract.", str(exc))
 
+        async def work() -> tuple[list[dict], object, ErrorEvent | None]:
+            out: list[dict] = []
+            usage = None
+            error: ErrorEvent | None = None
+            try:
+                async with asyncio.timeout(spec.turn_seconds):
+                    out, usage, error = await run_knowledge_turn(
+                        held, turn_request, chain("classifier"), chain("answer"),
+                        make_call_tool(held.toolset), turn_log_path,
+                    )
+            except asyncio.CancelledError:
+                raise
+            except TimeoutError:
+                error = ErrorEvent(code="deadline_exceeded", message=TOO_SLOW, retryable=True)
+            except Exception as exc:  # an honest error event, never half an answer
+                error = ErrorEvent(code="internal_error", message=f"{type(exc).__name__}: {exc}"[:500], retryable=True)
+            return out, usage, error
+
         async def events() -> AsyncIterator[str]:
             async with held.lock:  # one turn at a time per session
-                out: list[dict] = []
-                usage = None
-                error: ErrorEvent | None = None
-                try:
-                    async with asyncio.timeout(spec.turn_seconds):
-                        out, usage, error = await run_knowledge_turn(
-                            held, turn_request, chain("classifier"), chain("answer"),
-                            make_call_tool(held.toolset), turn_log_path,
-                        )
-                except asyncio.CancelledError:
-                    raise
-                except TimeoutError:
-                    error = ErrorEvent(code="deadline_exceeded", message=f"the turn took more than {spec.turn_seconds} seconds", retryable=True)
-                except Exception as exc:  # an honest error event, never half an answer
-                    error = ErrorEvent(code="internal_error", message=f"{type(exc).__name__}: {exc}"[:500], retryable=True)
+                task = asyncio.ensure_future(work())
+                async for beat in keepalive(task, spec.keepalive_seconds):
+                    yield beat
+                out, usage, error = task.result()
                 for event in out:
                     yield _sse(event)
                 if usage:
