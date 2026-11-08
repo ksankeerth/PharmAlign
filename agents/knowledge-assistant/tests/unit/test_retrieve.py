@@ -288,3 +288,62 @@ async def test_search_all_searches_the_whole_library_without_a_country_filter(mo
     call_tool = fake({"q": reply([hit("A:v1:c1", "t")])})
     await retrieve(["q"], False, call_tool, ToolLog())
     assert call_tool.seen[0][1]["countries"] == ["ae"]
+
+
+# ---- status questions: "is X still in force?", "what replaced X?"
+from app.chat.retrieve import STATUS_SUFFIX, is_status_question  # noqa: E402
+
+
+@pytest.mark.parametrize("text", [
+    "Is Federal Law No. 8 of 2019 still in force?", "What replaced it?", "Was the 2019 law repealed?", "Is this guideline superseded?",
+    "Does the old regulation still apply?" if False else "Is the old regulation still valid?", "Is it no longer applicable?",
+])
+def test_status_questions_are_recognised(text):
+    assert is_status_question([text])
+
+
+@pytest.mark.parametrize("text", ["How long is a marketing approval valid?", "What is the fee for renewal?", "Who may own a pharmacy?"])
+def test_other_questions_are_not_status_questions(text):
+    assert not is_status_question([text])
+
+
+async def test_a_status_question_searches_what_is_in_force_the_law_with_any_status_and_the_repeal():
+    q = "Is the old law still in force?"
+    call_tool = fake({q: reply([hit("A:v1:c1", "t")]), q + STATUS_SUFFIX: reply([hit("B:v1:c1", "repeal")])})
+    await retrieve([q], True, call_tool, ToolLog())  # the classifier called it a history question
+    searched = sorted((a["query"], a["purpose"]) for _, a in call_tool.seen)
+    assert searched == sorted([(q, "context"), (q, "requirement"), (q + STATUS_SUFFIX, "requirement")])
+
+
+async def test_a_status_question_puts_what_is_in_force_before_the_old_law():
+    q = "Is the old law still in force?"
+    by_purpose = {"requirement": reply([hit("NEW:v1:c1", "repealed by")]), "context": reply([hit("OLD:v1:c1", "old text")])}
+
+    async def call_tool(name, args):
+        return by_purpose[args["purpose"]]
+
+    got = await retrieve([q], True, call_tool, ToolLog())
+    assert [p["anchor"] for p in got.passages] == ["NEW:v1:c1", "OLD:v1:c1"]
+
+
+async def test_a_question_that_is_not_about_status_makes_one_search_as_before():
+    call_tool = fake({"q": reply([hit("A:v1:c1", "t")])})
+    await retrieve(["q"], False, call_tool, ToolLog())
+    assert [(a["query"], a["purpose"]) for _, a in call_tool.seen] == [("q", "requirement")]
+
+
+async def test_widening_repeats_each_search_with_the_purpose_it_first_had(monkeypatch):
+    monkeypatch.delenv("PHARMALIGN_KA_LOCAL_FIRST")
+    q = "Is the old law still in force?"
+    seen = []
+
+    async def call_tool(name, args):
+        seen.append((args["query"], args["purpose"], "countries" in args))
+        return reply([hit(f"A:v1:c{len(seen)}", f"text {len(seen)}")])  # the home search finds something, so only widen() goes further
+
+    found = await retrieve([q], False, call_tool, ToolLog())
+    assert {(query, purpose) for query, purpose, local in seen if local} == {(q, "requirement"), (q, "context"), (q + STATUS_SUFFIX, "requirement")}
+    seen.clear()
+    assert await widen(found, call_tool, ToolLog(), "requirement") == 3
+    assert {(query, purpose) for query, purpose, _ in seen} == {(q, "requirement"), (q, "context"), (q + STATUS_SUFFIX, "requirement")}
+    assert all(not local for *_, local in seen)
