@@ -1,12 +1,15 @@
 """Gaps: signals counted by code, the Gap Analyst's candidates, and a person's review.
 
 A candidate always cites a signal. Accepting one opens a change in a pack draft for a person to approve. It never edits
-a pack that is active. The grouping here is done by code, as the replay does; no model is called."""
+a pack that is active. An analysis asks the Gap Analyst (see pipeline/gap_run.py). If the agent is off, can't be asked
+or fails, the code groups the signals one to one instead, so the page always works."""
 from pharmalign_contracts.agents.run_agents import GapSignal
 from pharmalign_contracts.server import models as m
 
 from ..jobs import task
 from ..ops import op
+from ..pipeline import gap_run
+from ..pipeline.gap_run import FINISH_ANALYSIS
 from ..problems import invalid, not_found, require_reason
 from ..stores import STORES
 from ..tables import ROW
@@ -16,7 +19,6 @@ from .support import people_in_view, reach
 SIGNALS = STORES["gap_signal"]
 GAPS = STORES["gap"]
 ANALYSES = STORES["gap_analysis"]
-FINISH_ANALYSIS = "gaps.finish_analysis"
 
 
 def title_of(s: GapSignal) -> str:
@@ -62,7 +64,7 @@ async def start_analysis(req, ctx):
         invalid(f"Unknown signals: {', '.join(unknown)}.")
     a = m.GapAnalysis(id=ctx.id("ga"), status="running", started_at=ctx.now(), finished_at=None, candidates_created=0)
     ANALYSES.add(wctx, a)
-    wctx.schedule(FINISH_ANALYSIS, {"analysis_id": a.id, "signal_ids": ids}, ctx.after(2600))
+    await gap_run.begin(wctx, a.id, ids)
     wctx.audit(action="gap_analysis_started", object_type="gap_analysis", object_id=a.id, after={"signals": len(ids)})
     return a
 
@@ -109,13 +111,5 @@ async def review_gap(req, ctx):
 
 @task(FINISH_ANALYSIS)
 async def finish_analysis(payload, ctx):
-    a = await ANALYSES.get(ctx, payload["analysis_id"], for_update=True)
-    if a is None or a.status != "running":
-        return
-    covered = {i for g in await GAPS.list(ctx) for i in g.signal_ids}
-    wanted = set(payload["signal_ids"])
-    fresh = [s for s in await SIGNALS.list(ctx) if s.id in wanted and s.id not in covered]
-    for s in fresh:
-        await add_candidate(ctx, candidate_from(ctx, s))
-    await ANALYSES.save(ctx, a.model_copy(update={"status": "completed", "finished_at": ctx.now(), "candidates_created": len(fresh)}))
-    ctx.audit(action="gap_analysis_completed", object_type="gap_analysis", object_id=a.id, after={"candidates_created": len(fresh)}, actor_type="agent", actor_id="gap-analyst")
+    """The code's grouping, for when the agent is not asked. It uses short transactions of its own."""
+    await gap_run.run_fallback(ctx.rt, ctx.tenant.id, payload["analysis_id"], payload["signal_ids"], payload.get("fallback", "agent_not_asked"))

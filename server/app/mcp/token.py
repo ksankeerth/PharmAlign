@@ -80,7 +80,7 @@ def read(settings: Settings, token: str) -> RunScope:
         raise BadToken("malformed token") from e
 
 
-def run_token(settings: Settings, *, run_id: str, agent: str, tenant: str, case_id: str, snapshot_id: str, max_calls: int, expires_at: datetime) -> str:
+def run_token(settings: Settings, *, run_id: str, agent: str, tenant: str, case_id: Optional[str], snapshot_id: str, max_calls: int, expires_at: datetime) -> str:
     return sign(settings, RunScope("run", tenant, case_id, agent, run_id, snapshot_id, max_calls, int(expires_at.timestamp())))
 
 

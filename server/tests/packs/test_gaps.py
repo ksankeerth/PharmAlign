@@ -8,7 +8,7 @@ from app.tables import ROW
 from pharmalign_contracts.server import models as m
 
 from ..conftest import system_ctx
-from .conftest import audit_rows, count_rows, headers, run_jobs
+from .conftest import audit_rows, count_rows, headers, run_until_done
 
 pytestmark = pytest.mark.seeded
 
@@ -33,16 +33,14 @@ async def test_an_analysis_makes_candidates_that_each_cite_a_signal(http, clock)
     before = (await http.get("/api/v1/workspaces/ws-ae/gaps", headers=headers("p-sam"))).json()["items"]
     started = await http.post("/api/v1/workspaces/ws-ae/gap-analyses", json={"signal_ids": []}, headers=headers("p-sam"))
     assert started.status_code == 202 and started.json()["status"] == "running"
-    await run_jobs(http.app, clock)
-    done = (await http.get(f"/api/v1/gap-analyses/{started.json()['id']}", headers=headers("p-sam"))).json()
+    done = await run_until_done(http, clock, started.json()["id"])  # the agent has no stored answer here, so the code groups the signals
     assert done["status"] == "completed" and done["candidates_created"] == 2
     after = (await http.get("/api/v1/workspaces/ws-ae/gaps", headers=headers("p-sam"))).json()["items"]
     new = [g for g in after if g["id"] not in {b["id"] for b in before}]
     assert len(new) == 2 and all(g["signal_ids"] and g["status"] == "candidate" for g in new)
     # Signals already behind a gap are not counted twice.
     again = await http.post("/api/v1/workspaces/ws-ae/gap-analyses", json={"signal_ids": []}, headers=headers("p-sam"))
-    await run_jobs(http.app, clock)
-    assert (await http.get(f"/api/v1/gap-analyses/{again.json()['id']}", headers=headers("p-sam"))).json()["candidates_created"] == 0
+    assert (await run_until_done(http, clock, again.json()["id"]))["candidates_created"] == 0
 
 
 async def active_packs(engine) -> dict:

@@ -21,6 +21,16 @@ async def run_jobs(app, clock, seconds: int = 5) -> None:
     await Worker(app.state.rt).run_due()
 
 
+async def run_until_done(http, clock, analysis_id: str, seconds: int = 5, rounds: int = 80) -> dict:
+    """Runs due jobs again and again, as the worker does, until the analysis is no longer running. Returns the analysis."""
+    for _ in range(rounds):
+        await run_jobs(http.app, clock, seconds)
+        analysis = (await http.get(f"/api/v1/gap-analyses/{analysis_id}", headers=headers("p-sam"))).json()
+        if analysis["status"] != "running":
+            return analysis
+    return analysis
+
+
 async def add_person(engine, person_id: str, tenant_id: str, view: str) -> str:
     async with make_sessions(engine)() as db, db.begin():
         if await db.get(PersonRow, person_id) is None:
