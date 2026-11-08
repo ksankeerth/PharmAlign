@@ -1,12 +1,17 @@
 """Settings, read from PHARMALIGN_* environment variables."""
+from collections.abc import Sequence
 from typing import Literal, Optional
 
-from pydantic import model_validator
+from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+# The agents a person can do the work of. The others have no stand-in, so switching one off would stop the pipeline.
+SWITCHABLE_AGENTS = frozenset({"challenger", "sameness", "reliance-watch"})
+
+
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="PHARMALIGN_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="PHARMALIGN_", extra="ignore", populate_by_name=True)
 
     # Defaults to live, so demo identity only ever runs when someone asks for simulation.
     env: Literal["simulation", "shadow", "live"] = "live"
@@ -15,6 +20,11 @@ class Settings(BaseSettings):
     service_token: Optional[str] = None
     default_tenant: str = "ws-ae"
     default_person: str = "p-alex"
+    # A folder holding the built web UI (web/dist). Set, the server also serves the UI from the same origin.
+    web_dir: Optional[str] = None
+    # The most database connections the server keeps open (the agent tool server adds about half as many). Unset: SQLAlchemy's defaults, up to 15 each.
+    # A db-f1-micro Cloud SQL instance allows about 25 connections in all.
+    db_pool_max: Optional[int] = Field(default=None, ge=2)
     worker_enabled: bool = True
     worker_id: Optional[str] = None  # stable across restarts; defaults to the host name
     worker_poll_seconds: float = 1.0
@@ -32,6 +42,14 @@ class Settings(BaseSettings):
     agent_url_gap_analyst: Optional[str] = None
     agent_url_knowledge_assistant: Optional[str] = None
     agent_token: Optional[str] = None
+    # How the server proves itself to the agents. `static` sends agent_token. `google_id_token` sends a Google ID token for the agent's address,
+    # for private Cloud Run services (the server's service account needs the invoker role on them).
+    agent_auth: Literal["static", "google_id_token"] = "static"
+    # Agents switched off by configuration, comma separated: any of challenger, sameness, reliance-watch. A person does their work.
+    # Their code stays, and removing a name from the list turns the agent back on.
+    agents_off: str = ""
+    # The languages the Coordinator drafts questions to the company in, comma separated, such as "en". Empty: the pack's languages.
+    brief_languages: str = ""
     agent_connect_seconds: float = 5.0
     agent_read_seconds: float = 30.0
     agent_retries: int = 2
@@ -51,7 +69,10 @@ class Settings(BaseSettings):
     mock_regulator_hang_seconds: float = 30.0  # how long a "timed out" call stays silent
     mock_regulator_slow_seconds: float = 3.0
     # Knowledge. `auto` is bge-m3 when installed, else the deterministic embedder in simulation. The floor is the least similarity that counts as a source.
-    embedder: Literal["auto", "hash", "bge-m3"] = "auto"
+    embedder: Literal["auto", "hash", "bge-m3", "gemini-embedding-001"] = "auto"
+    # gemini-embedding-001 on Vertex AI. Unset, the Google client reads GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION, then Application Default Credentials.
+    google_cloud_project: Optional[str] = Field(default=None, validation_alias=AliasChoices("PHARMALIGN_GOOGLE_CLOUD_PROJECT", "GOOGLE_CLOUD_PROJECT"))
+    google_cloud_location: Optional[str] = Field(default=None, validation_alias=AliasChoices("PHARMALIGN_GOOGLE_CLOUD_LOCATION", "GOOGLE_CLOUD_LOCATION"))
     similarity_floor: Optional[float] = None
     # Every question: bge-reranker-v2-m3 reorders the best of vector and keyword search. It needs the bge-m3 extra.
     reranker: Literal["off", "bge-reranker-v2-m3"] = "off"
@@ -73,6 +94,25 @@ class Settings(BaseSettings):
     mcp_max_chars: int = 12_000  # characters in one result
     assistant_session_seconds: int = 8 * 3600  # how long an assistant session's token lasts
     assistant_max_tool_calls: int = 200
+
+    @model_validator(mode="after")
+    def _known_agents_off(self) -> "Settings":
+        unknown = sorted(self.off_agents - SWITCHABLE_AGENTS)
+        if unknown:
+            raise ValueError(f"PHARMALIGN_AGENTS_OFF can switch off {', '.join(sorted(SWITCHABLE_AGENTS))}, not {', '.join(unknown)}.")
+        return self
+
+    @property
+    def off_agents(self) -> frozenset[str]:
+        return frozenset(a.strip().lower() for a in self.agents_off.split(",") if a.strip())
+
+    def is_off(self, agent: str) -> bool:
+        return agent in self.off_agents
+
+    def languages_for_brief(self, pack_languages: Sequence[str]) -> list[str]:
+        """brief_languages when set, else the pack's. Only the brief's drafts use it; the pack's languages stay as they are."""
+        chosen = [c.strip() for c in self.brief_languages.split(",") if c.strip()]
+        return chosen or list(pack_languages)
 
     @model_validator(mode="after")
     def _poll_default(self) -> "Settings":
