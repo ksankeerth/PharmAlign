@@ -1,0 +1,6 @@
+# Copy to terraform.tfvars. The project number: gcloud projects describe pharmalign-sk --format='value(projectNumber)'
+project_id     = "pharmalign-sk"
+project_number = "123456789012"
+region         = "me-central1"
+billing_account_id = "XXXXXX-XXXXXX-XXXXXX" # gcloud billing projects describe pharmalign-sk; leave empty for no budget alert
+budget_amount      = 20                      # in the billing currency
