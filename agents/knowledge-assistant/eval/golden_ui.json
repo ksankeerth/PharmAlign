@@ -1,0 +1,76 @@
+{
+  "note": "The questions the assistant panel itself offers, and follow-ups a person would type after them. Expectations were set by searching the library by hand before any run, not from an answer.",
+  "starters": [
+    {
+      "id": "S1",
+      "q": "What long-term stability conditions apply in a hot climate?",
+      "route": "answer",
+      "docs": [["E-S25", "E-S07", "F-03", "F-S18"]],
+      "facts": ["30\\s*(°|º|o)?\\s*C"],
+      "forbid_docs": [],
+      "typed": [
+        {"q": "And for Zone II?", "route": "answer", "docs": [["E-S07", "F-03", "E-S25"]], "facts": ["25\\s*(°|º|o)?\\s*C"]},
+        {"q": "Which article says that?", "route": "answer", "docs": [], "facts": []}
+      ]
+    },
+    {
+      "id": "S2",
+      "q": "Who may operate a pharmaceutical establishment?",
+      "route": "answer",
+      "docs": [["A-01", "B-S06"]],
+      "facts": ["licen[cs]e"],
+      "forbid_docs": ["A-05", "A-11"],
+      "typed": [
+        {"q": "What about renewals?", "route": "answer", "docs": [["A-01", "B-S06", "A-09", "A-03"]], "facts": ["renew"]},
+        {"q": "Which article says that?", "route": "answer", "docs": [["A-01"]], "facts": ["\\b(Article|Articles)\\b"]}
+      ]
+    },
+    {
+      "id": "S3",
+      "q": "Is Federal Law No. 8 of 2019 still in force?",
+      "route": "answer",
+      "docs": [["A-01"]],
+      "facts": ["repeal|no longer|supersed|replaced|not in force", "\\b180\\b|\\b38\\b"],
+      "forbid_docs": [],
+      "typed": [
+        {"q": "Which article says that?", "route": "answer", "docs": [["A-01"]], "facts": ["\\b180\\b"]},
+        {"q": "What replaced it?", "route": "answer", "docs": [["A-01"]], "facts": ["\\b38\\b"]}
+      ]
+    },
+    {
+      "id": "S4",
+      "q": "How is a product's sameness with a reference approval judged?",
+      "route": "answer",
+      "docs": [["F-01", "F-05", "F-S04", "A-01"]],
+      "facts": ["same|equivalen"],
+      "forbid_docs": [],
+      "typed": [
+        {"q": "Which article says that?", "route": "answer", "docs": [], "facts": []},
+        {"q": "Does that apply in the UAE?", "route": "answer", "docs": [], "facts": []}
+      ]
+    },
+    {
+      "id": "S5",
+      "q": "Are vaping liquids with nicotine allowed?",
+      "route": "no_source",
+      "docs": [],
+      "facts": [],
+      "forbid_docs": [],
+      "typed": [
+        {"q": "What about nicotine-free ones?", "route": "refusal"},
+        {"q": "Which article says that?", "route": "refusal"}
+      ]
+    }
+  ],
+  "case": {
+    "case_id": "CASE-1042",
+    "person": "p-alex",
+    "checks": ["QUAL-07", "LBL-02", "LEGAL-01", "PV-01", "SAME-01"],
+    "general": [{"q": "What blocks promotion?", "kind": "blocks"}],
+    "per_check": [
+      {"fmt": "Why is {check} {status}?", "note": "worded by status in run_golden.why_question, as the panel does", "kind": "why"},
+      {"fmt": "Read the pages cited by {check} again", "kind": "pages"},
+      {"fmt": "Draft a comment on {check}", "kind": "draft"}
+    ]
+  }
+}
