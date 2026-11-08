@@ -31,6 +31,8 @@ A broken rule sends the reason back to the model once. A second break fails the 
 | `recommendation.choice` is one of `recommendation_options` | Server refuses a choice not offered |
 | `recommendation.reason_evidence` lists check ids from `results` | Server refuses a reason that cites nothing it was given |
 | Every draft question's `check_ids` are checks in `results`; texts in exactly the output languages | A question is tied to a finding |
+
+The model is given a result schema built for each run (`schema_for` in `app/rules.py`): each question's `texts` has one named field per output language. Gemini's structured output fills a map with open keys as `{}`, so the contract's map can't be given as it is. The answer is still checked as `BriefResult`.
 | Numbers in the summary, reason and questions appear in a finding, comment or tool result | No invented facts |
 | Evidence (none today) passes the shared anchor and quote check | Server's citation check |
 

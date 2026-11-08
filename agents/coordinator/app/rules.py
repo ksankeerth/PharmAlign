@@ -1,9 +1,39 @@
 """What is specific to the Coordinator: the first message and the rules a brief must keep before it leaves."""
 import json
+from functools import lru_cache
+from typing import Annotated
 
 from pharmalign_agent_common import ToolLog, check_evidence
 from pharmalign_agent_common.evidence import unquoted_numbers
-from pharmalign_contracts.agents.run_agents import BriefRequest, BriefResult
+from pharmalign_contracts.agents.run_agents import BriefRequest, BriefResult, DraftQuestion
+from pharmalign_contracts.common import Identifier, Strict
+from pydantic import BaseModel, ConfigDict, Field, create_model
+
+QuestionText = Annotated[str, Field(min_length=1, max_length=2000)]
+
+
+def schema_for(request: BriefRequest) -> type[BaseModel]:
+    """The result schema the model is given for this run: each question's texts written as one field per output language.
+
+    The contract's `texts` is a map by language. Gemini's structured output can't fill a map with open keys (it returns
+    `{}`), so every brief with a question was refused. The answer is still parsed and checked as BriefResult.
+    """
+    return _schema(tuple(dict.fromkeys(request.output_languages)))
+
+
+@lru_cache(maxsize=16)
+def _schema(languages: tuple[str, ...]) -> type[BaseModel]:
+    # Field names can't hold every code ("en-GB"), so each field carries its code as an alias, and is written back by it.
+    texts = create_model(
+        "QuestionTexts", __config__=ConfigDict(extra="forbid", serialize_by_alias=True),
+        **{f"t_{i}": (QuestionText, Field(alias=code)) for i, code in enumerate(languages)},
+    )
+    question = create_model(
+        "DraftQuestion", __base__=Strict, __doc__=DraftQuestion.__doc__,
+        check_ids=(list[Identifier], Field(min_length=1)),
+        texts=(texts, Field(description="One text in each output language.")),
+    )
+    return create_model("BriefResult", __base__=BriefResult, draft_questions=(list[question], Field(default_factory=list)))
 
 
 def build_message(request: BriefRequest) -> str:

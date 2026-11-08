@@ -90,3 +90,47 @@ async def test_a_choice_that_was_not_offered_is_refused():
     other = {**BRIEF, "recommendation": {"choice": "approve", "reason": "Looks fine.", "reason_evidence": ["M1"]}}
     with pytest.raises(OutputInvalid, match="wasn't offered"):
         await run(request_body(), [*READ, say_json(other), say_json(other)])
+
+
+def _texts_schema(request) -> dict:
+    """The question-texts schema in the answer tool the model is offered."""
+    declaration = request.tools_dict["set_model_response"]._get_declaration()
+    return declaration.parameters_json_schema["$defs"]["QuestionTexts"]
+
+
+@pytest.mark.parametrize("languages", [["en"], ["en", "ar"]])
+async def test_the_model_is_told_each_output_language_by_name(languages):
+    # Gemini fills a map with open keys as {}, so every brief with a question was refused. The schema names each language.
+    brief = {**BRIEF, "draft_questions": [{"check_ids": ["M1"], "texts": {code: f"Question ({code})." for code in languages}}]}
+    outcome, model, _ = await run(request_body(output_languages=languages), [call_tool("set_model_response", **brief)])
+    schema = _texts_schema(model.requests[0])
+    assert set(schema["properties"]) == set(languages) and set(schema["required"]) == set(languages)
+    assert schema["additionalProperties"] is False
+    assert set(outcome.result.draft_questions[0].texts) == set(languages)
+
+
+async def test_an_answer_with_a_language_left_out_is_sent_back_and_can_be_fixed():
+    # The answer tool checks the run's schema, so the model hears what is missing and answers again.
+    partial = {**BRIEF, "draft_questions": [{"check_ids": ["M1"], "texts": {"en": "Question?"}}]}
+    outcome, model, _ = await run(request_body(output_languages=["en", "ar"]),
+                                  [call_tool("set_model_response", **partial), call_tool("set_model_response", **BRIEF)])
+    assert model.calls == 2
+    assert set(outcome.result.draft_questions[0].texts) == {"en", "ar"}
+
+
+async def test_a_repeated_identical_call_is_not_sent_again():
+    outcome, model, mcp = await run(request_body(output_languages=["en", "ar"]),
+                                    [call_tool("get_findings"), call_tool("get_findings"), call_tool("get_findings", status=["look"]), say_json(BRIEF)])
+    assert [c.name for c in mcp.calls] == ["get_findings", "get_findings"]  # the repeat was answered without a call; other arguments go through
+    assert "write the brief now" in str(model.requests[2].contents[-1])
+    assert outcome.usage.tool_calls == 2
+
+
+async def test_the_coordinator_stops_at_its_own_model_call_ceiling():
+    from pharmalign_agent_common import BudgetExceeded
+
+    body = request_body(output_languages=["en", "ar"])
+    body["budget"] = {"max_model_calls": 40, "max_tool_calls": 80, "deadline_seconds": 600}
+    script = [call_tool("get_findings", status=[f"s{i}"]) for i in range(20)]
+    with pytest.raises(BudgetExceeded, match="more than 12 model calls"):
+        await run(body, script)
