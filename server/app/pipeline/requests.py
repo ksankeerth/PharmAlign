@@ -100,7 +100,7 @@ def brief_request(settings: Settings, run_id: str, case: CaseDetail, tenant: str
     earlier = PreviousRecommendation(version=previous.version, choice=previous.choice, reason=previous.reason) if previous else None
     return BriefRequest(**_base(settings, "coordinator", run_id, case, tenant, pack, now), input_fingerprint=input_fingerprint, case=_case_ref(case, product_type), results=results,
                         conflicts=list(conflicts), open_comments=list(open_comments), previous_recommendation=earlier,
-                        recommendation_options=list(options), output_languages=pack.languages)
+                        recommendation_options=list(options), output_languages=settings.languages_for_brief(pack.languages))
 
 
 def challenge_request(settings: Settings, run_id: str, case: CaseDetail, tenant: str, pack: PackDocument, now: datetime, product_type: Optional[str],
