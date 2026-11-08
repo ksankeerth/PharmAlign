@@ -48,6 +48,10 @@ class AgentSpec:
     repeat_answer: str | None = None
     # The agent's own ceiling on model calls, below the request's budget when that is higher. None: the request's budget only.
     max_model_calls: int | None = None
+    # When True, the model is made to answer: after a repeated call (with repeat_answer set), and on the last model call the
+    # budget allows, the next model call is sent with function calling off. For a model that keeps asking for tools instead of
+    # answering. False: every model call may call tools, as before.
+    force_answer: bool = False
 
     def output_schema_for(self, request: Any) -> type[BaseModel]:
         return self.schema_for(request) if self.schema_for else self.result_model
@@ -91,6 +95,7 @@ def agent_spec(
     schema_for: Callable[[Any], type[BaseModel]] | None = None,
     repeat_answer: str | None = None,
     max_model_calls: int | None = None,
+    force_answer: bool = False,
 ) -> AgentSpec:
     """Builds a spec, taking path, request, run model and tools from the shared contracts."""
     entry = next(a for a in RUN_AGENTS if a.name == name)
@@ -111,4 +116,5 @@ def agent_spec(
         schema_for=schema_for,
         repeat_answer=repeat_answer,
         max_model_calls=max_model_calls,
+        force_answer=force_answer,
     )

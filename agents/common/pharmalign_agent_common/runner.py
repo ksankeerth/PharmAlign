@@ -146,7 +146,7 @@ def build_agent(
     text = instruction or spec.instruction
     callbacks: dict[str, Any] = {}
     if tracker is not None:
-        callbacks = _callbacks(tracker, getattr(model, "model", ""), spec.repeat_answer)
+        callbacks = _callbacks(tracker, getattr(model, "model", ""), spec.repeat_answer, spec.force_answer)
     return LlmAgent(
         name=spec.adk_name,
         model=model,
@@ -171,11 +171,19 @@ def _error_code(tool_response: dict) -> Optional[str]:
     return body.get("code") if isinstance(body, dict) else None
 
 
-def _callbacks(tracker: RunTracker, model_name: str, repeat_answer: str | None = None) -> dict[str, Any]:
+NO_TOOLS = types.ToolConfig(function_calling_config=types.FunctionCallingConfig(mode=types.FunctionCallingConfigMode.NONE))
+
+
+def _callbacks(tracker: RunTracker, model_name: str, repeat_answer: str | None = None, force_answer: bool = False) -> dict[str, Any]:
     seen: set[tuple[str, str]] = set()
+    repeated = False  # a repeated call was answered from the run: with force_answer, the model answers next
 
     def before_model(callback_context, llm_request):
         tracker.before_model()
+        if force_answer and (repeated or tracker.started >= tracker.max_model_calls):
+            # Function calling off: the model can only answer. The tools stay declared, so earlier calls still read right.
+            llm_request.config = llm_request.config or types.GenerateContentConfig()
+            llm_request.config.tool_config = NO_TOOLS
 
     def after_model(callback_context, llm_response):
         tracker.after_model(model_name, llm_response)
@@ -186,6 +194,8 @@ def _callbacks(tracker: RunTracker, model_name: str, repeat_answer: str | None =
         if repeat_answer is not None:
             key = (tool.name, json.dumps(args, sort_keys=True, default=str))
             if key in seen:
+                nonlocal repeated
+                repeated = True
                 return {"repeated_call": True, "message": repeat_answer}  # a returned dict replaces the call: nothing is sent
             seen.add(key)
         tracker.before_tool()
