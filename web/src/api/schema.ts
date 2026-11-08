@@ -2327,9 +2327,10 @@ export interface components {
             agent: string;
             /**
              * Status
+             * @description `off` means the agent is switched off by configuration. A person does its work, and it is never counted as down.
              * @enum {string}
              */
-            status: "ok" | "degraded" | "down";
+            status: "ok" | "degraded" | "down" | "off";
             /**
              * Version
              * @default null

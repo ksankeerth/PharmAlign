@@ -33,7 +33,7 @@ info:
     - Accepts only the fact keys it asked for.
 
     '
-  version: 1.5.0
+  version: 1.6.0
 paths:
   /dossier-reads:
     post:

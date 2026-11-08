@@ -14,12 +14,19 @@ def agents_are_live(rt) -> bool:
     return hasattr(rt.agents, "alive")
 
 
+def _off(view: m.AgentHealthView) -> m.AgentHealthView:
+    return view.model_copy(update={"status": "off", "models_available": 0, "models_total": 0, "failures_last_hour": 0})
+
+
 async def agent_health(ctx) -> list[m.AgentHealthView]:
+    """An agent switched off by configuration shows as off. It is not asked, and it is never counted as down."""
+    off = ctx.rt.settings.off_agents
     if not agents_are_live(ctx.rt):
-        return await STORES["agent_health"].list(ctx)
+        return [_off(v) if v.agent in off else v for v in await STORES["agent_health"].list(ctx)]
     client = ctx.rt.agents
     names = sorted(client.urls)
-    alive = await asyncio.gather(*(client.alive(name) for name in names))
+    asked = [name for name in names if name not in off]  # an off agent is not asked
+    answers = dict(zip(asked, await asyncio.gather(*(client.alive(name) for name in asked))))
     row = ROW["agent_run"]
     hour_ago = ctx.now() - timedelta(hours=1)
     rows = await ctx.db.execute(
@@ -28,6 +35,7 @@ async def agent_health(ctx) -> list[m.AgentHealthView]:
     )
     runs = {agent: (last_success, failures) for agent, last_success, failures in rows}
     return [
-        m.AgentHealthView(agent=name, status="ok" if up else "down", last_success_at=runs.get(name, (None, 0))[0], failures_last_hour=runs.get(name, (None, 0))[1])
-        for name, up in zip(names, alive)
+        m.AgentHealthView(agent=name, status="off" if name in off else "ok" if answers[name] else "down", last_success_at=runs.get(name, (None, 0))[0],
+                          failures_last_hour=0 if name in off else runs.get(name, (None, 0))[1])
+        for name in names
     ]

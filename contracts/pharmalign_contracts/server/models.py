@@ -1604,7 +1604,7 @@ class GapReview(Strict):
 
 class AgentHealthView(Strict):
     agent: Slug
-    status: Literal["ok", "degraded", "down"]
+    status: Literal["ok", "degraded", "down", "off"] = Field(description="`off` means the agent is switched off by configuration. A person does its work, and it is never counted as down.")
     version: Optional[Identifier] = None
     contract_version: Optional[Identifier] = None
     models_available: int = 0

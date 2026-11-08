@@ -29,7 +29,7 @@ async def health_details(req, ctx: Ctx):
     agents = await agent_health(ctx) if database == "ok" else []
     worker = ctx.rt.worker
     ingest_worker = "ok" if worker is not None and not worker.done() else "down"
-    healthy = ingest_worker == "ok" and all(a.status == "ok" for a in agents)
+    healthy = ingest_worker == "ok" and all(a.status in ("ok", "off") for a in agents)  # an agent that is off by configuration is not a fault
     return ServerHealthDetails(
         status="down" if database == "down" else "ok" if healthy else "degraded",
         version=VERSION, contract_version=CONTRACT_VERSION, database=database, agent_mode="http" if agents_are_live(ctx.rt) else "replay", agents=agents,

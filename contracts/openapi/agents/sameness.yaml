@@ -33,7 +33,7 @@ info:
     - Applies the pack''s route triggers. The agent can''t call a difference acceptable.
 
     '
-  version: 1.5.0
+  version: 1.6.0
 paths:
   /sameness-comparisons:
     post:

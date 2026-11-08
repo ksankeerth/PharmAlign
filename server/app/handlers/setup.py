@@ -168,9 +168,11 @@ async def evaluate(ctx, previous: dict[str, m.ReadinessCheck]) -> list[m.Readine
     out.append(check("connection", ("mock" if approved[0].kind == "mock" else "pass") if approved else "fail",
                      f"{approved[0].name} is approved." if approved else "No approved connection."))
     agents = await agent_health(ctx)
-    ok = sum(1 for a in agents if a.status == "ok")
+    on = [a for a in agents if a.status != "off"]  # an agent that is off by configuration never fails readiness
+    ok = sum(1 for a in on if a.status == "ok")
+    off = len(agents) - len(on)
     if agents:
-        out.append(check("agents", "pass" if ok == len(agents) else "fail", f"{ok} of {len(agents)} agents report ok."))
+        out.append(check("agents", "pass" if ok == len(on) else "fail", f"{ok} of {len(on)} agents report ok." + (f" {off} off by configuration." if off else "")))
     elif ctx.rt.settings.env == "simulation" and not agents_are_live(ctx.rt):
         out.append(check("agents", "mock", "No agent services run here, so the server answers from recordings."))
     else:

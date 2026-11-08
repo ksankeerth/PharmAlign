@@ -10,10 +10,11 @@ import { Metric } from "./shared";
 
 const lastRun = (at?: string | null) => (at ? formatRelative(at) : "not yet");
 
-const STATUS: Record<AgentHealthView["status"], { tone: Tone; label: string; icon: "check" | "alert-triangle" | "x" }> = {
+const STATUS: Record<AgentHealthView["status"], { tone: Tone; label: string; icon: "check" | "alert-triangle" | "x" | "pause" }> = {
   ok: { tone: "pass", label: "Healthy", icon: "check" },
   degraded: { tone: "look", label: "Degraded", icon: "alert-triangle" },
   down: { tone: "held", label: "Down", icon: "x" },
+  off: { tone: "neutral", label: "Off by configuration", icon: "pause" },
 };
 
 export default function AgentHealthPage() {
@@ -33,7 +34,9 @@ export default function AgentHealthPage() {
       lost: mine.filter((r) => r.status === "lost").length,
     };
   };
-  const degraded = agents.filter((a) => a.status !== "ok");
+  const on = agents.filter((a) => a.status !== "off"); // an agent that is off by configuration is a choice, not a fault
+  const off = agents.filter((a) => a.status === "off");
+  const degraded = on.filter((a) => a.status !== "ok");
   const totalRuns = usage.data?.agents.reduce((n, a) => n + a.runs, 0) ?? 0;
   const totalFail = usage.data?.agents.reduce((n, a) => n + a.failures, 0) ?? 0;
   const tokens = usage.data?.agents.reduce((n, a) => n + a.usage.input_tokens + a.usage.output_tokens, 0) ?? 0;
@@ -53,6 +56,12 @@ export default function AgentHealthPage() {
         </Callout>
       ) : null}
 
+      {off.length ? (
+        <Callout tone="neutral" title={`${off.length} agent${off.length === 1 ? " is" : "s are"} off by configuration`}>
+          {off.map((a) => humanize(a.agent)).join(", ")}. A person does {off.length === 1 ? "its" : "their"} work, and {off.length === 1 ? "it is" : "they are"} not counted as down.
+        </Callout>
+      ) : null}
+
       {degraded.length ? (
         <Callout tone="look" title={`${degraded.length} agent${degraded.length === 1 ? " is" : "s are"} not fully healthy`}>
           {degraded.map((a) => (a.status === "down" ? `${humanize(a.agent)}: not answering` : `${humanize(a.agent)}: ${a.models_available} of ${a.models_total} models answering`)).join("; ")}. Work continues on the fallback model, and every use of it is recorded.
@@ -60,7 +69,7 @@ export default function AgentHealthPage() {
       ) : null}
 
       <div className="adm-metrics">
-        <Metric label="Agents healthy" value={health.data ? `${agents.filter((a) => a.status === "ok").length} of ${agents.length}` : "..."} tone={degraded.length ? "look" : "pass"} />
+        <Metric label="Agents healthy" value={health.data ? `${on.filter((a) => a.status === "ok").length} of ${on.length}` : "..."} note={off.length ? `${off.length} off by configuration` : undefined} tone={degraded.length ? "look" : "pass"} />
         <Metric label="Runs, last 30 days" value={formatNumber(totalRuns)} note={totalRuns ? `${formatPercent(totalFail / totalRuns)} failed` : undefined} />
         <Metric label="Failures, last hour" value={agents.reduce((n, a) => n + (a.failures_last_hour ?? 0), 0)} tone={agents.some((a) => (a.failures_last_hour ?? 0) > 0) ? "look" : "pass"} />
         <Metric label="Lost runs" value={runs.data ? rs.filter((r) => r.status === "lost").length : "..."} note="Agent restarted mid-run" tone={rs.some((r) => r.status === "lost") ? "look" : "pass"} />
@@ -78,7 +87,7 @@ export default function AgentHealthPage() {
           columns={[
             { key: "agent", header: "Agent", sort: (a) => a.agent, render: (a) => <div><div className="strong">{humanize(a.agent)}</div>{a.version ? <div className="xsmall muted">v{a.version}</div> : null}</div> },
             { key: "status", header: "Status", sort: (a) => a.status, render: (a) => { const s = STATUS[a.status]; return <Pill tone={s.tone} icon={s.icon} size="sm">{s.label}</Pill>; } },
-            { key: "models", header: "Models available", align: "right", render: (a) => (a.models_total ? <span className={`num ${a.models_available !== a.models_total ? "strong" : ""}`}>{a.models_available} of {a.models_total}</span> : <span className="small muted">Not reported</span>) },
+            { key: "models", header: "Models available", align: "right", render: (a) => (a.status === "off" ? <span className="small muted">Off</span> : a.models_total ? <span className={`num ${a.models_available !== a.models_total ? "strong" : ""}`}>{a.models_available} of {a.models_total}</span> : <span className="small muted">Not reported</span>) },
             { key: "fail", header: "Failures, last hour", align: "right", render: (a) => <span className="num">{a.failures_last_hour ?? 0}</span> },
             { key: "fb", header: "Fallback used", align: "right", hideBelow: 900, render: (a) => <span className="num">{per(a.agent).fallback}</span> },
             { key: "gen", header: "Current / superseded", align: "right", hideBelow: 1100, render: (a) => <span className="num">{per(a.agent).current} / {per(a.agent).superseded}</span> },

@@ -34,7 +34,7 @@ info:
     `get_run_trace`, `draft_comment`.
 
     '
-  version: 1.5.0
+  version: 1.6.0
 paths:
   /sessions:
     post:

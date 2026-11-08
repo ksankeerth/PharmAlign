@@ -2,7 +2,7 @@
 openapi: 3.1.0
 info:
   title: PharmAlign Regulator Records API
-  version: 1.5.0
+  version: 1.6.0
   description: 'What PharmAlign expects from a government system of record. The built-in mock serves it at `/mock`
     in simulation, and a real connector adapts a government system to it.
 

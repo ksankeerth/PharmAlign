@@ -4,7 +4,7 @@ from typing import Annotated, Generic, Literal, Optional, TypeVar
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
-CONTRACT_VERSION = "1.5.0"
+CONTRACT_VERSION = "1.6.0"
 CONTRACT_HEADER = "X-PharmAlign-Contract"
 
 RUN_ID_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9_.-]{2,127}$"

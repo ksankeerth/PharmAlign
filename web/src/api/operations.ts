@@ -16,7 +16,7 @@ export interface OperationMeta {
 }
 
 export const CONTRACT_TITLE = "PharmAlign Server API";
-export const CONTRACT_VERSION = "1.5.0";
+export const CONTRACT_VERSION = "1.6.0";
 
 export const OPERATIONS = {
   get_api_v1_me: { method: "GET", path: "/api/v1/me", summary: "Who is signed in, and in which view", tag: "Identity", views: ["platform_admin","process_owner","case_officer","decision_maker","auditor"], simulationOnly: false, stream: false },
