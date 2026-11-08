@@ -630,3 +630,48 @@ async def test_an_unreachable_agent_leaves_the_run_until_its_deadline_then_error
     await drive(rt, clock, rounds=60)
     assert (await checks_by_id(rt))["PV-01"].status == "error"
     assert next(r for r in await all_runs(rt) if r.run_id == run_of("PV-01")).status == "lost"
+
+
+async def test_the_briefs_draft_questions_become_draft_questions_on_the_case(rt, clock, agents):
+    from pharmalign_contracts.server.models import Question
+
+    def question(qid: str, by: str, status: str = "draft") -> Question:
+        return Question(id=qid, case_id=CASE, status=status, check_ids=["QUAL-07"], texts={"en": f"Earlier question {qid}."}, drafted_by=by)
+
+    async with rt.sessions() as db, db.begin():
+        ctx = system_ctx(rt, db)
+        for q in (question("q-old-agent", "agent"), question("q-sent-agent", "agent", "sent"), question("q-person", "person")):
+            STORES["question"].add(ctx, q)
+    agents.answers[(CASE, "coordinator")] = {
+        "input_fingerprint": "$request.input_fingerprint",
+        "recommendation": {"choice": "hold_ask_company", "reason": "Stability conditions do not meet the rule.", "reason_evidence": ["QUAL-07"]},
+        "summary": "Hold and ask the company about the stability conditions.",
+        "draft_questions": [{"check_ids": ["QUAL-07"], "texts": {"en": "Please send long-term data at the required conditions."}}],
+    }
+    await start(rt)
+    await drive(rt, clock)
+    async with rt.sessions() as db:
+        questions = {q.id: q for q in await STORES["question"].list(system_ctx(rt, db))}
+    new = [q for q in questions.values() if q.texts == {"en": "Please send long-term data at the required conditions."}]
+    assert len(new) == 1 and new[0].status == "draft" and new[0].drafted_by == "agent" and new[0].check_ids == ["QUAL-07"]
+    assert questions["q-old-agent"].status == "closed"  # an unsent agent draft gives way to the new brief's drafts
+    assert questions["q-sent-agent"].status == "sent" and questions["q-person"].status == "draft"
+
+
+async def test_a_persons_act_after_the_brief_gave_up_gets_a_new_brief(rt, clock, agents):
+    # Three failed briefs end with a person told. A later act by a person changes the inputs, so it earns fresh attempts.
+    agents.script(CASE, "coordinator", *[ReplayScript("failed") for _ in range(3)])
+    await start(rt)
+    await drive(rt, clock, rounds=60)
+    assert [r.status for r in await all_runs(rt) if r.agent == "coordinator"] == ["failed"] * 3
+    await _waive(rt, "QUAL-07", "wv-after-giving-up")
+    async with rt.sessions() as db, db.begin():
+        ctx = system_ctx(rt, db)
+        await runner.rebrief(ctx, CASE)
+        await ctx.flush()
+    await drive(rt, clock, rounds=60)
+    briefs = [r for r in await all_runs(rt) if r.agent == "coordinator"]
+    assert len(briefs) == 4 and briefs[-1].status == "completed"
+    async with rt.sessions() as db:
+        versions = await STORES["recommendation_version"].list(system_ctx(rt, db))
+    assert any(v.is_current for v in versions)
