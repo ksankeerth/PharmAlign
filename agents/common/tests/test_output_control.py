@@ -121,6 +121,21 @@ async def test_a_not_found_answer_is_not_counted_as_a_tool_failure(spec, mcp_set
     assert outcome.tool_errors == []
 
 
+async def test_a_call_with_invalid_arguments_is_not_counted_as_a_tool_failure(spec, mcp_settings):
+    """The model's own bad call (a one-letter search) is refused with the reason, and the run goes on. It isn't the tool failing."""
+    from pharmalign_agent_common.testing import FakeMcpServer
+
+    def refused(args):
+        raise RuntimeError(json.dumps({"tool": "search_dossier", "code": "invalid_arguments",
+                                       "message": "Invalid arguments: ('query',) String should have at least 2 characters", "retryable": False}))
+
+    with FakeMcpServer({"search_dossier": refused}) as server:
+        settings = type(mcp_settings)(mcp_url=server.url)
+        model = FakeModel(script=[call_tool("search_dossier", query="a"), say_json(good_result())])
+        outcome = await run_agent(spec, request(), settings=settings, model=model)
+    assert outcome.tool_errors == []
+
+
 async def test_tools_outside_the_contract_list_are_not_offered(spec, mcp_settings):
     from pharmalign_agent_common.testing import FakeMcpServer
 

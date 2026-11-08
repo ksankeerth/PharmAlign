@@ -156,7 +156,9 @@ def build_agent(
     )
 
 
-ANSWER_CODES = frozenset({"not_found", "outside_check_sources"})  # a tool's answer, not a failure: the run goes on and is complete
+# A tool's answer, not a failure: the run goes on and is complete. invalid_arguments is the model's own mistake (say a
+# one-letter search): the tool tells it why, it asks again, and every claim it makes still needs a quote a tool returned.
+ANSWER_CODES = frozenset({"not_found", "outside_check_sources", "invalid_arguments"})
 
 
 def _error_code(tool_response: dict) -> Optional[str]:
