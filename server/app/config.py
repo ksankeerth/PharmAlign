@@ -6,8 +6,9 @@ from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-# The agents a person can do the work of. The others have no stand-in, so switching one off would stop the pipeline.
-SWITCHABLE_AGENTS = frozenset({"challenger", "sameness", "reliance-watch"})
+# The agents a person or the code can stand in for. The others have no stand-in, so switching one off would stop the pipeline.
+# The Gap Analyst's stand-in is the code that groups signals one to one.
+SWITCHABLE_AGENTS = frozenset({"challenger", "sameness", "reliance-watch", "gap-analyst"})
 
 
 class Settings(BaseSettings):
@@ -45,7 +46,7 @@ class Settings(BaseSettings):
     # How the server proves itself to the agents. `static` sends agent_token. `google_id_token` sends a Google ID token for the agent's address,
     # for private Cloud Run services (the server's service account needs the invoker role on them).
     agent_auth: Literal["static", "google_id_token"] = "static"
-    # Agents switched off by configuration, comma separated: any of challenger, sameness, reliance-watch. A person does their work.
+    # Agents switched off by configuration, comma separated: any of challenger, sameness, reliance-watch, gap-analyst. A person or the code does their work.
     # Their code stays, and removing a name from the list turns the agent back on.
     agents_off: str = ""
     # The languages the Coordinator drafts questions to the company in, comma separated, such as "en". Empty: the pack's languages.

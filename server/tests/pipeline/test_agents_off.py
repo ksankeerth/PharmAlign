@@ -111,10 +111,11 @@ def test_the_setting_names_agents_with_commas_and_spaces():
     off = Settings(agents_off="challenger, Sameness ,reliance-watch").off_agents
     assert off == {"challenger", "sameness", "reliance-watch"}
     assert Settings().off_agents == frozenset()
+    assert Settings(agents_off="gap-analyst").is_off("gap-analyst")
     assert Settings(agents_off="sameness").is_off("sameness") and not Settings(agents_off="sameness").is_off("challenger")
 
 
-@pytest.mark.parametrize("name", ["dossier-reader", "coordinator", "challenger,gap-analyst", "unknown"])
-def test_only_the_three_agents_with_a_person_to_stand_in_can_be_switched_off(name):
+@pytest.mark.parametrize("name", ["dossier-reader", "coordinator", "challenger,checklist-assessor", "unknown"])
+def test_only_the_agents_with_a_stand_in_can_be_switched_off(name):
     with pytest.raises(ValueError, match="PHARMALIGN_AGENTS_OFF"):
         Settings(agents_off=name)
