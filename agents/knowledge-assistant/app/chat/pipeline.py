@@ -32,10 +32,10 @@ from pharmalign_contracts.common import Usage
 from app import replies
 from app.answer import TurnAnswer
 from app.chat import answer as answering
-from app.chat import quotes
+from app.chat import quotes, topics
 from app.chat.labels import NOT_AVAILABLE_REPLIES, HistoryEntry, Route
 from app.chat.models import AllModelsBusy, ModelCall, ModelChain, ModelFailed, env_seconds
-from app.chat.retrieve import CallTool, Retrieved, can_widen, local_first_on, retrieve, widen
+from app.chat.retrieve import CallTool, Retrieved, can_widen, is_status_question, local_first_on, retrieve, widen
 from app.chat.understand import understand
 from app.rules import check_turn
 
@@ -110,7 +110,7 @@ async def run_knowledge_turn(
         "agent_session_id": held.id, "message": request.message, "gate": False, "kind": None, "follow_up": None,
         "parts": [], "history_wanted": False, "english": None, "fail_open": False, "route": "error",
         "searches": [], "widened": False, "retries": 0, "check_error": None, "citations": [], "answer_model": None,
-        "how": None, "style": "none", "sources_named": [], "search_all": False, "budget_cut": None,
+        "how": None, "found": None, "style": "none", "sources_named": [], "search_all": False, "budget_cut": None,
     }
     deadline = started + TURN_BUDGET_SECONDS
     last_turn = held.history[-1] if held.history else None
@@ -164,7 +164,7 @@ async def _run(
         return [], _error("tool_error", "The library search failed. Try again.")
     if retrieved.nothing_found:
         rec["route"] = "no_source"
-        ta = TurnAnswer(events=[answering.no_source_event(retrieved, replies.SUGGESTIONS)])
+        ta = TurnAnswer(events=[answering.no_source_event(retrieved, topics.suggestions_for(route.parts) or replies.SUGGESTIONS)])
         return _done(held, request, ta, "no_source"), None
 
     # 4 answer and 5 check; when the model finds no answer in the home sources, widen to the whole library once
@@ -186,7 +186,7 @@ async def _run(
         return [], last.error
     if last.status == "no_source":
         rec["route"] = "no_source"
-        ta = TurnAnswer(events=[answering.no_source_event(retrieved, last.suggestions)])
+        ta = TurnAnswer(events=[answering.no_source_event(retrieved, last.suggestions or topics.suggestions_for(route.parts) or replies.SUGGESTIONS)])
         return _done(held, request, ta, "no_source"), None
     if last.ta is None:
         return [], _error("invalid_output", last.reason or "the answer was refused")
@@ -214,6 +214,7 @@ async def _attempt(
 ) -> Attempt:
     """Up to RETRIES + 1 answer calls on the passages found so far, each checked; a refused answer is retried with the reason."""
     reason: str | None = None
+    history = route.history_wanted or is_status_question(route.parts)  # a status question may cite the old law next to its status
     for attempt in range(RETRIES + 1):
         if attempt and deadline - time.monotonic() < RETRY_MIN_SECONDS:
             rec["budget_cut"] = "retry"
@@ -230,18 +231,27 @@ async def _attempt(
             rec["check_error"] = reason
             continue
         rec["answer_model"] = result.model
+        rec["found"] = out.found[:300]  # what the model said answers the question, for finding out why an answer missed
         if answering.is_no_source(out):
+            named = answering.named_passages(out.found, retrieved)
+            if named and attempt < RETRIES:  # it named passages that answer, then refused: ask once which of the two it means
+                reason = (
+                    f"you named {', '.join(named[:3])} as stating the answer but set no_source. If they state it, set answer to "
+                    "message and cite them. If they do not, set found to none"
+                )
+                rec["check_error"] = reason
+                continue
             return Attempt("no_source", suggestions=list(out.suggestions))
         try:
-            candidate = answering.to_turn_answer(out, retrieved, route.preface)
-            check_turn(Turn(held.create, request, calls_before), candidate, held.log, history=route.history_wanted)
+            candidate = answering.to_turn_answer(out, retrieved, route.preface, topics.suggestions_for(route.parts), hard=attempt == RETRIES)
+            check_turn(Turn(held.create, request, calls_before), candidate, held.log, history=history)
             # the server checks each quote against its whole document: look at the rest of it, and widen a quote that repeats
             chunks, checks = await quotes.document_chunks(candidate, retrieved.passages, call_tool, held.log)
             retrieved.searches.extend(checks)
             candidate, changes = quotes.repair(candidate, chunks, request.message)
             if changes:
                 rec["quotes_repaired"] = rec.get("quotes_repaired", []) + changes
-                check_turn(Turn(held.create, request, calls_before), candidate, held.log, history=route.history_wanted)  # still word for word from a tool's text
+                check_turn(Turn(held.create, request, calls_before), candidate, held.log, history=history)  # still word for word from a tool's text
             if problem := answering.citation_problems(candidate, request.message, chunks):
                 raise ValueError(problem)
         except ValueError as bad:

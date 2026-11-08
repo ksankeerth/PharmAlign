@@ -19,6 +19,11 @@ Each turn the model answers with `{"events": [...]}` holding only `message`, `no
 
 The session's run token goes out as a bearer header on every tool call of that session, and nowhere else.
 
+## Two paths
+
+- **Knowledge-only sessions** run the chat pipeline (`app/chat`: language gate, classify, retrieve, answer, check) when `PHARMALIGN_KA_PIPELINE=on`. The cloud sets it (`infra/terraform/agents.tf`). A turn takes about 10 s and ends inside `PHARMALIGN_KA_TURN_BUDGET` (50 s). A question about whether a law is still in force is searched three ways, and the chips under an answer stay on the question's subject (`app/chat/topics.py` when no model wrote any).
+- **Case sessions** always use the model-driven agent. The server gives up on a stream that is silent for 60 s, so the agent sends a comment line every 10 s, thinks briefly in each round, is told to answer after 5 rounds or 40 s, does not repeat a call within a turn, cancels a model call that hangs for 25 s, and ends a turn that takes 75 s with a plain "took too long" error. These controls are opt-in settings of `SessionSpec` in `../common`.
+
 ## Tools (from the server's MCP endpoint, nothing else)
 
 | Session | Tools |

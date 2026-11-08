@@ -138,7 +138,7 @@ async def test_the_search_asks_for_the_home_country_first_and_the_server_gets_th
 
 
 async def test_nothing_found_for_every_part_gives_no_source_without_the_answer_model():
-    parts = ["How are drone deliveries regulated?", "Who licenses a balloon festival?"]
+    parts = ["How are drone deliveries regulated?", "Who approves a balloon festival?"]
     async with pipe([classified(parts=parts)], []) as p:
         events = await ask(p, "Drone deliveries, and balloon festivals?")
     no_source = [e for e in events if e["type"] == "no_source"]
@@ -366,7 +366,7 @@ async def test_the_turn_log_has_one_line_per_turn_and_never_the_token(tmp_path):
     assert [r["route"] for r in rows] == ["answer", "greeting", "no_source", "language"]
     keys = {"agent_session_id", "message", "gate", "kind", "follow_up", "parts", "history_wanted", "english", "fail_open",
             "route", "searches", "widened", "passages", "models", "retries", "check_error", "citations", "answer_model", "ms",
-            "how", "style", "sources_named", "search_all", "budget_cut"}
+            "how", "found", "style", "sources_named", "search_all", "budget_cut"}
     assert all(set(r) == keys for r in rows)
     answer, greeting, nothing, gate = rows
     assert answer["agent_session_id"] == sid and answer["message"] == VALID_Q and answer["kind"] == "question"
@@ -707,3 +707,79 @@ async def test_the_check_failure_retry_is_skipped_when_too_little_budget_is_left
     assert events[-1]["type"] == "error" and events[-1]["code"] == "invalid_output"
     (row,) = [json.loads(line) for line in path.read_text().splitlines()]
     assert row["budget_cut"] == "retry" and row["retries"] == 0
+
+
+# ---- phase 2: status questions, chips on the subject, anchors in the text
+async def test_a_status_question_is_searched_three_ways_and_may_name_the_old_law_with_its_status():
+    q = "Is the marketing authorization of a medicine still valid for three years?"
+    said = answered("The earlier rule of three years is superseded.", (OLD_VALID, OLD_QUOTE))
+    async with pipe([classified(parts=[q], history_wanted=False)], [said]) as p:
+        events = await ask(p, q)
+    searched = {(c.arguments["purpose"], c.arguments["query"].endswith("repealed or replaced by a new law")) for c in p.mcp.calls if "purpose" in c.arguments}
+    assert {("requirement", False), ("context", False), ("requirement", True)} <= searched
+    assert message_of(events)["citations"][0]["anchor"] == OLD_VALID  # the classifier did not flag history; the question itself did
+    assert "whether a law is still in force, or what replaced it" in p.answerer.requests[0].contents[0].parts[0].text
+
+
+async def test_nothing_found_gives_chips_on_the_subject_of_the_question_not_the_general_three():
+    q = "Are vaping liquids with nicotine allowed?"
+    tools = {**library().tools(TOOLS), "search_kb": lambda _a: {"no_source_found": True, "hits": [], "searched": 3}}
+    async with pipe([classified(parts=[q])], [], fake_tools=tools) as p:
+        events = await ask(p, q)
+    chips = next(e for e in events if e["type"] == "no_source")["suggestions"]
+    assert chips and chips != list(replies.SUGGESTIONS) and chips[0] == "How is a medical product classified?"
+
+
+async def test_a_model_no_source_without_chips_still_gets_chips_on_the_subject():
+    q = "Are vaping liquids with nicotine allowed?"
+    quiet = {"answer": "no_source", "text": "", "citations": [], "suggestions": []}
+    async with pipe([classified(parts=[q])], [say_json(quiet)]) as p:
+        events = await ask(p, q)
+    assert next(e for e in events if e["type"] == "no_source")["suggestions"][0] == "How is a medical product classified?"
+
+
+async def test_an_answer_without_chips_gets_chips_on_the_subject():
+    q = "How long is a marketing approval valid, and what does it cost?"
+    plain = answered("The authorization is valid for five years.", (A_VALID, VALID_QUOTE))
+    async with pipe([classified(parts=[q])], [plain]) as p:
+        events = await ask(p, q)
+    assert message_of(events)["suggestions"] == list(__import__("app.chat.topics", fromlist=["x"]).suggestions_for([q]))
+    assert message_of(events)["suggestions"]
+
+
+async def test_an_anchor_written_into_the_text_is_sent_back_once_with_the_reason():
+    leaky = answered(f"{A_VALID} [The marketing authorization of a medicine] is valid for five years.", (A_VALID, VALID_QUOTE))
+    async with pipe([classified()], [leaky, VALID_ANSWER]) as p:
+        events = await ask(p)
+    assert "anchor" in p.answerer.requests[1].contents[0].parts[0].text
+    assert A_VALID not in message_of(events)["text"] and p.answerer.calls == 2
+
+
+async def test_an_anchor_that_survives_the_repair_is_cut_out_and_the_answer_still_goes_out():
+    leaky = answered(f"It is valid for five years {A_VALID} as the decree says.", (A_VALID, VALID_QUOTE))
+    async with pipe([classified()], [leaky, leaky]) as p:
+        events = await ask(p)
+    text = message_of(events)["text"]
+    assert events[-1]["type"] != "error" and A_VALID not in text and "valid for five years" in text
+
+
+async def test_a_refusal_that_names_the_passage_that_answers_is_asked_once_more():
+    refused = {"found": A_VALID, "answer": "no_source", "text": "", "citations": [], "suggestions": []}
+    async with pipe([classified()], [say_json(refused), VALID_ANSWER]) as p:
+        events = await ask(p)
+    assert message_of(events)["citations"][0]["anchor"] == A_VALID and p.answerer.calls == 2
+    assert A_VALID in p.answerer.requests[1].contents[0].parts[0].text  # the reason names the passage
+
+
+async def test_a_refusal_that_names_nothing_is_not_asked_again():
+    honest = {"found": "none", "answer": "no_source", "text": "", "citations": [], "suggestions": []}
+    async with pipe([classified()], [say_json(honest)]) as p:
+        events = await ask(p)
+    assert p.kinds(events) == ["no_source", "usage"] and p.answerer.calls == 1
+
+
+async def test_a_second_refusal_after_naming_a_passage_ends_as_no_source():
+    refused = {"found": A_VALID, "answer": "no_source", "text": "", "citations": [], "suggestions": []}
+    async with pipe([classified()], [say_json(refused), say_json({**refused, "found": "none"})]) as p:
+        events = await ask(p)
+    assert p.kinds(events) == ["no_source", "usage"] and p.answerer.calls == 2
