@@ -1,0 +1,19 @@
+# What `gcloud builds submit` leaves out of the upload. Without this file it would follow .gitignore instead.
+.git
+.run
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/node_modules
+web/dist
+web/test-results
+web/playwright-report
+web/e2e
+knowledge/documents
+infra/terraform/.terraform
+infra/terraform/*.tfstate*
+infra/terraform/*.tfplan
+infra/terraform/terraform.tfvars
+.env
+agents.env

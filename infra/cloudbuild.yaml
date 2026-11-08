@@ -1,0 +1,45 @@
+# The server image and the five agent images, built in parallel by Cloud Build (infra/scripts/build.sh submits this from the repository root).
+# DOCKER_BUILDKIT makes each build read its own <Dockerfile>.dockerignore.
+steps:
+  - id: server
+    name: gcr.io/cloud-builders/docker
+    env: ["DOCKER_BUILDKIT=1"]
+    args: ["build", "-f", "server/Dockerfile", "--build-arg", "EXTRAS=gemini", "-t", "${_REGISTRY}/server:${_TAG}", "."]
+    waitFor: ["-"]
+  - id: dossier-reader
+    name: gcr.io/cloud-builders/docker
+    env: ["DOCKER_BUILDKIT=1"]
+    args: ["build", "-f", "agents/dossier-reader/Dockerfile", "--build-arg", "AGENT_VERSION=${_TAG}", "-t", "${_REGISTRY}/dossier-reader:${_TAG}", "."]
+    waitFor: ["-"]
+  - id: checklist-assessor
+    name: gcr.io/cloud-builders/docker
+    env: ["DOCKER_BUILDKIT=1"]
+    args: ["build", "-f", "agents/checklist-assessor/Dockerfile", "--build-arg", "AGENT_VERSION=${_TAG}", "-t", "${_REGISTRY}/checklist-assessor:${_TAG}", "."]
+    waitFor: ["-"]
+  - id: coordinator
+    name: gcr.io/cloud-builders/docker
+    env: ["DOCKER_BUILDKIT=1"]
+    args: ["build", "-f", "agents/coordinator/Dockerfile", "--build-arg", "AGENT_VERSION=${_TAG}", "-t", "${_REGISTRY}/coordinator:${_TAG}", "."]
+    waitFor: ["-"]
+  - id: knowledge-assistant
+    name: gcr.io/cloud-builders/docker
+    env: ["DOCKER_BUILDKIT=1"]
+    args: ["build", "-f", "agents/knowledge-assistant/Dockerfile", "--build-arg", "AGENT_VERSION=${_TAG}", "-t", "${_REGISTRY}/knowledge-assistant:${_TAG}", "."]
+    waitFor: ["-"]
+  - id: gap-analyst
+    name: gcr.io/cloud-builders/docker
+    env: ["DOCKER_BUILDKIT=1"]
+    args: ["build", "-f", "agents/gap-analyst/Dockerfile", "--build-arg", "AGENT_VERSION=${_TAG}", "-t", "${_REGISTRY}/gap-analyst:${_TAG}", "."]
+    waitFor: ["-"]
+
+images:
+  - "${_REGISTRY}/server:${_TAG}"
+  - "${_REGISTRY}/dossier-reader:${_TAG}"
+  - "${_REGISTRY}/checklist-assessor:${_TAG}"
+  - "${_REGISTRY}/coordinator:${_TAG}"
+  - "${_REGISTRY}/knowledge-assistant:${_TAG}"
+  - "${_REGISTRY}/gap-analyst:${_TAG}"
+
+options:
+  logging: CLOUD_LOGGING_ONLY # needed when the build runs as its own service account
+timeout: 1800s
