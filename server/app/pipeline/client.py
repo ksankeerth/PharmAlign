@@ -1,6 +1,7 @@
 """How the server talks to agents. It knows them only through the OpenAPI contracts: POST, then poll, then DELETE to cancel."""
 import asyncio
 import json
+import time
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Mapping, Optional, Protocol
 
@@ -30,6 +31,42 @@ class AgentClient(Protocol):
 def static_bearer(token: Optional[str]) -> TokenProvider:
     async def provide(audience: str) -> Optional[str]:
         return token
+
+    return provide
+
+
+ID_TOKEN_LIFETIME_SECONDS = 3300  # Google's tokens last an hour; one is replaced a little before that
+
+
+def audience_of(url: str) -> str:
+    """A Cloud Run service is called with a token for its address alone: no path, no trailing slash."""
+    from urllib.parse import urlsplit
+
+    parts = urlsplit(url)
+    return f"{parts.scheme}://{parts.netloc}"
+
+
+def google_id_token(*, fetch: Optional[Callable[[str], str]] = None, now: Callable[[], float] = time.monotonic) -> TokenProvider:
+    """A Google ID token for the agents' address, from the service account the server runs as. Cloud Run checks it against the invoker permission.
+
+    Fetching blocks, so it runs off the event loop. Tokens are kept per address until shortly before they end, and two calls at once share one fetch."""
+    if fetch is None:
+        def fetch(audience: str) -> str:
+            import google.auth.transport.requests
+            from google.oauth2 import id_token
+
+            return id_token.fetch_id_token(google.auth.transport.requests.Request(), audience)
+
+    kept: dict[str, tuple[str, float]] = {}
+    locks: dict[str, asyncio.Lock] = {}
+
+    async def provide(url: str) -> Optional[str]:
+        audience = audience_of(url)
+        async with locks.setdefault(audience, asyncio.Lock()):
+            held = kept.get(audience)
+            if held is None or now() >= held[1]:
+                kept[audience] = (await asyncio.to_thread(fetch, audience), now() + ID_TOKEN_LIFETIME_SECONDS)
+            return kept[audience][0]
 
     return provide
 
@@ -115,7 +152,8 @@ def make_agent_client(settings, clock) -> AgentClient:
         from .replay import ReplayAgentClient
 
         return ReplayAgentClient.from_files(clock=clock)
+    token = google_id_token() if settings.agent_auth == "google_id_token" else static_bearer(settings.agent_token)
     return HttpAgentClient(
-        agent_urls(settings), static_bearer(settings.agent_token), connect_seconds=settings.agent_connect_seconds,
+        agent_urls(settings), token, connect_seconds=settings.agent_connect_seconds,
         read_seconds=settings.agent_read_seconds, retries=settings.agent_retries,
     )

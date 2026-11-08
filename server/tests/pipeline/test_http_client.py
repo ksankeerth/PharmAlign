@@ -213,3 +213,69 @@ def test_each_agent_has_one_url_setting_and_simulation_replays():
     assert isinstance(make_agent_client(settings, None), ReplayAgentClient)
     assert isinstance(make_agent_client(Settings(env="live"), None), HttpAgentClient)
     assert isinstance(make_agent_client(Settings(env="simulation", agent_mode="http"), None), HttpAgentClient)
+
+
+# ---- a Google ID token for private Cloud Run services
+
+async def test_the_id_token_is_for_the_agents_address_alone_and_is_kept_until_it_is_nearly_over():
+    from app.pipeline.client import audience_of, google_id_token
+
+    asked, clock = [], [0.0]
+
+    def fetch(audience):
+        asked.append(audience)
+        return f"token-{len(asked)}"
+
+    provide = google_id_token(fetch=fetch, now=lambda: clock[0])
+    assert audience_of("https://pharmalign-agents-abc-uc.a.run.app/") == "https://pharmalign-agents-abc-uc.a.run.app"
+    assert audience_of("https://agents.test:8443/assessments?x=1") == "https://agents.test:8443"
+    assert await provide("https://a.test/") == "token-1" and await provide("https://a.test") == "token-1"  # kept, whatever the path
+    assert await provide("https://b.test") == "token-2"  # a different service, a different token
+    clock[0] = 3000
+    assert await provide("https://a.test") == "token-1"
+    clock[0] = 3400
+    assert await provide("https://a.test") == "token-3"  # replaced before Google's hour is up
+    assert asked == ["https://a.test", "https://b.test", "https://a.test"]
+
+
+async def test_two_calls_at_once_share_one_fetch_and_the_fetch_runs_off_the_event_loop():
+    import threading
+    from app.pipeline.client import google_id_token
+    import asyncio
+
+    threads = []
+
+    def fetch(audience):
+        threads.append(threading.get_ident())
+        return "tok"
+
+    provide = google_id_token(fetch=fetch)
+    assert await asyncio.gather(*(provide("https://a.test") for _ in range(5))) == ["tok"] * 5
+    assert len(threads) == 1 and threads[0] != threading.get_ident()
+
+
+async def test_the_client_sends_the_id_token_as_the_bearer_and_the_static_one_stays_for_local_use():
+    from app.pipeline.client import google_id_token
+
+    seen = []
+
+    def handler(request):
+        seen.append(request.headers.get("authorization"))
+        return httpx.Response(200, json={"status": "ok"})
+
+    provide = google_id_token(fetch=lambda audience: f"id-for-{audience}")
+    cloud = HttpAgentClient({AGENT: "https://agents.test/"}, provide, transport=httpx.MockTransport(handler))
+    assert await cloud.alive(AGENT) is True and seen == ["Bearer id-for-https://agents.test"]
+    local = HttpAgentClient({AGENT: "http://agent.test"}, static_bearer("dev-token"), transport=httpx.MockTransport(handler))
+    await local.alive(AGENT)
+    assert seen[-1] == "Bearer dev-token"
+
+
+def test_the_setting_chooses_the_token_provider(monkeypatch):
+    from app.pipeline import client as client_module
+
+    chosen = []
+    monkeypatch.setattr(client_module, "google_id_token", lambda: chosen.append("google") or client_module.static_bearer("g"))
+    make_agent_client(Settings(env="live", agent_mode="http", agent_auth="google_id_token"), None)
+    make_agent_client(Settings(env="live", agent_mode="http", agent_token="t"), None)
+    assert chosen == ["google"]
