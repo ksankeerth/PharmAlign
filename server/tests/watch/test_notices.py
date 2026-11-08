@@ -120,3 +120,24 @@ def incident_of(notice_id):
     from app.tables import ROW
 
     return ROW["watch_incident"].notice_id == notice_id
+
+
+async def test_with_reliance_watch_off_a_notice_still_waits_for_a_person_to_match(make_app, engine):
+    """The watch flow matches and explains in code and never calls Reliance Watch, so switching it off changes nothing: every match is open for a person."""
+    before = len(await rows(engine, "agent_run", agent_runs_of("reliance-watch")))  # the demo seed holds some old runs
+    app = make_app(settings={**DEAD_AGENTS, "agents_off": "challenger,sameness,reliance-watch"})
+    async with client_for(app) as http:
+        r = await http.post("/api/v1/simulations/sim-15/events", json={"kind": "foreign_notice", "notice": SUSPENSION}, headers=headers("p-jordan"))
+    assert r.status_code in (200, 202), r.text
+    [notice] = [n for n in await rows(engine, "foreign_notice") if n.doc["title"] == SUSPENSION["title"]]
+    matches = await rows(engine, "watch_match", watch_match_of(notice.id))
+    assert matches and all(x.doc["status"] == "open" for x in matches)
+    assert len(await rows(engine, "agent_run", agent_runs_of("reliance-watch"))) == before
+    alert = await alerts_for(engine, "p-alex", notice.id)
+    assert len(alert) == 1 and "wait for a person" in alert[0].doc["body"]
+
+
+def agent_runs_of(agent):
+    from app.tables import ROW
+
+    return ROW["agent_run"].agent == agent

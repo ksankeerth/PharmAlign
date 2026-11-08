@@ -168,7 +168,14 @@ def _stage_order(definitions: Sequence[CheckDefinition]) -> list[str]:
 
 def _new_check(ctx: Ctx, case: CaseDetail, d: CheckDefinition, run_id: str) -> CheckDetail:
     detail = CheckDetail(
-        id=f"cr-{case.id[5:]}-{d.id.lower()}", check_id=d.id, case_id=case.id, pipeline_run_id=run_id, name=d.id, method=d.method, agent=_agent_for(d),
+def _by_a_person(ctx: Ctx, d: CheckDefinition) -> bool:
+    """True when the agent that would read this check is switched off, so a person does it."""
+    agent = _agent_for(d)
+    return agent is not None and ctx.rt.settings.is_off(agent)
+
+
+        id=f"cr-{case.id[5:]}-{d.id.lower()}", check_id=d.id, case_id=case.id, pipeline_run_id=run_id, name=d.id, method=d.method,
+        agent=None if _by_a_person(ctx, d) else _agent_for(d),
         status=check_status(d.method, None), is_current=True, blocking=d.severity == "blocking", summary="Waiting to run.", generation=0, attempt=1, updated_at=ctx.now(),
         question=d.question, source=d.source, legal_force=d.legal_force, may_pass_alone=d.may_pass_alone, fingerprint="sha256:0000",
     )
@@ -552,7 +559,7 @@ async def _advance_stages(ctx: Ctx, p: Pinned, pipeline: PipelineRun, all_work: 
             if d.method == "code":
                 await _run_code_check(ctx, p, c, d, documents)
                 continue
-            if d.method == "person":
+            if d.method == "person" or _by_a_person(ctx, d):
                 await _save_settled(ctx, c, check_status("person", None), "Waiting for a person to confirm.")
                 continue
             reader, call = _reader_state(ctx, p, pipeline, all_work, active, documents)
@@ -912,8 +919,10 @@ async def _finish_check(ctx: Ctx, case: CaseDetail, work: RunWork, verdict: Verd
     moved = await CHECKS.save(ctx, moved.model_copy(update={"updated_at": ctx.now(), "fingerprint": check_fingerprint(moved)}))
     await ctx.db.flush()
     await _write_trace(ctx, p, moved, "saved_reasoning" if moved.method == "agent" and moved.agent_status else "rule_trace", work, run if verdict.accepted else None, gates)
+        if _needs_second_check(moved, gates) and ctx.rt.settings.is_off(CHALLENGER):
+            moved, gates = _no_second_check(ctx, moved, gates)
     await _mark(ctx, work, "applied", applied=True)
-    if moved.blocking and moved.agent_status == "met" and gates and all(g.allowed for g in gates):
+    if _needs_second_check(moved, gates) and not ctx.rt.settings.is_off(CHALLENGER):
         _open_challenge(ctx, p, moved)
     actor = {"type": "agent", "id": work.agent}
     ctx.timeline(case.id, "check_finished", f"{c.check_id} finished: {moved.status.replace('_', ' ')}.", actor, c.id)
@@ -928,6 +937,21 @@ def _open_challenge(ctx: Ctx, p: Pinned, c: CheckDetail) -> None:
     """A blocking check an agent found met gets a second reading that tries to disprove it. The row goes in now; the next step calls the agent."""
     run_id = rules.run_id_for(p.case.id, p.case.sequence, f"{c.check_id}-challenge", c.generation, c.attempt)
     try:
+NO_SECOND_CHECK = "No second check: a person confirms."
+
+
+def _needs_second_check(c: CheckDetail, gates: Sequence[GateDecisionView]) -> bool:
+    """A blocking check that an agent found met, with every gate passed, gets a second reading."""
+    return c.blocking and c.agent_status == "met" and bool(gates) and all(g.allowed for g in gates)
+
+
+def _no_second_check(ctx: Ctx, c: CheckDetail, gates: Sequence[GateDecisionView]) -> tuple[CheckDetail, list[GateDecisionView]]:
+    """With the Challenger off, nothing disputes the finding, so a person confirms it. A check that already needs a person is left as it is."""
+    if c.status != "pass":
+        return c, list(gates)
+    status = check_status("agent", "completed", may_pass_alone=False, finding="met")
+    return c.model_copy(update={"status": status, "summary": f"{NO_SECOND_CHECK} {c.summary}"[:500]}), [*gates, _gate(ctx, False, "no_second_check", NO_SECOND_CHECK)]
+
         request = build.challenge_request(ctx.rt.settings, run_id, p.case, ctx.tenant.id, p.pack, ctx.now(), p.product_type, c)
     except ValidationError:
         return
@@ -1226,7 +1250,7 @@ async def _finish_brief(ctx: Ctx, case: CaseDetail, work: RunWork, verdict: Verd
 # ---------------------------------------------------------------- the step, the jobs and the tick
 
 
-async def _call(agents, call: Call) -> AgentReply:
+async def _call(agents, call: Call, off: frozenset[str] = frozenset()) -> AgentReply:
     try:
         if call.op == "start":
             return await agents.start(call.agent, call.request)
@@ -1240,13 +1264,15 @@ async def advance(rt: Runtime, tenant_id: str, case_id: str) -> None:
     """One step. No transaction is open during the agent calls."""
     async with _tx(rt, tenant_id) as ctx:
         calls = await _plan(ctx, case_id)
-    replies = await asyncio.gather(*(_call(rt.agents, c) for c in calls))
+    replies = await asyncio.gather(*(_call(rt.agents, c, rt.settings.off_agents) for c in calls))
     for call, reply in zip(calls, replies):
         await apply_reply(rt, tenant_id, case_id, call.run_id, call.op, reply)
     async with _tx(rt, tenant_id) as ctx:
         await _schedule_next(ctx, case_id)
 
 
+        if call.agent in off:
+            return AgentReply(0)  # an agent that is switched off is never called, even for a run opened before it was switched off
 async def _schedule_next(ctx: Ctx, case_id: str) -> None:
     case = await CASES.require(ctx, case_id, "Case")
     active = {v.run_id for v in await _active_runs(ctx, case_id)}
