@@ -1,0 +1,159 @@
+{
+  "id": "table-only",
+  "title": "Values only in tables (read_table), pipe and space-aligned",
+  "angles": [
+    4
+  ],
+  "about": "The stability narrative gives no numbers. The long-term and accelerated values are in table 2 on page 3 (pipes). The shelf life is in a two-column table on page 4. The site is in a space-aligned table.",
+  "request": {
+    "fact_keys": [
+      {
+        "key": "shelf_life_months",
+        "description": "Proposed shelf life",
+        "value_type": "number",
+        "unit": "months",
+        "look_in": [
+          "3.2.P.8"
+        ]
+      },
+      {
+        "key": "long_term_temp_c",
+        "description": "Long-term storage temperature",
+        "value_type": "number",
+        "unit": "C",
+        "look_in": [
+          "3.2.P.8"
+        ]
+      },
+      {
+        "key": "long_term_rh_pct",
+        "description": "Long-term relative humidity",
+        "value_type": "number",
+        "unit": "%",
+        "look_in": [
+          "3.2.P.8"
+        ]
+      },
+      {
+        "key": "long_term_months",
+        "description": "Months of long-term data",
+        "value_type": "number",
+        "unit": "months",
+        "look_in": [
+          "3.2.P.8"
+        ]
+      },
+      {
+        "key": "manufacturing_site",
+        "description": "Finished product site",
+        "value_type": "text",
+        "unit": null,
+        "look_in": [
+          "3.2.P.3"
+        ]
+      },
+      {
+        "key": "accelerated_months",
+        "description": "Months of accelerated data",
+        "value_type": "number",
+        "unit": "months",
+        "look_in": [
+          "3.2.P.8"
+        ]
+      }
+    ]
+  },
+  "documents": [
+    {
+      "doc_id": "d-01",
+      "filename": "cover-letter.pdf",
+      "module": "1.0",
+      "language": "en",
+      "pages": [
+        "Cover letter\n\nApplicant: Eastgate Medicines. Product: Quenaril 10 mg tablets. New registration application, abridged route."
+      ]
+    },
+    {
+      "doc_id": "d-02",
+      "filename": "stability-report.pdf",
+      "module": "3.2.P.8",
+      "language": "en",
+      "pages": [
+        "Stability report: Quenaril 10 mg tablets\n\nContents\n\n3.2.P.8.1 Summary ........ page 2\n3.2.P.8.3 Stability data ........ page 3\n3.2.P.8.4 Conclusion ........ page 4",
+        "3.2.P.8.1 Summary\n\nThree primary batches were placed on stability in the proposed commercial pack. The studies, their conditions and their durations are given in Table 2. All results stayed within specification at every time point. The conclusion is in Table 3.",
+        "3.2.P.8.3 Stability data\n\nTable 1. Batches placed on stability\n\n| Batch | Date of manufacture | Pack |\n| QN-001 | March 2025 | Alu/Alu blister |\n| QN-002 | March 2025 | Alu/Alu blister |\n| QN-003 | April 2025 | Alu/Alu blister |\n\nTable 2. Studies\n\n| Study | Storage condition | Temperature (C) | Relative humidity (%) | Months of data |\n| Long-term | 25 C / 60% RH | 25 | 60 | 12 |\n| Intermediate | 30 C / 65% RH | 30 | 65 | 6 |\n| Accelerated | 40 C / 75% RH | 40 | 75 | 6 |\n\nAssay, related substances and dissolution met the acceptance criteria at every time point.",
+        "3.2.P.8.4 Conclusion\n\nTable 3. Proposed shelf life and storage statement\n\n| Item | Proposal |\n| Proposed shelf life | 24 months |\n| Storage statement | Do not store above 25 C |"
+      ]
+    },
+    {
+      "doc_id": "d-03",
+      "filename": "manufacture.pdf",
+      "module": "3.2.P.3",
+      "language": "en",
+      "pages": [
+        "3.2.P.3.1 Manufacturer(s)\n\nThe sites involved in the manufacture of the finished product are listed below.\n\nRole                  Site                          Address\nFinished product      Eastgate Works, Plant 1       4 Mill Lane, Eastgate\nPrimary packaging     Eastgate Works, Plant 1       4 Mill Lane, Eastgate\nBatch release         Eastgate Works, QA Block      4 Mill Lane, Eastgate\n\nThe site holds a current certificate of good manufacturing practice.",
+        "3.2.P.3.3 Description of manufacturing process\n\nDirect compression of the blend, followed by tablet compression and blister packing."
+      ]
+    }
+  ],
+  "expect": {
+    "facts": {
+      "shelf_life_months": {
+        "status": "found",
+        "number": 24,
+        "unit": "months",
+        "evidence_in": [
+          "d-02"
+        ]
+      },
+      "long_term_temp_c": {
+        "status": "found",
+        "number": 25,
+        "unit": "C",
+        "evidence_in": [
+          "d-02"
+        ]
+      },
+      "long_term_rh_pct": {
+        "status": "found",
+        "number": 60,
+        "unit": "%",
+        "evidence_in": [
+          "d-02"
+        ]
+      },
+      "long_term_months": {
+        "status": "found",
+        "number": 12,
+        "unit": "months",
+        "evidence_in": [
+          "d-02"
+        ]
+      },
+      "manufacturing_site": {
+        "status": "found",
+        "value_contains": "Eastgate Works, Plant 1",
+        "evidence_in": [
+          "d-03"
+        ]
+      },
+      "accelerated_months": {
+        "status": "found",
+        "number": 6,
+        "unit": "months",
+        "evidence_in": [
+          "d-02"
+        ]
+      }
+    },
+    "document_map": {
+      "d-01": "1.0",
+      "d-02": "3.2.P.8",
+      "d-03": "3.2.P.3"
+    },
+    "issues": {
+      "required": [],
+      "allowed": []
+    }
+  }
+}

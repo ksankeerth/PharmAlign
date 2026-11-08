@@ -1,0 +1,355 @@
+{
+  "id": "large-set",
+  "title": "A large file set near the budget: 13 files, about 70 pages",
+  "angles": [
+    13,
+    6
+  ],
+  "about": "A 13-file dossier like the demo case (69 pages). A reference approval from another authority says 24 months (not this dossier). The SmPC has no module. Eight facts are asked.",
+  "request": {
+    "fact_keys": [
+      {
+        "key": "shelf_life_months",
+        "description": "Proposed shelf life",
+        "value_type": "number",
+        "unit": "months",
+        "look_in": [
+          "3.2.P.8"
+        ]
+      },
+      {
+        "key": "strength",
+        "description": "Strength per unit",
+        "value_type": "text",
+        "unit": null,
+        "look_in": [
+          "3.2.P.1"
+        ]
+      },
+      {
+        "key": "manufacturing_site",
+        "description": "Finished product site",
+        "value_type": "text",
+        "unit": null,
+        "look_in": [
+          "3.2.P.3"
+        ]
+      },
+      {
+        "key": "long_term_temp_c",
+        "description": "Long-term storage temperature",
+        "value_type": "number",
+        "unit": "C",
+        "look_in": [
+          "3.2.P.8"
+        ]
+      },
+      {
+        "key": "long_term_rh_pct",
+        "description": "Long-term relative humidity",
+        "value_type": "number",
+        "unit": "%",
+        "look_in": [
+          "3.2.P.8"
+        ]
+      },
+      {
+        "key": "long_term_months",
+        "description": "Months of long-term data",
+        "value_type": "number",
+        "unit": "months",
+        "look_in": [
+          "3.2.P.8"
+        ]
+      },
+      {
+        "key": "applicant_name",
+        "description": "Name of the applicant (marketing authorisation holder)",
+        "value_type": "text",
+        "unit": null,
+        "look_in": [
+          "1.2"
+        ]
+      },
+      {
+        "key": "licence_number",
+        "description": "Establishment licence number",
+        "value_type": "text",
+        "unit": null,
+        "look_in": [
+          "1.2"
+        ]
+      }
+    ]
+  },
+  "documents": [
+    {
+      "doc_id": "d-01",
+      "filename": "cover-letter.pdf",
+      "module": "1.0",
+      "language": "en",
+      "pages": [
+        "Cover letter\n\nApplicant: Ridgeline Pharma Ltd. Product: Venturax 400 mg/100 mg tablets. New registration application, abridged route.\n\nWe submit this dossier for the registration of the product named above.",
+        "Please address all questions about this application to the regulatory affairs office of the applicant.\n\nWe submit this dossier for the registration of the product named above and confirm that the information is complete and accurate.",
+        "We submit this dossier for the registration of the product named above and confirm that the information is complete and accurate.\n\nThe product is a fixed-dose combination tablet for oral use. The reference medicinal product is marketed in several countries."
+      ]
+    },
+    {
+      "doc_id": "d-02",
+      "filename": "application-form.pdf",
+      "module": "1.2",
+      "language": "en",
+      "pages": [
+        "Application form, section 1. Applicant and product\n\nName of the applicant (marketing authorisation holder): Ridgeline Pharma Ltd\nProduct name: Venturax 400 mg/100 mg tablets\nPharmaceutical form: film-coated tablet",
+        "Annexes to this form are listed in the table of contents and follow the common technical document structure.\n\nSection 2. Administrative information about the application, the contact persons and the declared route of registration.",
+        "Section 3. Administrative information about the application, the contact persons and the declared route of registration.\n\nThe applicant confirms that the product is not subject to additional monitoring and that the fee was paid by bank transfer.",
+        "The applicant confirms that the product is not subject to additional monitoring and that the fee was paid by bank transfer.\n\nAnnexes to this form are listed in the table of contents and follow the common technical document structure.",
+        "Annexes to this form are listed in the table of contents and follow the common technical document structure.\n\nSection 5. Administrative information about the application, the contact persons and the declared route of registration.",
+        "Section 6. Administrative information about the application, the contact persons and the declared route of registration.\n\nThe applicant confirms that the product is not subject to additional monitoring and that the fee was paid by bank transfer."
+      ]
+    },
+    {
+      "doc_id": "d-03",
+      "filename": "fee-receipt.pdf",
+      "module": "1.2",
+      "language": "en",
+      "pages": [
+        "Registration fee receipt\n\nReceipt number: FEE-9027-0001\nProduct: Venturax 400 mg/100 mg tablets\nApplicant: Ridgeline Pharma Ltd\nPayment method: bank transfer\n\nThis receipt confirms that the registration fee for a new registration application, abridged route, has been paid in full."
+      ]
+    },
+    {
+      "doc_id": "d-04",
+      "filename": "quality-overall-summary.pdf",
+      "module": "2.3",
+      "language": "en",
+      "pages": [
+        "Methods were validated according to the applicable guidelines. Dissolution was shown to be similar to the reference product in three media.\n\nThe container closure system is an Alu/Alu blister. Compatibility with the product was shown during development.",
+        "The container closure system is an Alu/Alu blister. Compatibility with the product was shown during development.\n\n2.3.P.2 The quality overall summary describes the control of the finished product, the container closure system and the analytical methods.",
+        "2.3.P.3 The quality overall summary describes the control of the finished product, the container closure system and the analytical methods.\n\nMethods were validated according to the applicable guidelines. Dissolution was shown to be similar to the reference product in three media.",
+        "Methods were validated according to the applicable guidelines. Dissolution was shown to be similar to the reference product in three media.\n\nThe container closure system is an Alu/Alu blister. Compatibility with the product was shown during development.",
+        "The container closure system is an Alu/Alu blister. Compatibility with the product was shown during development.\n\n2.3.P.5 The quality overall summary describes the control of the finished product, the container closure system and the analytical methods.",
+        "2.3.P.6 The quality overall summary describes the control of the finished product, the container closure system and the analytical methods.\n\nMethods were validated according to the applicable guidelines. Dissolution was shown to be similar to the reference product in three media.",
+        "Methods were validated according to the applicable guidelines. Dissolution was shown to be similar to the reference product in three media.\n\nThe container closure system is an Alu/Alu blister. Compatibility with the product was shown during development.",
+        "The container closure system is an Alu/Alu blister. Compatibility with the product was shown during development.\n\n2.3.P.8 The quality overall summary describes the control of the finished product, the container closure system and the analytical methods."
+      ]
+    },
+    {
+      "doc_id": "d-05",
+      "filename": "stability.pdf",
+      "module": "3.2.P.8",
+      "language": "en",
+      "pages": [
+        "The tests were done with validated methods. Degradation products stayed below the reporting threshold in all batches.\n\nPhotostability testing showed that the product needs no special protection from light beyond the original package.",
+        "3.2.P.8.1 Stability summary and conclusion.\n\nBased on the data presented, a shelf life of 36 months is proposed when stored below 30 C in the original package.",
+        "Batch QN-3: assay, related substances and dissolution were within specification at each time point tested.\n\nThe tests were done with validated methods. Degradation products stayed below the reporting threshold in all batches.",
+        "The tests were done with validated methods. Degradation products stayed below the reporting threshold in all batches.\n\nPhotostability testing showed that the product needs no special protection from light beyond the original package.",
+        "Photostability testing showed that the product needs no special protection from light beyond the original package.\n\nBatch QN-5: assay, related substances and dissolution were within specification at each time point tested.",
+        "Batch QN-6: assay, related substances and dissolution were within specification at each time point tested.\n\nThe tests were done with validated methods. Degradation products stayed below the reporting threshold in all batches.",
+        "The tests were done with validated methods. Degradation products stayed below the reporting threshold in all batches.\n\nPhotostability testing showed that the product needs no special protection from light beyond the original package.",
+        "Photostability testing showed that the product needs no special protection from light beyond the original package.\n\nBatch QN-8: assay, related substances and dissolution were within specification at each time point tested.",
+        "Table 8. Long-term stability, three primary batches.\n\nStorage: long-term conditions of 25 C / 60% RH. Time points: 0, 3, 6, 9 and 12 months.\n\n12 months of long-term data are available for all batches. All results are within specification.",
+        "The tests were done with validated methods. Degradation products stayed below the reporting threshold in all batches.\n\nPhotostability testing showed that the product needs no special protection from light beyond the original package.",
+        "Photostability testing showed that the product needs no special protection from light beyond the original package.\n\nBatch QN-11: assay, related substances and dissolution were within specification at each time point tested.",
+        "Batch QN-12: assay, related substances and dissolution were within specification at each time point tested.\n\nThe tests were done with validated methods. Degradation products stayed below the reporting threshold in all batches.",
+        "The tests were done with validated methods. Degradation products stayed below the reporting threshold in all batches.\n\nPhotostability testing showed that the product needs no special protection from light beyond the original package.",
+        "Photostability testing showed that the product needs no special protection from light beyond the original package.\n\nBatch QN-14: assay, related substances and dissolution were within specification at each time point tested."
+      ]
+    },
+    {
+      "doc_id": "d-06",
+      "filename": "stability-addendum.pdf",
+      "module": "3.2.P.8",
+      "language": "en",
+      "pages": [
+        "All results continue to be within specification at each time point.\n\nAddendum, page 1. This addendum gives the updated tables for the batches already reported. No new batches were added.",
+        "Addendum, page 2. This addendum gives the updated tables for the batches already reported. No new batches were added.\n\nAll results continue to be within specification at each time point.",
+        "All results continue to be within specification at each time point.\n\nAddendum, page 3. This addendum gives the updated tables for the batches already reported. No new batches were added.",
+        "Addendum, page 4. This addendum gives the updated tables for the batches already reported. No new batches were added.\n\nAll results continue to be within specification at each time point."
+      ],
+      "sequence": 2
+    },
+    {
+      "doc_id": "d-07",
+      "filename": "manufacture.pdf",
+      "module": "3.2.P.3",
+      "language": "en",
+      "pages": [
+        "In-process controls include blend uniformity, tablet weight, hardness and friability. Limits and frequencies are listed in the control table.\n\nProcess validation was done on three consecutive batches at the proposed commercial scale.",
+        "Process validation was done on three consecutive batches at the proposed commercial scale.\n\n3.2.P.3.2 The process uses direct compression. Equipment is qualified and cleaned according to written procedures.",
+        "3.2.P.3.3 The process uses direct compression. Equipment is qualified and cleaned according to written procedures.\n\nIn-process controls include blend uniformity, tablet weight, hardness and friability. Limits and frequencies are listed in the control table.",
+        "3.2.P.3.1 Manufacturer. The finished product site is Ridgeline Pharma, Plant 6, 40 Kiln Road, Stonebridge. The site holds a current certificate of good manufacturing practice.",
+        "Process validation was done on three consecutive batches at the proposed commercial scale.\n\n3.2.P.3.5 The process uses direct compression. Equipment is qualified and cleaned according to written procedures.",
+        "3.2.P.3.6 The process uses direct compression. Equipment is qualified and cleaned according to written procedures.\n\nIn-process controls include blend uniformity, tablet weight, hardness and friability. Limits and frequencies are listed in the control table.",
+        "In-process controls include blend uniformity, tablet weight, hardness and friability. Limits and frequencies are listed in the control table.\n\nProcess validation was done on three consecutive batches at the proposed commercial scale.",
+        "Process validation was done on three consecutive batches at the proposed commercial scale.\n\n3.2.P.3.8 The process uses direct compression. Equipment is qualified and cleaned according to written procedures.",
+        "3.2.P.3.9 The process uses direct compression. Equipment is qualified and cleaned according to written procedures.\n\nIn-process controls include blend uniformity, tablet weight, hardness and friability. Limits and frequencies are listed in the control table."
+      ]
+    },
+    {
+      "doc_id": "d-08",
+      "filename": "leaflet-en.pdf",
+      "module": "1.3",
+      "language": "en",
+      "pages": [
+        "If you have any further questions on the use of this medicine, ask your doctor or pharmacist.\n\nLike all medicines, this medicine can cause side effects, although not everybody gets them.",
+        "Like all medicines, this medicine can cause side effects, although not everybody gets them.\n\nSection 2. Tell your doctor or pharmacist if you are taking, have recently taken or might take any other medicines.",
+        "Section 3. Tell your doctor or pharmacist if you are taking, have recently taken or might take any other medicines.\n\nIf you have any further questions on the use of this medicine, ask your doctor or pharmacist.",
+        "If you have any further questions on the use of this medicine, ask your doctor or pharmacist.\n\nLike all medicines, this medicine can cause side effects, although not everybody gets them."
+      ]
+    },
+    {
+      "doc_id": "d-09",
+      "filename": "leaflet-ar.pdf",
+      "module": "1.3",
+      "language": "ar",
+      "pages": [
+        "نشرة معلومات للمريض\n\nأقراص فنتوراكس 400 ملغ/100 ملغ المغلفة\n\nاقرأ هذه النشرة بعناية قبل البدء في تناول الدواء.",
+        "1. ما هو هذا الدواء\n\nيستعمل هذا الدواء مرتين في اليوم كما أوصاك الطبيب.",
+        "5. كيفية تخزين هذا الدواء\n\nيحفظ بعيداً عن متناول الأطفال.",
+        "6. محتويات العبوة ومعلومات أخرى\n\nتحتوي العلبة على 20 قرصاً."
+      ]
+    },
+    {
+      "doc_id": "d-10",
+      "filename": "pv-system-summary.pdf",
+      "module": "1.8",
+      "language": "en",
+      "pages": [
+        "A summary of the system master file is available on request. Staff are trained on the reporting timelines.\n\nSection 1. The pharmacovigilance system covers collection, assessment and reporting of adverse reaction reports.",
+        "Section 2. The pharmacovigilance system covers collection, assessment and reporting of adverse reaction reports.\n\nA summary of the system master file is available on request. Staff are trained on the reporting timelines.",
+        "A summary of the system master file is available on request. Staff are trained on the reporting timelines.\n\nSection 3. The pharmacovigilance system covers collection, assessment and reporting of adverse reaction reports.",
+        "Section 4. The pharmacovigilance system covers collection, assessment and reporting of adverse reaction reports.\n\nA summary of the system master file is available on request. Staff are trained on the reporting timelines.",
+        "A summary of the system master file is available on request. Staff are trained on the reporting timelines.\n\nSection 5. The pharmacovigilance system covers collection, assessment and reporting of adverse reaction reports."
+      ]
+    },
+    {
+      "doc_id": "d-11",
+      "filename": "establishment-licence.pdf",
+      "module": "1.2",
+      "language": "en",
+      "pages": [
+        "Establishment licence number EST-20717, valid until 2028. Issued by the competent authority to Ridgeline Pharma for the manufacture of solid oral dosage forms.",
+        "Licence record, page 2. The licence covers the manufacture and release of solid oral dosage forms.\n\nLicence record, page 2. The licence covers the manufacture and release of solid oral dosage forms."
+      ]
+    },
+    {
+      "doc_id": "d-12",
+      "filename": "reference-approval.pdf",
+      "module": "1.10",
+      "language": "en",
+      "pages": [
+        "Reference document, page 1. Administrative details of the approval granted by the reference authority.\n\nReference document, page 1. Administrative details of the approval granted by the reference authority.",
+        "Reference approval. The product was approved by the reference authority with a shelf life of 24 months.",
+        "Reference document, page 3. Administrative details of the approval granted by the reference authority.\n\nReference document, page 3. Administrative details of the approval granted by the reference authority."
+      ]
+    },
+    {
+      "doc_id": "d-13",
+      "filename": "smpc.pdf",
+      "module": null,
+      "language": "en",
+      "pages": [
+        "Summary of Product Characteristics (draft)\n\n1. Name of the medicinal product\n\nVenturax 400 mg/100 mg tablets\n\n2. Qualitative and quantitative composition\n\nEach film-coated tablet contains 400 mg of venturax and 100 mg of the second active substance.",
+        "Section 2. Posology and method of administration are described for adults and for children weighing 40 kg or more.\n\nSpecial warnings and precautions for use are listed with the contraindications and the interactions with other medicinal products.",
+        "Special warnings and precautions for use are listed with the contraindications and the interactions with other medicinal products.\n\nSection 3. Posology and method of administration are described for adults and for children weighing 40 kg or more.",
+        "Section 4. Posology and method of administration are described for adults and for children weighing 40 kg or more.\n\nSpecial warnings and precautions for use are listed with the contraindications and the interactions with other medicinal products.",
+        "Special warnings and precautions for use are listed with the contraindications and the interactions with other medicinal products.\n\nSection 5. Posology and method of administration are described for adults and for children weighing 40 kg or more.",
+        "Section 6. Posology and method of administration are described for adults and for children weighing 40 kg or more.\n\nSpecial warnings and precautions for use are listed with the contraindications and the interactions with other medicinal products."
+      ]
+    }
+  ],
+  "expect": {
+    "facts": {
+      "shelf_life_months": {
+        "status": "found",
+        "number": 36,
+        "unit": "months",
+        "evidence_in": [
+          "d-05"
+        ]
+      },
+      "strength": {
+        "status": "found",
+        "value_contains": "400 mg",
+        "evidence_in": [
+          "d-13",
+          "d-01",
+          "d-02"
+        ]
+      },
+      "manufacturing_site": {
+        "status": "found",
+        "value_contains": "Ridgeline Pharma, Plant 6",
+        "evidence_in": [
+          "d-07"
+        ]
+      },
+      "long_term_temp_c": {
+        "status": "found",
+        "number": 25,
+        "unit": "C",
+        "evidence_in": [
+          "d-05"
+        ]
+      },
+      "long_term_rh_pct": {
+        "status": "found",
+        "number": 60,
+        "unit": "%",
+        "evidence_in": [
+          "d-05"
+        ]
+      },
+      "long_term_months": {
+        "status": "found",
+        "number": 12,
+        "unit": "months",
+        "evidence_in": [
+          "d-05"
+        ]
+      },
+      "applicant_name": {
+        "status": "found",
+        "value_contains": "Ridgeline Pharma Ltd",
+        "evidence_in": [
+          "d-02",
+          "d-01",
+          "d-03"
+        ]
+      },
+      "licence_number": {
+        "status": "found",
+        "value_contains": "EST-20717",
+        "evidence_in": [
+          "d-11"
+        ]
+      }
+    },
+    "document_map": {
+      "d-01": "1.0",
+      "d-02": "1.2",
+      "d-03": "1.2",
+      "d-04": "2.3",
+      "d-05": "3.2.P.8",
+      "d-06": "3.2.P.8",
+      "d-07": "3.2.P.3",
+      "d-08": "1.3",
+      "d-09": "1.3",
+      "d-10": "1.8",
+      "d-11": "1.2",
+      "d-12": "1.10",
+      "d-13": "1.3"
+    },
+    "forbidden": [
+      "24 months"
+    ],
+    "limits": {
+      "model_calls": 30,
+      "seconds": 300
+    },
+    "issues": {
+      "required": [],
+      "allowed": []
+    }
+  }
+}

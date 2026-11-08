@@ -1,0 +1,112 @@
+{
+  "id": "arabic",
+  "title": "An Arabic document declared ar: facts quoted in Arabic exactly as written",
+  "angles": [
+    10
+  ],
+  "about": "The SmPC and leaflet are in Arabic and declared ar. The strength and the storage condition are only in Arabic. The shelf life is also in the English stability report.",
+  "request": {
+    "fact_keys": [
+      {
+        "key": "strength",
+        "description": "Strength per unit",
+        "value_type": "text",
+        "unit": null,
+        "look_in": [
+          "3.2.P.1"
+        ]
+      },
+      {
+        "key": "storage_condition",
+        "description": "Storage condition on the label",
+        "value_type": "text",
+        "unit": null,
+        "look_in": [
+          "1.3"
+        ]
+      },
+      {
+        "key": "shelf_life_months",
+        "description": "Proposed shelf life",
+        "value_type": "number",
+        "unit": "months",
+        "look_in": [
+          "3.2.P.8"
+        ]
+      }
+    ]
+  },
+  "documents": [
+    {
+      "doc_id": "d-01",
+      "filename": "smpc-ar.pdf",
+      "module": null,
+      "language": "ar",
+      "pages": [
+        "ملخص خصائص المنتج (مسودة، الأقسام من 1 إلى 6)\n\n1. اسم المنتج الدوائي\n\nأقراص لورفانتين 250 ملغ المغلفة\n\n2. التركيب النوعي والكمي\n\nيحتوي كل قرص مغلف على 250 ملغ من لورفانتين هيدروكلوريد.\n\n3. الشكل الصيدلاني\n\nقرص مغلف. أقراص بيضاء بيضاوية الشكل.",
+        "6.3 مدة الصلاحية\n\nمدة صلاحية المنتج الدوائي 36 شهراً.\n\n6.4 احتياطات خاصة للتخزين\n\nلا يحفظ في درجة حرارة تزيد عن 25 درجة مئوية. يحفظ في العبوة الأصلية لحمايته من الرطوبة.\n\n6.5 طبيعة العبوة ومحتوياتها\n\nشرائط من الألومنيوم في علب تحتوي على 30 قرصاً."
+      ]
+    },
+    {
+      "doc_id": "d-02",
+      "filename": "leaflet-ar.pdf",
+      "module": "1.3",
+      "language": "ar",
+      "pages": [
+        "نشرة معلومات للمريض\n\nأقراص لورفانتين 250 ملغ المغلفة\n\nاقرأ هذه النشرة بعناية قبل البدء في تناول الدواء لأنها تحتوي على معلومات مهمة لك.\n\n1. ما هو هذا الدواء وما هي دواعي استعماله\n\nيستعمل هذا الدواء مرة واحدة في اليوم كما أوصاك الطبيب. يحتوي كل قرص على 250 ملغ من المادة الفعالة.\n\n5. كيفية تخزين هذا الدواء\n\nيحفظ بعيداً عن متناول الأطفال. لا يحفظ في درجة حرارة تزيد عن 25 درجة مئوية."
+      ]
+    },
+    {
+      "doc_id": "d-03",
+      "filename": "stability-report.pdf",
+      "module": "3.2.P.8",
+      "language": "en",
+      "pages": [
+        "Stability report: Lorvantine 250 mg film-coated tablets\n\nContents\n\n3.2.P.8.1 Stability summary and conclusion ........ page 2\n3.2.P.8.3 Stability data ........ page 3",
+        "3.2.P.8.1 Stability summary and conclusion\n\nThree primary batches of Lorvantine 250 mg film-coated tablets were placed on stability in the proposed commercial pack. All results stayed within specification at every time point. Based on these data, a shelf life of 36 months is proposed when the product is stored below 25 C in the original package.",
+        "3.2.P.8.3 Stability data\n\nThe long-term study was stored at 25 C / 60% RH for 12 months."
+      ]
+    }
+  ],
+  "expect": {
+    "facts": {
+      "strength": {
+        "status": "found",
+        "value_contains": "250 ملغ",
+        "evidence_in": [
+          "d-01",
+          "d-02"
+        ],
+        "verbatim": true
+      },
+      "storage_condition": {
+        "status": "found",
+        "value_contains": "لا يحفظ في درجة حرارة تزيد عن 25 درجة مئوية",
+        "evidence_in": [
+          "d-01",
+          "d-02"
+        ],
+        "verbatim": true
+      },
+      "shelf_life_months": {
+        "status": "found",
+        "number": 36,
+        "unit": "months",
+        "evidence_in": [
+          "d-01",
+          "d-03"
+        ],
+        "verbatim": true
+      }
+    },
+    "document_map": {
+      "d-01": "1.3",
+      "d-02": "1.3",
+      "d-03": "3.2.P.8"
+    },
+    "issues": {
+      "required": [],
+      "allowed": []
+    }
+  }
+}

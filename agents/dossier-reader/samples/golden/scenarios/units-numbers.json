@@ -1,0 +1,205 @@
+{
+  "id": "units-numbers",
+  "title": "Values given another way: written as found, with a number in the key's unit only where the text supports it",
+  "angles": [
+    12
+  ],
+  "about": "The shelf life is '2 years' (key in months). The temperature is '25 °C ± 2 °C'. The months are 'eighteen (18)'. The batch size has thousands separators. The impurity limit is a decimal. The label gives only 77 °F for a key in C.",
+  "request": {
+    "fact_keys": [
+      {
+        "key": "shelf_life_months",
+        "description": "Proposed shelf life",
+        "value_type": "number",
+        "unit": "months",
+        "look_in": [
+          "3.2.P.8"
+        ]
+      },
+      {
+        "key": "long_term_temp_c",
+        "description": "Long-term storage temperature",
+        "value_type": "number",
+        "unit": "C",
+        "look_in": [
+          "3.2.P.8"
+        ]
+      },
+      {
+        "key": "long_term_rh_pct",
+        "description": "Long-term relative humidity",
+        "value_type": "number",
+        "unit": "%",
+        "look_in": [
+          "3.2.P.8"
+        ]
+      },
+      {
+        "key": "long_term_months",
+        "description": "Months of long-term data",
+        "value_type": "number",
+        "unit": "months",
+        "look_in": [
+          "3.2.P.8"
+        ]
+      },
+      {
+        "key": "batch_size",
+        "description": "Commercial batch size",
+        "value_type": "number",
+        "unit": "tablets",
+        "look_in": [
+          "3.2.P.3"
+        ]
+      },
+      {
+        "key": "impurity_limit_pct",
+        "description": "Limit for any single unspecified degradation product",
+        "value_type": "number",
+        "unit": "%",
+        "look_in": [
+          "3.2.P.5"
+        ]
+      },
+      {
+        "key": "storage_temp_c",
+        "description": "Storage temperature limit on the label",
+        "value_type": "number",
+        "unit": "C",
+        "look_in": [
+          "1.3"
+        ]
+      }
+    ]
+  },
+  "documents": [
+    {
+      "doc_id": "d-01",
+      "filename": "smpc.pdf",
+      "module": "1.3",
+      "language": "en",
+      "pages": [
+        "Summary of Product Characteristics (draft, sections 1 to 6)\n\n1. Name of the medicinal product\n\nPelnixa 25 mg film-coated tablets\n\n2. Qualitative and quantitative composition\n\nEach film-coated tablet contains 25 mg of pelnixa.\n\n3. Pharmaceutical form\n\nFilm-coated tablet. White, oval, biconvex tablets.",
+        "6.3 Shelf life\n\nThe shelf life of the medicinal product is 2 years.\n\n6.4 Special precautions for storage\n\nKeep in the original package.\n\n6.5 Nature and contents of container\n\nPVC/PVDC-Alu blisters in cartons of 30 tablets."
+      ]
+    },
+    {
+      "doc_id": "d-02",
+      "filename": "stability-report.pdf",
+      "module": "3.2.P.8",
+      "language": "en",
+      "pages": [
+        "Stability report: Pelnixa 25 mg film-coated tablets\n\nThis report supports the shelf life requested in Module 1.",
+        "3.2.P.8.3 Stability data\n\nThe long-term study was stored at 25 °C ± 2 °C / 60 % ± 5 % RH for eighteen (18) months. The accelerated study was stored at 40 °C ± 2 °C / 75 % ± 5 % RH for six (6) months.\n\nSpecification: any single unspecified degradation product: not more than 0.15 %."
+      ]
+    },
+    {
+      "doc_id": "d-03",
+      "filename": "manufacture.pdf",
+      "module": "3.2.P.3",
+      "language": "en",
+      "pages": [
+        "3.2.P.3 Manufacture\n\n3.2.P.3.1 Manufacturer(s)\n\nThe finished product is manufactured at Larkfield Pharma, Plant 1, 3 Orchard Way, Tennant.\n\nThe commercial batch size is 1,200,000 tablets.",
+        "3.2.P.3.3 Description of manufacturing process\n\nDirect compression of the blend, followed by tablet compression, film coating and blister packing. In-process controls are listed in section 3.2.P.3.4."
+      ]
+    },
+    {
+      "doc_id": "d-04",
+      "filename": "export-label-excerpt.pdf",
+      "module": "1.3",
+      "language": "en",
+      "pages": [
+        "Label excerpt (export presentation)\n\nPelnixa 25 mg film-coated tablets, 30 tablets.\n\nStore below 77 °F. Keep out of the reach of children."
+      ]
+    }
+  ],
+  "expect": {
+    "facts": {
+      "shelf_life_months": {
+        "status": "found",
+        "value_contains": "2 years",
+        "number_in": [
+          null,
+          2
+        ],
+        "unit_in": [
+          null,
+          "years",
+          "year"
+        ],
+        "evidence_in": [
+          "d-01"
+        ]
+      },
+      "long_term_temp_c": {
+        "status": "found",
+        "number": 25,
+        "unit": "C",
+        "evidence_in": [
+          "d-02"
+        ]
+      },
+      "long_term_rh_pct": {
+        "status": "found",
+        "number": 60,
+        "unit": "%",
+        "evidence_in": [
+          "d-02"
+        ]
+      },
+      "long_term_months": {
+        "status": "found",
+        "number": 18,
+        "unit": "months",
+        "evidence_in": [
+          "d-02"
+        ]
+      },
+      "batch_size": {
+        "status": "found",
+        "number": 1200000,
+        "evidence_in": [
+          "d-03"
+        ]
+      },
+      "impurity_limit_pct": {
+        "status": "found",
+        "number": 0.15,
+        "unit": "%",
+        "evidence_in": [
+          "d-02"
+        ]
+      },
+      "storage_temp_c": {
+        "status": "found",
+        "value_contains": "77",
+        "number_in": [
+          null,
+          77
+        ],
+        "unit_not": "C",
+        "evidence_in": [
+          "d-04"
+        ]
+      }
+    },
+    "document_map": {
+      "d-01": "1.3",
+      "d-02": "3.2.P.8",
+      "d-03": "3.2.P.3",
+      "d-04": "1.3"
+    },
+    "forbidden_numbers": {
+      "shelf_life_months": [
+        24
+      ],
+      "storage_temp_c": [
+        25
+      ]
+    },
+    "issues": {
+      "required": [],
+      "allowed": []
+    }
+  }
+}

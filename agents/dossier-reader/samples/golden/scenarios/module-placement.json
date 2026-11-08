@@ -1,0 +1,168 @@
+{
+  "id": "module-placement",
+  "title": "Files with no module: place them with the given labels only; unclear stays null",
+  "angles": [
+    6
+  ],
+  "about": "Five files have no module. The SmPC, the stability report and the batch record excerpt have a clear home among the given labels. Annex B says nothing. The clinical overview belongs to module 2.5, which is not a given label, so it stays null.",
+  "request": {
+    "fact_keys": [
+      {
+        "key": "shelf_life_months",
+        "description": "Proposed shelf life",
+        "value_type": "number",
+        "unit": "months",
+        "look_in": [
+          "3.2.P.8"
+        ]
+      },
+      {
+        "key": "manufacturing_site",
+        "description": "Finished product site",
+        "value_type": "text",
+        "unit": null,
+        "look_in": [
+          "3.2.P.3"
+        ]
+      }
+    ]
+  },
+  "documents": [
+    {
+      "doc_id": "d-01",
+      "filename": "fee-receipt.pdf",
+      "module": "1.2",
+      "language": "en",
+      "pages": [
+        "Registration fee receipt\n\nReceipt number: FEE-3302-0011\nProduct: Ostrelix 20 mg tablets\nApplicant: Redwater Pharma\nPayment method: bank transfer\n\nThis receipt confirms that the registration fee for a new registration application, abridged route, has been paid in full."
+      ]
+    },
+    {
+      "doc_id": "d-02",
+      "filename": "smpc.pdf",
+      "module": null,
+      "language": "en",
+      "pages": [
+        "Summary of Product Characteristics (draft, sections 1 to 6)\n\n1. Name of the medicinal product\n\nOstrelix 20 mg tablets\n\n2. Qualitative and quantitative composition\n\nEach tablet contains 20 mg of ostrelix.\n\n3. Pharmaceutical form\n\nFilm-coated tablet. White, oval, biconvex tablets.",
+        "6.3 Shelf life\n\nThe shelf life of the medicinal product is 24 months.\n\n6.4 Special precautions for storage\n\nDo not store above 30 C.\n\n6.5 Nature and contents of container\n\nPVC/PVDC-Alu blisters in cartons of 30 tablets."
+      ]
+    },
+    {
+      "doc_id": "d-03",
+      "filename": "patient-leaflet.pdf",
+      "module": "1.3",
+      "language": "en",
+      "pages": [
+        "Package leaflet: information for the patient\n\nOstrelix 20 mg tablets\n\nRead all of this leaflet carefully before you start taking this medicine, because it contains important information for you.\n\n1. What this medicine is and what it is used for\n\nThis medicine is taken once a day, as your doctor has told you. Each tablet contains 20 mg of the active substance.\n\n5. How to store this medicine\n\nKeep this medicine out of the sight and reach of children. Do not store above 30 C."
+      ]
+    },
+    {
+      "doc_id": "d-04",
+      "filename": "quality-overall-summary.pdf",
+      "module": "2.3",
+      "language": "en",
+      "pages": [
+        "2.3 Quality Overall Summary\n\nThis summary follows the structure of Module 3 for Ostrelix 20 mg tablets.\n\n2.3.S Drug substance\n\nThe drug substance is supplied by an approved manufacturer, with details in Module 3.2.S. It is a white to off-white crystalline powder.",
+        "2.3.P.2 Pharmaceutical development\n\nThe formulation uses a direct compression process with common excipients. The tablets were shown to have a dissolution profile similar to the reference product in three media.\n\n2.3.P.8 Stability\n\nThe stability data support the storage conditions and the shelf life proposed in Module 3.2.P.8."
+      ]
+    },
+    {
+      "doc_id": "d-05",
+      "filename": "manufacture-overview.pdf",
+      "module": "3.2.P.3",
+      "language": "en",
+      "pages": [
+        "3.2.P.3 Manufacture\n\n3.2.P.3.1 Manufacturer(s)\n\nThe finished product is manufactured, packaged, tested and released at Redwater Pharma, Block 2, 31 Tannery Row, Ashmoor.",
+        "3.2.P.3.3 Description of manufacturing process\n\nDirect compression of the blend, followed by tablet compression, film coating and blister packing. In-process controls are listed in section 3.2.P.3.4."
+      ]
+    },
+    {
+      "doc_id": "d-06",
+      "filename": "stability-commitment.pdf",
+      "module": "3.2.P.8",
+      "language": "en",
+      "pages": [
+        "3.2.P.8.2 Post-approval stability commitment and protocol\n\nThe applicant commits to continue the long-term study on the three primary batches up to the end of the proposed shelf life, and to place one production batch of Ostrelix 20 mg tablets per year on stability.\n\nThe protocol will be updated if a storage condition or a test method changes."
+      ]
+    },
+    {
+      "doc_id": "d-07",
+      "filename": "stability-report-final.pdf",
+      "module": null,
+      "language": "en",
+      "pages": [
+        "Stability report: Ostrelix 20 mg tablets\n\nContents\n\n3.2.P.8.1 Stability summary and conclusion ........ page 2\n3.2.P.8.3 Stability data ........ page 3",
+        "3.2.P.8.1 Stability summary and conclusion\n\nThree primary batches of Ostrelix 20 mg tablets were placed on stability in the proposed commercial pack. All results stayed within specification at every time point. Based on these data, a shelf life of 24 months is proposed when the product is stored below 30 C in the original package.",
+        "3.2.P.8.3 Stability data\n\n| Study | Storage condition | Months of data |\n| Long-term | 30 C / 65% RH | 18 |\n| Accelerated | 40 C / 75% RH | 6 |"
+      ]
+    },
+    {
+      "doc_id": "d-08",
+      "filename": "batch-record-excerpt.pdf",
+      "module": null,
+      "language": "en",
+      "pages": [
+        "Master batch record (excerpt)\n\nStep 1. Dispense and weigh the excipients. Step 2. Blend for 15 minutes. Step 3. Compress to the target tablet weight and check hardness every 30 minutes. Step 4. Film-coat to a weight gain of 3%. Step 5. Pack into blisters and record the yield.\n\nIn-process controls and limits are listed in section 3.2.P.3.4."
+      ]
+    },
+    {
+      "doc_id": "d-09",
+      "filename": "annex-b.pdf",
+      "module": null,
+      "language": "en",
+      "pages": [
+        "Annex B\n\nPlease see the covering email of 3 March for the list of attached items. The items marked with an asterisk will follow in a later sequence.\n\nThis page is intentionally left mostly blank."
+      ]
+    },
+    {
+      "doc_id": "d-10",
+      "filename": "clinical-overview.pdf",
+      "module": null,
+      "language": "en",
+      "pages": [
+        "2.5 Clinical overview\n\nThis overview summarises the clinical pharmacology, efficacy and safety of ostrelix. The product is used once a day. The overview relies on the published literature and on the bioequivalence study with the reference medicinal product."
+      ]
+    }
+  ],
+  "expect": {
+    "facts": {
+      "shelf_life_months": {
+        "status": "found",
+        "number": 24,
+        "unit": "months",
+        "evidence_in": [
+          "d-02",
+          "d-07"
+        ]
+      },
+      "manufacturing_site": {
+        "status": "found",
+        "value_contains": "Redwater Pharma, Block 2",
+        "evidence_in": [
+          "d-05"
+        ]
+      }
+    },
+    "document_map": {
+      "d-01": "1.2",
+      "d-02": "1.3",
+      "d-03": "1.3",
+      "d-04": "2.3",
+      "d-05": "3.2.P.3",
+      "d-06": "3.2.P.8",
+      "d-07": "3.2.P.8",
+      "d-08": "3.2.P.3",
+      "d-09": null,
+      "d-10": null
+    },
+    "issues": {
+      "required": [],
+      "allowed": [
+        {
+          "doc_id": "d-09",
+          "kind": "looks_incomplete"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "id": "unreadable-page",
+  "title": "Pages with no text: unreadable issues, and no facts from them",
+  "angles": [
+    9
+  ],
+  "about": "Page 2 of the stability report is an image with no text. scan-0007.pdf is one image page. The site is named only in that scan, and the long-term table is only on stability page 2.",
+  "request": {
+    "fact_keys": [
+      {
+        "key": "shelf_life_months",
+        "description": "Proposed shelf life",
+        "value_type": "number",
+        "unit": "months",
+        "look_in": [
+          "3.2.P.8"
+        ]
+      },
+      {
+        "key": "manufacturing_site",
+        "description": "Finished product site",
+        "value_type": "text",
+        "unit": null,
+        "look_in": [
+          "3.2.P.3"
+        ]
+      },
+      {
+        "key": "long_term_months",
+        "description": "Months of long-term data",
+        "value_type": "number",
+        "unit": "months",
+        "look_in": [
+          "3.2.P.8"
+        ]
+      }
+    ]
+  },
+  "documents": [
+    {
+      "doc_id": "d-01",
+      "filename": "smpc.pdf",
+      "module": "1.3",
+      "language": "en",
+      "pages": [
+        "Summary of Product Characteristics (draft, sections 1 to 6)\n\n1. Name of the medicinal product\n\nMarixan 5 mg tablets\n\n2. Qualitative and quantitative composition\n\nEach tablet contains 5 mg of marixan.\n\n3. Pharmaceutical form\n\nFilm-coated tablet. White, oval, biconvex tablets.",
+        "6.3 Shelf life\n\nThe shelf life of the medicinal product is 24 months.\n\n6.4 Special precautions for storage\n\nDo not store above 30 C.\n\n6.5 Nature and contents of container\n\nPVC/PVDC-Alu blisters in cartons of 30 tablets."
+      ]
+    },
+    {
+      "doc_id": "d-02",
+      "filename": "stability-report.pdf",
+      "module": "3.2.P.8",
+      "language": "en",
+      "pages": [
+        "Stability report: Marixan 5 mg tablets\n\nThe results for the three primary batches are presented on page 2 (Table 1) and discussed on page 3.",
+        "",
+        "3.2.P.8.1 Conclusion\n\nAll results stayed within specification. A shelf life of 24 months is proposed when the product is stored below 30 C in the original package."
+      ]
+    },
+    {
+      "doc_id": "d-03",
+      "filename": "manufacture-overview.pdf",
+      "module": "3.2.P.3",
+      "language": "en",
+      "pages": [
+        "3.2.P.3 Manufacture\n\nThe name and address of the manufacturing site are given in the attached good manufacturing practice certificate. The process is direct compression followed by blister packing."
+      ]
+    },
+    {
+      "doc_id": "d-04",
+      "filename": "scan-0007.pdf",
+      "module": null,
+      "language": "en",
+      "pages": [
+        ""
+      ]
+    }
+  ],
+  "expect": {
+    "facts": {
+      "shelf_life_months": {
+        "status": "found",
+        "number": 24,
+        "unit": "months",
+        "evidence_in": [
+          "d-01",
+          "d-02"
+        ]
+      },
+      "manufacturing_site": {
+        "status": "not_found"
+      },
+      "long_term_months": {
+        "status": "not_found"
+      }
+    },
+    "document_map": {
+      "d-01": "1.3",
+      "d-02": "3.2.P.8",
+      "d-03": "3.2.P.3",
+      "d-04": null
+    },
+    "issues": {
+      "required": [
+        {
+          "doc_id": "d-02",
+          "kind": "unreadable",
+          "page": 2
+        },
+        {
+          "doc_id": "d-04",
+          "kind": "unreadable",
+          "page": 1
+        }
+      ],
+      "allowed": [
+        {
+          "doc_id": "d-02",
+          "kind": "looks_incomplete"
+        },
+        {
+          "doc_id": "d-04",
+          "kind": "looks_incomplete"
+        }
+      ]
+    }
+  }
+}
