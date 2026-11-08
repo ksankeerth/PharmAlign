@@ -11,6 +11,8 @@ Rules:
   default AE, the code the library stores for the UAE, its emirates included), and only when that finds nothing, or the server
   refuses the filter, among the whole library. The library also holds EU, WHO, GCC and other documents, and they can outrank
   the UAE law that answers the question.
+- Home passages that are only near the topic do not answer: when the answer model says no_source, widen() runs the same
+  queries over the whole library once, and the model answers again on the larger set.
   PHARMALIGN_KA_LOCAL_FIRST=off searches the whole library at once, as before.
 """
 import asyncio
@@ -147,16 +149,18 @@ async def _search_local_first(
 
 
 async def retrieve(
-    parts: Sequence[str], history_wanted: bool, call_tool: CallTool, tool_log: ToolLog, message: str | None = None
+    parts: Sequence[str], history_wanted: bool, call_tool: CallTool, tool_log: ToolLog, message: str | None = None,
+    search_all: bool = False,
 ) -> Retrieved:
     """One search_kb per part and one for the original message (when it differs from every part), run together.
 
-    Results come back in part order, then the message. A passage found twice is kept once."""
+    Results come back in part order, then the message. A passage found twice is kept once.
+    With `search_all` every query goes to the whole library, with no country filter."""
     purpose = "context" if history_wanted else "requirement"
     queries = list(parts)
     if message and message.strip() and all(_same_words(message) != _same_words(p) for p in parts):
         queries.append(message)
-    local = sorted(home_countries()) if local_first_on() else []
+    local = sorted(home_countries()) if local_first_on() and not search_all else []
     results = await asyncio.gather(*(_search_local_first(q, purpose, call_tool, tool_log, local) for q in queries))
     out = Retrieved()
     anchors: set[str] = set()
@@ -170,6 +174,39 @@ async def retrieve(
             texts.add(passage["text"])
             out.passages.append(passage)
     return out
+
+
+def _local_only_queries(retrieved: Retrieved) -> list[str]:
+    """The queries whose real searches were all home-country ones, in order. A quote check is not a search for an answer."""
+    scopes: dict[str, set[str]] = {}
+    for row in retrieved.searches:
+        if row.get("scope") != "quote_check":
+            scopes.setdefault(row["query"], set()).add(row.get("scope") or "all")
+    return [q for q, found in scopes.items() if found == {"local"}]
+
+
+def can_widen(retrieved: Retrieved) -> bool:
+    return bool(_local_only_queries(retrieved))
+
+
+async def widen(retrieved: Retrieved, call_tool: CallTool, tool_log: ToolLog, purpose: str) -> int:
+    """Searches the whole library for every query that was only searched at home, together, and adds what they find.
+
+    Rows and passages are appended to `retrieved`: passages follow the same de-duplication as retrieve() (by anchor,
+    then by identical text) and the ones already there keep their place. Returns how many searches ran."""
+    queries = _local_only_queries(retrieved)
+    results = await asyncio.gather(*(_search(q, purpose, call_tool, tool_log) for q in queries))
+    anchors = {p["anchor"] for p in retrieved.passages}
+    texts = {p["text"] for p in retrieved.passages}
+    for row, passages in results:
+        retrieved.searches.append(row)
+        for passage in passages:
+            if passage["anchor"] in anchors or passage["text"] in texts:
+                continue
+            anchors.add(passage["anchor"])
+            texts.add(passage["text"])
+            retrieved.passages.append(passage)
+    return len(results)
 
 
 def searches_tried(retrieved: Retrieved) -> list[dict]:

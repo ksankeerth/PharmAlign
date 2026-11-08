@@ -59,10 +59,13 @@ def saved_trace_ids(log: ToolLog) -> set[str]:
     }
 
 
-def check_turn(turn: Turn, answer: TurnAnswer, log: ToolLog) -> None:
-    """Mirrors the contract and the server's checks. Raises ValueError."""
+def check_turn(turn: Turn, answer: TurnAnswer, log: ToolLog, *, history: bool | None = None) -> None:
+    """Mirrors the contract and the server's checks. Raises ValueError.
+
+    `history` is the classifier's word that the person asks about earlier law. It counts together with the old-law
+    words in the raw message; None (the ADK path) leaves only the words."""
     check_evidence(answer, log)  # every anchor came from a tool in this session, every quote is in its text
-    history = bool(HISTORY.search(turn.request.message))
+    history = bool(history) or bool(HISTORY.search(turn.request.message))
     traces = saved_trace_ids(log)
     for event in answer.events:
         if event.type == "message":

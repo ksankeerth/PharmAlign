@@ -64,6 +64,13 @@ def stub_reply(turn: dict, quotes: dict[str, str]) -> str:
     return src
 
 
+def stub_kind(turn: dict) -> str:
+    """The HistoryEntry kind of the stubbed reply."""
+    if turn["route"] == "fixed":
+        return "refused" if turn.get("reply") in ("off_topic", "unsafe", "own_data") else turn.get("reply", "answer")
+    return "no_source" if turn["route"] == "no_source" else "answer"
+
+
 def expected_english(turn: dict) -> bool:
     return turn.get("reply") != "language"
 
@@ -89,6 +96,7 @@ async def run(only: set[str] | None) -> dict:
     load_dotenv(AGENT / ".env")
     from app.chat import gate
     from app.chat.classify import classify
+    from app.chat.labels import HistoryEntry
     from app.chat.models import chain_from_env
 
     chain = chain_from_env("classifier")
@@ -98,16 +106,16 @@ async def run(only: set[str] | None) -> dict:
     for dialogue in dialogues:
         if only and dialogue["id"] not in only:
             continue
-        history: list[tuple[str, str]] = []
+        history: list[HistoryEntry] = []
         for number, turn in enumerate(dialogue["turns"], start=1):
             reply = stub_reply(turn, quotes)
             if gate.needs_english(turn["user"]):
-                history.append((turn["user"], reply))
+                history.append(HistoryEntry(turn["user"], reply, stub_kind(turn)))
                 continue
             started = time.monotonic()
             labels, calls = await classify(turn["user"], history, chain)
             ms = round((time.monotonic() - started) * 1000)
-            history.append((turn["user"], reply))
+            history.append(HistoryEntry(turn["user"], reply, stub_kind(turn)))
             records.append({
                 "dialogue": dialogue["id"], "turn": number, "user": turn["user"], "want": {k: turn.get(k) for k in (
                     "kind", "follow_up", "route", "parts", "history_wanted", "rewrite")},

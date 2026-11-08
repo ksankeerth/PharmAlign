@@ -1,13 +1,17 @@
 """One knowledge turn, step by step: gate, classify, route, retrieve, answer, check.
 
-    message -> 0 gate (no model) -> 1 classify -> 2 route -> a fixed reply, OR
+    message -> 0-2 understand() (gate, suggestion pick, classify, route) -> a fixed reply, OR
                3 retrieve (search_kb per part) -> nothing found: no_source (no answer model)
                                                -> 4 answer (one model call, no tools) -> 5 check (app/rules.py)
 
 Rules:
 - A fixed reply never goes through the answer model or the answer check.
 - Nothing is streamed before the answer passes the check. One retry with the reason, then an error event.
+- When the answer model says no_source on the home sources, the whole library is searched once and the model answers again
+  (a fresh retry budget). Only a second no_source, or none when nothing new came back, ends the turn that way.
 - When the answer model says no_source, code builds the event from the searches that really ran. The model cannot invent searches.
+- A turn has a time budget (TURN_BUDGET_SECONDS). Every answer call ends by the deadline; a retry or the widen step that
+  cannot fit in the time left is skipped, and the turn log says which one in `budget_cut`.
 - One JSON line per turn goes to the turn log when a path is set. It never holds the run token.
 """
 import asyncio
@@ -17,7 +21,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from google.adk.tools.mcp_tool import McpToolset
 from pharmalign_agent_common import ToolLog, Turn
@@ -29,18 +33,19 @@ from app import replies
 from app.answer import TurnAnswer
 from app.chat import answer as answering
 from app.chat import quotes
-from app.chat.classify import classify
-from app.chat.gate import needs_english
-from app.chat.labels import Route
-from app.chat.models import AllModelsBusy, ModelCall, ModelChain, ModelFailed
-from app.chat.retrieve import CallTool, Retrieved, retrieve
-from app.chat.route import route as decide
+from app.chat.labels import NOT_AVAILABLE_REPLIES, HistoryEntry, Route
+from app.chat.models import AllModelsBusy, ModelCall, ModelChain, ModelFailed, env_seconds
+from app.chat.retrieve import CallTool, Retrieved, can_widen, local_first_on, retrieve, widen
+from app.chat.understand import understand
 from app.rules import check_turn
 
 log = logging.getLogger(__name__)
 
 HISTORY_KEPT = 20
 RETRIES = 1
+TURN_BUDGET_SECONDS = env_seconds("PHARMALIGN_KA_TURN_BUDGET", 50.0)  # the server gives up on a turn at 60 s
+RETRY_MIN_SECONDS = 8.0  # a check-failure retry needs at least this much of the budget left
+WIDEN_MIN_SECONDS = 20.0  # the widen step (a whole-library search and a second answer) needs at least this much
 
 
 @dataclass
@@ -48,10 +53,14 @@ class PipelineSession:
     id: str
     create: SessionCreate
     log: ToolLog
-    history: list[tuple[str, str]]  # (user message, reply text), for the classifier
+    history: list[HistoryEntry]  # what each turn said and was, for the classifier
     toolset: McpToolset | None
     created: datetime
     lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+
+
+def _suggestions(ta: TurnAnswer) -> tuple[str, ...]:
+    return tuple(getattr(ta.events[0], "suggestions", None) or ())
 
 
 def _reply_text(ta: TurnAnswer) -> str:
@@ -100,15 +109,17 @@ async def run_knowledge_turn(
     rec: dict[str, Any] = {
         "agent_session_id": held.id, "message": request.message, "gate": False, "kind": None, "follow_up": None,
         "parts": [], "history_wanted": False, "english": None, "fail_open": False, "route": "error",
-        "searches": [], "retries": 0, "check_error": None, "citations": [], "answer_model": None,
+        "searches": [], "widened": False, "retries": 0, "check_error": None, "citations": [], "answer_model": None,
+        "how": None, "style": "none", "sources_named": [], "search_all": False, "budget_cut": None,
     }
+    deadline = started + TURN_BUDGET_SECONDS
     last_turn = held.history[-1] if held.history else None
     try:
-        events, error = await _run(held, request, classifier, answerer, call_tool, models, retrieved, rec)
+        events, error = await _run(held, request, classifier, answerer, call_tool, models, retrieved, rec, deadline)
         return events, _usage(models, len(retrieved.searches)), error
     finally:
         if not held.history or held.history[-1] is last_turn:  # the turn failed: the next message still has context
-            held.history.append((request.message, ""))
+            held.history.append(HistoryEntry(request.message, "", "error"))
             del held.history[:-HISTORY_KEPT]
         if turn_log_path:
             rec["searches"] = [
@@ -125,89 +136,130 @@ async def run_knowledge_turn(
 
 async def _run(
     held: PipelineSession, request: TurnRequest, classifier: ModelChain, answerer: ModelChain, call_tool: CallTool,
-    models: list[ModelCall], retrieved: Retrieved, rec: dict[str, Any],
+    models: list[ModelCall], retrieved: Retrieved, rec: dict[str, Any], deadline: float,
 ) -> tuple[list[dict], ErrorEvent | None]:
-    has_history = bool(held.history)
-
-    # 0 the language gate: no model call
-    if needs_english(request.message):
+    # 0 gate, suggestion pick, 1 classify (fails open, so it never raises), 2 route
+    understood = await understand(request.message, held.history, classifier)
+    models.extend(understood.calls)
+    labels, route = understood.labels, understood.route
+    rec.update(how=understood.how, style=route.style, sources_named=list(route.sources_named), search_all=route.search_all)
+    if understood.how == "gate":
         rec.update(gate=True, route="language")
-        return _fixed(held, request, Route(kind="fixed", reply="language", has_history=has_history)), None
-
-    # 1 classify (fails open, so it never raises) and 2 route
-    labels, calls = await classify(request.message, held.history, classifier)
-    models.extend(calls)
+        return _fixed(held, request, route), None
     rec.update(
         kind=labels.kind, follow_up=labels.follow_up, parts=list(labels.parts), history_wanted=labels.history_wanted,
         english=labels.english, fail_open=labels.fail_open,
     )
-    route = decide(labels, has_history=has_history)
     if route.kind == "fixed":
         rec["route"] = route.reply
         return _fixed(held, request, route), None
 
     # 3 retrieve
     calls_before = len(held.log.calls)
-    found = await retrieve(route.parts, route.history_wanted, call_tool, held.log, request.message)
+    # a picked suggestion has no words of its own worth searching ("yes")
+    own_words = None if understood.how == "suggestion_pick" else request.message
+    found = await retrieve(route.parts, route.history_wanted, call_tool, held.log, own_words, route.search_all)
     retrieved.passages, retrieved.searches = found.passages, found.searches
     if retrieved.all_failed:
         return [], _error("tool_error", "The library search failed. Try again.")
     if retrieved.nothing_found:
         rec["route"] = "no_source"
         ta = TurnAnswer(events=[answering.no_source_event(retrieved, replies.SUGGESTIONS)])
-        return _done(held, request, ta), None
+        return _done(held, request, ta, "no_source"), None
 
-    # 4 answer and 5 check
-    reason: str | None = None
+    # 4 answer and 5 check; when the model finds no answer in the home sources, widen to the whole library once
+    first = await _attempt(held, request, route, answerer, call_tool, models, retrieved, rec, calls_before, deadline)
+    last = first
+    wants_widen = first.status == "no_source" and not route.search_all and local_first_on() and can_widen(retrieved)
+    if wants_widen and deadline - time.monotonic() < WIDEN_MIN_SECONDS:
+        rec["budget_cut"] = "widen"
+        wants_widen = False
+    if wants_widen:
+        purpose = "context" if route.history_wanted else "requirement"
+        seen = len(retrieved.passages)
+        ran = await widen(retrieved, call_tool, held.log, purpose)
+        if ran:
+            rec["widened"] = True
+        if ran and len(retrieved.passages) > seen:
+            last = await _attempt(held, request, route, answerer, call_tool, models, retrieved, rec, calls_before, deadline)
+    if last.error:
+        return [], last.error
+    if last.status == "no_source":
+        rec["route"] = "no_source"
+        ta = TurnAnswer(events=[answering.no_source_event(retrieved, last.suggestions)])
+        return _done(held, request, ta, "no_source"), None
+    if last.ta is None:
+        return [], _error("invalid_output", last.reason or "the answer was refused")
+    rec["route"] = "answer"
+    rec["citations"] = [{"anchor": c.anchor, "quote": c.quote} for c in last.ta.events[0].citations]
+    return _done(held, request, last.ta, "answer"), None
+
+
+@dataclass
+class Attempt:
+    """How one round of answer calls ended: a checked answer (`ta`), the model's no_source (`suggestions`), a failure
+    (`reason`: every call was refused by the checks), or an error event."""
+
+    status: Literal["answer", "no_source", "failed", "error"]
     ta: TurnAnswer | None = None
+    suggestions: list[str] = field(default_factory=list)
+    reason: str | None = None
+    error: ErrorEvent | None = None
+
+
+async def _attempt(
+    held: PipelineSession, request: TurnRequest, route: Route, answerer: ModelChain, call_tool: CallTool,
+    models: list[ModelCall], retrieved: Retrieved, rec: dict[str, Any], calls_before: int,
+    deadline: float,
+) -> Attempt:
+    """Up to RETRIES + 1 answer calls on the passages found so far, each checked; a refused answer is retried with the reason."""
+    reason: str | None = None
     for attempt in range(RETRIES + 1):
+        if attempt and deadline - time.monotonic() < RETRY_MIN_SECONDS:
+            rec["budget_cut"] = "retry"
+            break
         rec["retries"] = attempt
         try:
-            out, result = await answering.answer(route.parts, retrieved, route.history_wanted, answerer, reason, calls=models)
+            out, result = await answering.answer(route.parts, retrieved, route.history_wanted, answerer, reason, calls=models, style=route.style, deadline=deadline)
         except AllModelsBusy:
-            return [], _error("model_unavailable", "The answer model is busy. Try again in a minute.")
+            return Attempt("error", error=_error("model_unavailable", "The answer model is busy. Try again in a minute."))
         except ModelFailed as failure:
-            return [], _error("internal_error", str(failure))
+            return Attempt("error", error=_error("internal_error", str(failure)))
         except ValueError as bad:  # the JSON did not fit the schema
             reason = "the answer was not one JSON object in the required shape: " + (str(bad).splitlines() or [""])[0]
             rec["check_error"] = reason
             continue
         rec["answer_model"] = result.model
         if answering.is_no_source(out):
-            ta = TurnAnswer(events=[answering.no_source_event(retrieved, out.suggestions)])
-            rec["route"] = "no_source"
-            break
+            return Attempt("no_source", suggestions=list(out.suggestions))
         try:
             candidate = answering.to_turn_answer(out, retrieved, route.preface)
-            check_turn(Turn(held.create, request, calls_before), candidate, held.log)
+            check_turn(Turn(held.create, request, calls_before), candidate, held.log, history=route.history_wanted)
             # the server checks each quote against its whole document: look at the rest of it, and widen a quote that repeats
             chunks, checks = await quotes.document_chunks(candidate, retrieved.passages, call_tool, held.log)
             retrieved.searches.extend(checks)
             candidate, changes = quotes.repair(candidate, chunks, request.message)
             if changes:
                 rec["quotes_repaired"] = rec.get("quotes_repaired", []) + changes
-                check_turn(Turn(held.create, request, calls_before), candidate, held.log)  # still word for word from a tool's text
+                check_turn(Turn(held.create, request, calls_before), candidate, held.log, history=route.history_wanted)  # still word for word from a tool's text
             if problem := answering.citation_problems(candidate, request.message, chunks):
                 raise ValueError(problem)
         except ValueError as bad:
             reason = str(bad)
             rec["check_error"] = reason
             continue
-        ta = candidate
-        rec["route"] = "answer"
-        rec["citations"] = [{"anchor": c.anchor, "quote": c.quote} for c in ta.events[0].citations]
-        break
-    if ta is None:
-        return [], _error("invalid_output", reason or "the answer was refused")
-    return _done(held, request, ta), None
+        return Attempt("answer", ta=candidate)
+    return Attempt("failed", reason=reason)
 
 
 def _fixed(held: PipelineSession, request: TurnRequest, route: Route) -> list[dict]:
-    return _done(held, request, TurnAnswer(events=[replies.fixed_event(route)]))
+    reply = route.reply or ""
+    kind = "refused" if reply in NOT_AVAILABLE_REPLIES else reply  # greeting, clarify, split, language, distress, decision
+    return _done(held, request, TurnAnswer(events=[replies.fixed_event(route)]), kind)
 
 
-def _done(held: PipelineSession, request: TurnRequest, ta: TurnAnswer) -> list[dict]:
+def _done(held: PipelineSession, request: TurnRequest, ta: TurnAnswer, kind: str) -> list[dict]:
     """The events for a checked answer, and the turn goes into the session's history."""
-    held.history.append((request.message, _reply_text(ta)))
+    held.history.append(HistoryEntry(request.message, _reply_text(ta), kind, _suggestions(ta)))
     del held.history[:-HISTORY_KEPT]
     return stream_events(ta)

@@ -10,6 +10,9 @@ Rules:
 
 PHARMALIGN_MODEL_KA_CLASSIFIER   comma list, first is preferred (default gemini-3.5-flash-lite,gemini-3.1-flash-lite)
 PHARMALIGN_MODEL_KA_ANSWER       comma list, first is preferred (default gemini-3.8-flash,gemini-3.5-flash-lite)
+A call can carry a `deadline` (a time.monotonic() value): no attempt starts with under 1 s left, an attempt gets at
+most the time left, and a timeout caused by that cut is not the model's fault, so it does not start a cooldown.
+
 PHARMALIGN_KA_THINKING           optional "model=level,model=level". Default: "minimal" for flash-lite models, else "low"
 """
 import asyncio
@@ -39,8 +42,18 @@ THINKING_ENV = "PHARMALIGN_KA_THINKING"
 COOLDOWN_SECONDS = 60.0
 COOLDOWN_ENV = "PHARMALIGN_KA_COOLDOWN_SECONDS"
 RETRY_SECONDS = 2.0
+MIN_ATTEMPT_SECONDS = 1.0  # an attempt that has less than this before the deadline is not started
 
 _COOLDOWNS: dict[str, float] = {}  # model name -> time it may be used again, shared by every chain in the process
+
+
+def env_seconds(name: str, default: float) -> float:
+    """A positive, finite float from the environment; missing or invalid means the default."""
+    try:
+        value = float(os.environ.get(name) or default)
+    except ValueError:
+        return default
+    return value if math.isfinite(value) and value > 0 else default
 
 
 def reset_cooldowns() -> None:
@@ -186,8 +199,11 @@ class ModelChain:
         schema: type[BaseModel] | None = None,
         timeout: float | None = None,
         calls: list[ModelCall] | None = None,
+        deadline: float | None = None,
     ) -> ModelResult:
-        """Try each model in order. Pass `calls` to keep a live record of attempts even if the caller cancels us."""
+        """Try each model in order. Pass `calls` to keep a live record of attempts even if the caller cancels us.
+
+        `deadline` is a time.monotonic() value: the whole call must end by then (AllModelsBusy when it cannot)."""
         calls = [] if calls is None else calls
         skipped: str | None = None
         for model in self.models:
@@ -196,15 +212,24 @@ class ModelChain:
                 continue
             fallback_from = skipped
             response = None
+            cut_by_deadline = False  # the last attempt timed out only because the deadline shortened it
             for attempt in range(2):
+                attempt_timeout = timeout
+                cut_by_deadline = False
+                if deadline is not None:
+                    left = deadline - time.monotonic()
+                    if left < MIN_ATTEMPT_SECONDS:
+                        raise AllModelsBusy(self.role, calls)
+                    if timeout is None or left < timeout:
+                        attempt_timeout, cut_by_deadline = left, True
                 call = ModelCall(role=self.role, model=model, fallback_from=fallback_from)
                 calls.append(call)
                 started = time.monotonic()
                 try:
                     llm = self._llm(model)
                     request = self._request(model, system, prompt, schema)
-                    if timeout is not None:
-                        response = await asyncio.wait_for(self._call(llm, request), timeout)
+                    if attempt_timeout is not None:
+                        response = await asyncio.wait_for(self._call(llm, request), attempt_timeout)
                     else:
                         response = await self._call(llm, request)
                 except asyncio.CancelledError:
@@ -214,16 +239,19 @@ class ModelChain:
                 except Exception as error:
                     call.ms = round((time.monotonic() - started) * 1000)
                     call.error = f"{type(error).__name__}: {error}"[:300]
-                    if not is_busy(error, timeout is not None):
+                    if not is_busy(error, attempt_timeout is not None):
                         raise ModelFailed(model, calls) from error
-                    if attempt == 0 and self.retry_seconds is not None and isinstance(error, errors.APIError):  # busy: one more go at the same model
+                    cut_by_deadline = cut_by_deadline and isinstance(error, asyncio.TimeoutError)
+                    retry_fits = deadline is None or deadline - time.monotonic() - (self.retry_seconds or 0) >= MIN_ATTEMPT_SECONDS
+                    if attempt == 0 and self.retry_seconds is not None and isinstance(error, errors.APIError) and retry_fits:  # busy: one more go at the same model
                         fallback_from = None
                         await asyncio.sleep(self.retry_seconds)
                         continue
                     break
                 break
             if response is None:
-                _COOLDOWNS[model] = self.clock() + self.cooldown_seconds
+                if not cut_by_deadline:  # a timeout the deadline caused is not the model's fault
+                    _COOLDOWNS[model] = self.clock() + self.cooldown_seconds
                 skipped = model
                 continue
             call.ms = round((time.monotonic() - started) * 1000)

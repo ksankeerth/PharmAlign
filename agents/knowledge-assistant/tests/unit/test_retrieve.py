@@ -4,7 +4,7 @@ import json
 import pytest
 from pharmalign_agent_common import ToolLog
 
-from app.chat.retrieve import Retrieved, home_countries, local_first_on, retrieve, searches_tried
+from app.chat.retrieve import Retrieved, home_countries, local_first_on, retrieve, searches_tried, widen
 
 
 @pytest.fixture(autouse=True)
@@ -226,6 +226,49 @@ async def test_every_part_falls_back_on_its_own(local_first):
     assert [p["document_id"] for p in found.passages] == ["A-01", "B-01"]
 
 
+async def test_widen_searches_the_whole_library_for_queries_that_only_ran_at_home(local_first):
+    tool = by_scope(reply([hit("A-01:v1:c1", "uae text")]), reply([hit("A-01:v1:c1", "uae text"), hit("W-01:v1:c1", "who text", "W-01")]))
+    found = await retrieve(["qa", "qb"], False, tool, ToolLog())
+    tool.seen.clear()
+    ran = await widen(found, tool, ToolLog(), "requirement")
+    assert ran == 2
+    assert all("countries" not in a and a["purpose"] == "requirement" for a in tool.seen)
+    assert sorted(a["query"] for a in tool.seen) == ["qa", "qb"]
+    assert [(s["query"], s["scope"]) for s in found.searches] == [("qa", "local"), ("qb", "local"), ("qa", "all"), ("qb", "all")]
+    assert [p["anchor"] for p in found.passages] == ["A-01:v1:c1", "W-01:v1:c1"]  # the old one keeps its place, no repeats
+
+
+async def test_widen_skips_a_query_that_already_has_a_whole_library_row_and_a_quote_check_row(local_first):
+    found = Retrieved(
+        passages=[{"anchor": "A-01:v1:c1", "text": "uae text"}],
+        searches=[
+            {"query": "qa", "purpose": "requirement", "scope": "local", "hits": 0, "documents": [], "searched": 3, "failed": False},
+            {"query": "qa", "purpose": "requirement", "scope": "all", "hits": 1, "documents": ["A-01"], "searched": 3, "failed": False},
+            {"query": "qb", "purpose": "requirement", "scope": "local", "hits": 1, "documents": ["A-01"], "searched": 3, "failed": False},
+            {"query": "a quote", "purpose": "context", "scope": "quote_check", "hits": 1, "documents": ["A-01"], "failed": False},
+        ],
+    )
+    tool = by_scope(reply([]), reply([hit("W-01:v1:c1", "who text", "W-01")]))
+    assert await widen(found, tool, ToolLog(), "requirement") == 1
+    assert [a["query"] for a in tool.seen] == ["qb"]  # not qa (has an "all" row), not the quote check
+    assert [p["anchor"] for p in found.passages] == ["A-01:v1:c1", "W-01:v1:c1"]
+
+
+async def test_widen_drops_a_passage_whose_text_is_already_there_under_another_anchor(local_first):
+    tool = by_scope(reply([hit("A-01:v1:c1", "same words")]), reply([hit("W-01:v1:c1", "same words", "W-01"), hit("W-01:v1:c2", "new words", "W-01")]))
+    found = await retrieve(["q"], False, tool, ToolLog())
+    await widen(found, tool, ToolLog(), "requirement")
+    assert [p["anchor"] for p in found.passages] == ["A-01:v1:c1", "W-01:v1:c2"]
+
+
+async def test_widen_returns_zero_and_searches_nothing_when_every_query_has_a_whole_library_row(local_first):
+    tool = by_scope(reply([]), reply([hit("W-01:v1:c1", "who text", "W-01")]))
+    found = await retrieve(["q"], False, tool, ToolLog())  # home found nothing, so the whole library was searched too
+    tool.seen.clear()
+    assert await widen(found, tool, ToolLog(), "requirement") == 0
+    assert tool.seen == [] and len(found.searches) == 2
+
+
 def test_the_home_country_list_comes_from_the_environment(monkeypatch):
     assert home_countries({}) == {"ae"}  # the code the library stores for the UAE, emirates included
     assert home_countries({"PHARMALIGN_KA_HOME_COUNTRIES": " OM , sa ,, "}) == {"om", "sa"}
@@ -234,3 +277,14 @@ def test_the_home_country_list_comes_from_the_environment(monkeypatch):
 def test_the_switch_turns_local_first_off(monkeypatch):
     assert local_first_on({}) and local_first_on({"PHARMALIGN_KA_LOCAL_FIRST": "on"})
     assert not local_first_on({"PHARMALIGN_KA_LOCAL_FIRST": " OFF "})
+
+
+async def test_search_all_searches_the_whole_library_without_a_country_filter(monkeypatch):
+    monkeypatch.setenv("PHARMALIGN_KA_LOCAL_FIRST", "on")
+    call_tool = fake({"q": reply([hit("A:v1:c1", "t")])})
+    got = await retrieve(["q"], False, call_tool, ToolLog(), search_all=True)
+    (_, args), = call_tool.seen
+    assert "countries" not in args and got.searches[0]["scope"] == "all"
+    call_tool = fake({"q": reply([hit("A:v1:c1", "t")])})
+    await retrieve(["q"], False, call_tool, ToolLog())
+    assert call_tool.seen[0][1]["countries"] == ["ae"]

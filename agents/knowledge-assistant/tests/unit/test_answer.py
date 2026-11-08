@@ -265,12 +265,44 @@ def test_the_home_countries_default_and_env_list_are_parsed(monkeypatch):
     assert got == ["gb-1", "uae-1"]
 
 
-def test_the_system_prompt_prefers_local_law_and_names_foreign_sources_as_not_uae_law():
-    for rule in ("UAE federal or emirate", "not UAE law", "no local", "GCC, Arab League, international, EU, US"):
+def test_the_system_prompt_prefers_local_law_names_gcc_guidance_by_its_member_states_and_other_sources_as_not_uae_law():
+    for rule in ("UAE sources", "whenever one answers the part", "GCC", "member states including the UAE", "not UAE law"):
         assert rule in SYSTEM
+
+
+def test_the_jurisdiction_label_is_uae_gcc_or_not_uae(monkeypatch):
+    monkeypatch.delenv("PHARMALIGN_KA_HOME_COUNTRIES", raising=False)
+    passages = [
+        _passage("gulf-1", "-", issuer="Gulf Health Council"),
+        _passage("who-1", "-", issuer="WHO"),
+        {**_passage("gcc-title-1", None, issuer="Executive Board"), "title": "Guidelines for stability testing (GCC)"},
+        _passage("uae-1", "AE", issuer="Gulf Health Council"),  # home stays UAE
+        {**_passage("who-2", "-", issuer="WHO"), "title": "Gccx and gccs text"},  # not a whole word
+    ]
+    block = json.loads(build_prompt(["Q?"], passages, history_wanted=False).split("<passages>")[1].split("</passages>")[0])
+    assert [(b["anchor"], b["jurisdiction"]) for b in block] == [
+        ("uae-1", "UAE"), ("gulf-1", "GCC"), ("who-1", "not UAE"), ("gcc-title-1", "GCC"), ("who-2", "not UAE"),
+    ]
 
 
 def test_the_system_prompt_answers_only_what_is_asked_and_still_accepts_other_words():
     for rule in ("Answer only what each part asks", "do not answer a nearby fact instead", "in other words, answer it",
                  "leaves no part answered"):
         assert rule in SYSTEM
+
+
+@pytest.mark.parametrize("style, line", [
+    ("shorter", "Answer in at most two sentences."),
+    ("simpler", "Use plain words a non-lawyer understands, no legal jargon."),
+    ("more_detail", "Give more detail: the conditions, exceptions and related rules the passages state."),
+    ("bullets", "Write the answer as short bullet points, one per rule, each starting with '- '."),
+])
+def test_a_style_adds_one_line_to_the_prompt(style, line):
+    assert line in build_prompt(["Q?"], PASSAGES, history_wanted=False, style=style)
+    assert line not in SYSTEM
+
+
+def test_no_style_adds_nothing():
+    plain = build_prompt(["Q?"], PASSAGES, history_wanted=False)
+    assert build_prompt(["Q?"], PASSAGES, history_wanted=False, style="none") == plain
+    assert "at most two sentences" not in plain and "bullet points" not in plain

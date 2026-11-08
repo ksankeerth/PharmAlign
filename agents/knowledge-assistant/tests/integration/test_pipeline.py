@@ -365,7 +365,8 @@ async def test_the_turn_log_has_one_line_per_turn_and_never_the_token(tmp_path):
     rows = [json.loads(line) for line in text.splitlines()]
     assert [r["route"] for r in rows] == ["answer", "greeting", "no_source", "language"]
     keys = {"agent_session_id", "message", "gate", "kind", "follow_up", "parts", "history_wanted", "english", "fail_open",
-            "route", "searches", "passages", "models", "retries", "check_error", "citations", "answer_model", "ms"}
+            "route", "searches", "widened", "passages", "models", "retries", "check_error", "citations", "answer_model", "ms",
+            "how", "style", "sources_named", "search_all", "budget_cut"}
     assert all(set(r) == keys for r in rows)
     answer, greeting, nothing, gate = rows
     assert answer["agent_session_id"] == sid and answer["message"] == VALID_Q and answer["kind"] == "question"
@@ -485,3 +486,224 @@ def test_the_app_with_the_switch_on_serves_the_pipeline_routes(monkeypatch):
     finally:
         monkeypatch.undo()
         _reload_app()
+
+
+# ------------------------------------------------------------------ widening to the whole library on no_source
+
+STABILITY_Q = "What long-term stability conditions apply in a hot climate?"
+HOME_NEAR = "Medicines shall be stored in a warehouse that keeps the temperature in a hot climate under control."
+WORLD_QUOTE = "Long-term stability studies for climatic zone IV shall be run at 30 C and 65% RH for at least twelve months."
+HOME_ANCHOR, WORLD_ANCHOR = "H-02:v1:c0001", "W-10:v1:c0001"
+WORLD_ANSWER = answered(
+    "Under WHO guidance, which is not UAE law, long-term studies for climatic zone IV run at 30 C and 65% RH for twelve months.",
+    (WORLD_ANCHOR, WORLD_QUOTE), suggestions=["What about accelerated studies?"],
+)
+
+
+def two_libraries() -> dict:
+    """search_kb answers from the home library when asked for a country, and from the whole library otherwise."""
+    home = FakeCase(clauses=[Clause(HOME_ANCHOR, HOME_NEAR, article="3", title="Storage standard")])
+    world = FakeCase(clauses=[
+        Clause(HOME_ANCHOR, HOME_NEAR, article="3", title="Storage standard"),
+        Clause(WORLD_ANCHOR, WORLD_QUOTE, article="2", title="WHO stability guideline", issuer="WHO"),
+    ])
+    tools = world.tools(TOOLS)
+    tools["search_kb"] = lambda args: (home if args.get("countries") else world).search_kb(args)
+    return tools
+
+
+def searches_of(p: Pipe) -> list[dict]:
+    return [c.arguments for c in p.mcp.calls_to("search_kb")]
+
+
+@pytest.fixture
+def home_first(monkeypatch):
+    monkeypatch.delenv("PHARMALIGN_KA_LOCAL_FIRST", raising=False)
+    monkeypatch.delenv("PHARMALIGN_KA_HOME_COUNTRIES", raising=False)
+
+
+async def test_a_no_source_on_the_home_passages_widens_to_the_whole_library_and_answers_there(home_first, tmp_path):
+    path = tmp_path / "turns.jsonl"
+    async with pipe([classified(parts=(STABILITY_Q,))], [say_json(NO_SOURCE_ANSWER), WORLD_ANSWER], fake_tools=two_libraries(), log_path=path) as p:
+        events = await ask(p, STABILITY_Q)
+    assert p.kinds(events)[-1] == "usage" and "no_source" not in p.kinds(events)
+    assert message_of(events)["citations"] == [{"anchor": WORLD_ANCHOR, "quote": WORLD_QUOTE}]
+    first, second, *checks = searches_of(p)
+    assert first["countries"] == ["ae"] and "countries" not in second and second["query"] == STABILITY_Q
+    assert second["purpose"] == first["purpose"] == "requirement"
+    assert p.answerer.calls == 2
+    prompt = p.answerer.requests[1].contents[0].parts[0].text
+    assert WORLD_ANCHOR in prompt and HOME_ANCHOR in prompt  # the second call saw the enlarged set
+    assert WORLD_ANCHOR not in p.answerer.requests[0].contents[0].parts[0].text
+    usage = UsageEvent.model_validate(events[-1]).usage
+    assert usage.model_calls == 3 and usage.tool_calls == 2 + len(checks)  # classifier + 2 answers; 2 searches + the quote check(s)
+    (row,) = [json.loads(line) for line in path.read_text().splitlines()]
+    assert row["widened"] is True and row["route"] == "answer"
+    assert [s["scope"] for s in row["searches"][:2]] == ["local", "all"]
+    assert [m["role"] for m in row["models"]] == ["classifier", "answer", "answer"]
+
+
+async def test_a_second_no_source_gives_one_no_source_listing_the_home_and_whole_library_searches(home_first):
+    answers = [say_json(NO_SOURCE_ANSWER), say_json({**NO_SOURCE_ANSWER, "suggestions": ["What does WHO say?"]})]
+    async with pipe([classified(parts=(STABILITY_Q,))], answers, fake_tools=two_libraries()) as p:
+        events = await ask(p, STABILITY_Q)
+    assert p.kinds(events) == ["no_source", "usage"]
+    tried = events[0]["searches_tried"]
+    assert [t["search"] for t in tried] == [
+        f"search_kb (requirement, home country): {STABILITY_Q}", f"search_kb (requirement): {STABILITY_Q}",
+    ]
+    assert events[0]["suggestions"] == ["What does WHO say?"] and p.answerer.calls == 2
+    assert UsageEvent.model_validate(events[-1]).usage.tool_calls == 2
+
+
+async def test_an_answer_on_the_home_passages_does_not_search_the_whole_library(home_first, tmp_path):
+    path = tmp_path / "turns.jsonl"
+    home = FakeCase(clauses=[Clause(A_VALID, VALID_QUOTE, article="12", title="Registration decree")])
+    tools = home.tools(TOOLS)
+    tools["search_kb"] = lambda args: home.search_kb(args) if args.get("countries") else {"no_source_found": True, "hits": [], "searched": 0}
+    async with pipe([classified()], [VALID_ANSWER], fake_tools=tools, log_path=path) as p:
+        events = await ask(p)
+    assert message_of(events)["citations"]
+    assert [bool(a.get("countries")) for a in searches_of(p)] == [True, False]  # the home search, then the quote check
+    assert "document_ids" in searches_of(p)[1]
+    assert p.answerer.calls == 1
+    (row,) = [json.loads(line) for line in path.read_text().splitlines()]
+    assert row["widened"] is False and [s["scope"] for s in row["searches"]] == ["local", "quote_check"]
+
+
+async def test_with_local_first_off_a_no_source_is_final_and_nothing_is_widened(monkeypatch, tmp_path):
+    monkeypatch.setenv("PHARMALIGN_KA_LOCAL_FIRST", "off")
+    path = tmp_path / "turns.jsonl"
+    async with pipe([classified(parts=(STABILITY_Q,))], [say_json(NO_SOURCE_ANSWER)], fake_tools=two_libraries(), log_path=path) as p:
+        events = await ask(p, STABILITY_Q)
+    assert p.kinds(events) == ["no_source", "usage"] and p.answerer.calls == 1
+    assert all("countries" not in a for a in searches_of(p)) and len(searches_of(p)) == 1
+    (row,) = [json.loads(line) for line in path.read_text().splitlines()]
+    assert row["widened"] is False
+
+
+SUGGESTED_ANSWER = answered(
+    "The authorization is valid for five years.", (A_VALID, VALID_QUOTE), suggestions=[REPORT_Q, "When must I renew it?"]
+)
+REPORT_ANSWER = answered("A serious reaction is reported within fifteen days.", (B_REPORT, REPORT_QUOTE))
+
+
+def search_queries(calls) -> list[str]:
+    return [c.arguments["query"] for c in calls if c.name == "search_kb" and "document_ids" not in c.arguments]
+
+
+async def test_yes_after_an_answer_with_suggestions_searches_the_first_suggestion(tmp_path):
+    path = tmp_path / "turns.jsonl"
+    async with pipe([classified()], [SUGGESTED_ANSWER, REPORT_ANSWER], log_path=path) as p:
+        sid = await p.open(False)
+        await p.turn(sid, VALID_Q)
+        before = len(p.mcp.calls)
+        events = await p.turn(sid, "yes")
+    assert p.classifier.calls == 1  # the pick is code: no classifier call for "yes"
+    assert search_queries(p.mcp.calls[before:]) == [REPORT_Q]
+    assert message_of(events)["citations"][0]["anchor"] == B_REPORT
+    rows = [json.loads(line) for line in path.read_text().splitlines()]
+    assert rows[1]["how"] == "suggestion_pick" and rows[1]["parts"] == [REPORT_Q]
+    assert [m["role"] for m in rows[1]["models"]] == ["answer"]
+
+
+async def test_try_again_after_no_source_searches_the_whole_library_at_once(monkeypatch, tmp_path):
+    monkeypatch.delenv("PHARMALIGN_KA_LOCAL_FIRST", raising=False)
+    path = tmp_path / "turns.jsonl"
+    drone = ["How are drone deliveries regulated?"]
+    script = [classified(parts=drone), classified(parts=drone, follow_up=True)]
+    async with pipe(script, [], log_path=path) as p:
+        sid = await p.open(False)
+        await p.turn(sid, "Drone deliveries?")
+        before = len(p.mcp.calls)
+        await p.turn(sid, "try again")
+    first_turn = [c.arguments for c in p.mcp.calls[:before]]
+    again = [c.arguments for c in p.mcp.calls[before:]]
+    assert any("countries" in a for a in first_turn)  # the first search went home first
+    assert again and all("countries" not in a for a in again)
+    prompt = p.classifier.requests[1].contents[0].parts[0].text
+    assert "found nothing in the library" in prompt
+    rows = [json.loads(line) for line in path.read_text().splitlines()]
+    assert rows[0]["search_all"] is False and rows[1]["search_all"] is True and rows[1]["how"] == "classifier"
+
+
+async def test_a_style_request_reaches_the_answer_prompt_and_the_log(tmp_path):
+    path = tmp_path / "turns.jsonl"
+    short = {**labels(follow_up=True), "style": "shorter", "sources_named": ["WHO"]}
+    async with pipe([classified(), say_json(short)], [VALID_ANSWER, VALID_ANSWER], log_path=path) as p:
+        sid = await p.open(False)
+        await p.turn(sid, VALID_Q)
+        await p.turn(sid, "shorter please")
+    first, second = (r.contents[0].parts[0].text for r in p.answerer.requests)
+    assert "at most two sentences" not in first and "Answer in at most two sentences." in second
+    rows = [json.loads(line) for line in path.read_text().splitlines()]
+    assert (rows[0]["how"], rows[0]["style"], rows[0]["sources_named"], rows[0]["search_all"]) == ("classifier", "none", [], False)
+    assert (rows[1]["style"], rows[1]["sources_named"], rows[1]["search_all"]) == ("shorter", ["WHO"], True)
+
+
+async def test_history_entries_carry_kind_and_suggestions_to_the_classifier():
+    async with pipe([classified(), classified(kind="vague", parts=())], [VALID_ANSWER]) as p:
+        sid = await p.open(False)
+        await p.turn(sid, VALID_Q)
+        await p.turn(sid, "hmm")
+    prompt = p.classifier.requests[1].contents[0].parts[0].text
+    assert "Assistant (answer):" in prompt and "Assistant suggested: 1." in prompt and "When must I renew it?" in prompt
+
+
+# ------------------------------------------------------------------ the turn time budget
+
+async def test_a_slow_answer_model_ends_the_turn_in_time_with_an_error_and_no_cooldown(monkeypatch, tmp_path):
+    import time
+
+    from app.chat import models as models_module
+    from app.chat import pipeline
+
+    monkeypatch.setattr(pipeline, "TURN_BUDGET_SECONDS", 0.4)
+    monkeypatch.setattr(models_module, "MIN_ATTEMPT_SECONDS", 0.05)
+    path = tmp_path / "turns.jsonl"
+    async with pipe([classified()], [VALID_ANSWER], log_path=path) as p:
+        p.answerer.delay_seconds = 5.0
+        started = time.monotonic()
+        events = await ask(p)
+        elapsed = time.monotonic() - started
+    assert elapsed < 3.0
+    assert events[-1]["type"] == "error" and events[-1]["code"] == "model_unavailable" and events[-1]["retryable"] is True
+    assert not [e for e in events if e["type"] == "message"]
+    assert "fake-answer" not in models_module._COOLDOWNS  # the budget cut it, the model was not at fault
+    (row,) = [json.loads(line) for line in path.read_text().splitlines()]
+    assert row["budget_cut"] is None and row["route"] == "error"
+
+
+async def test_the_widen_step_is_skipped_when_too_little_budget_is_left(home_first, monkeypatch, tmp_path):
+    from app.chat import pipeline
+
+    monkeypatch.setattr(pipeline, "TURN_BUDGET_SECONDS", pipeline.WIDEN_MIN_SECONDS - 5)
+    path = tmp_path / "turns.jsonl"
+    async with pipe([classified(parts=(STABILITY_Q,))], [say_json(NO_SOURCE_ANSWER), WORLD_ANSWER], fake_tools=two_libraries(), log_path=path) as p:
+        events = await ask(p, STABILITY_Q)
+    assert p.kinds(events) == ["no_source", "usage"] and p.answerer.calls == 1
+    assert all(a.get("countries") for a in searches_of(p))  # no whole-library search
+    (row,) = [json.loads(line) for line in path.read_text().splitlines()]
+    assert row["budget_cut"] == "widen" and row["widened"] is False and row["route"] == "no_source"
+
+
+async def test_the_widen_step_runs_with_enough_budget_and_nothing_is_cut(home_first, tmp_path):
+    path = tmp_path / "turns.jsonl"
+    async with pipe([classified(parts=(STABILITY_Q,))], [say_json(NO_SOURCE_ANSWER), WORLD_ANSWER], fake_tools=two_libraries(), log_path=path) as p:
+        await ask(p, STABILITY_Q)
+    (row,) = [json.loads(line) for line in path.read_text().splitlines()]
+    assert row["widened"] is True and row["budget_cut"] is None
+
+
+async def test_the_check_failure_retry_is_skipped_when_too_little_budget_is_left(monkeypatch, tmp_path):
+    from app.chat import pipeline
+
+    monkeypatch.setattr(pipeline, "TURN_BUDGET_SECONDS", pipeline.RETRY_MIN_SECONDS - 3)
+    path = tmp_path / "turns.jsonl"
+    wrong = answered("It is valid.", (A_VALID, "valid for seven years"))
+    async with pipe([classified()], [wrong, VALID_ANSWER], log_path=path) as p:
+        events = await ask(p)
+    assert p.answerer.calls == 1
+    assert events[-1]["type"] == "error" and events[-1]["code"] == "invalid_output"
+    (row,) = [json.loads(line) for line in path.read_text().splitlines()]
+    assert row["budget_cut"] == "retry" and row["retries"] == 0

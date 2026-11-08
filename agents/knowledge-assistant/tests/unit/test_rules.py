@@ -84,3 +84,15 @@ def test_the_message_has_the_question_and_no_token():
     message = json.loads(build_message(SessionCreate.model_validate(session_body()), TurnRequest(message="Why?", focus={"check_id": "QUAL-07"})))
     assert message["question"] == "Why?" and message["focus"] == {"check_id": "QUAL-07"} and message["case_id"] == "case-1042"
     assert "session-token" not in json.dumps(message)
+
+
+def test_the_classifiers_history_flag_lets_old_law_through_when_the_message_has_no_history_words():
+    cited = {"citations": [{"anchor": OLD_ANCHOR, "quote": OLD_QUOTE}]}
+    plain = turn("compare with the 2019 law")  # no word in it points to earlier law
+    with pytest.raises(ValueError, match="in force"):
+        check_turn(plain, answer(**cited), READ)
+    with pytest.raises(ValueError, match="in force"):
+        check_turn(plain, answer(**cited), READ, history=False)
+    check_turn(plain, answer(text="The superseded guideline asked for 6 months.", **cited), READ, history=True)
+    with pytest.raises(ValueError, match="Say so"):  # the flag does not skip the rule to name the status
+        check_turn(plain, answer(**cited), READ, history=True)

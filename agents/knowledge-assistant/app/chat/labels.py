@@ -1,6 +1,7 @@
 """What the classifier says about one message, and what the router decides. Shared by classify.py, route.py and pipeline.py."""
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -11,6 +12,33 @@ KINDS: tuple[str, ...] = Kind.__args__  # type: ignore[attr-defined]
 Reply = Literal["greeting", "clarify", "split", "language", "distress", "decision", "off_topic", "unsafe", "own_data"]
 NOT_AVAILABLE_REPLIES = frozenset({"off_topic", "unsafe", "own_data"})  # sent as not_available, reason out_of_scope
 MAX_PARTS = 3  # more parts than this gets the "split" reply
+
+Style = Literal["none", "shorter", "simpler", "more_detail", "bullets"]
+STYLES: tuple[str, ...] = Style.__args__  # type: ignore[attr-defined]
+MAX_SOURCES = 5
+
+# What kind of reply a chat turn got, as the classifier is told about it.
+EntryKind = Literal["answer", "no_source", "clarify", "split", "greeting", "decision", "language", "distress", "refused", "error"]
+ENTRY_KINDS: tuple[str, ...] = EntryKind.__args__  # type: ignore[attr-defined]
+
+
+@dataclass(frozen=True)
+class HistoryEntry:
+    """One finished turn of the chat: what the person said, what we replied, what kind of reply it was, and the
+    follow-up questions we showed with it."""
+
+    user: str
+    reply: str
+    kind: str  # one of ENTRY_KINDS
+    suggestions: tuple[str, ...] = ()
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "HistoryEntry":
+        """From a dict with keys user, reply, kind, suggestions (the shape of eval/conversation.jsonl)."""
+        return cls(
+            user=str(data["user"]), reply=str(data.get("reply") or ""), kind=str(data.get("kind") or "answer"),
+            suggestions=tuple(str(s) for s in data.get("suggestions") or ()),
+        )
 
 
 class ClassifierOutput(BaseModel):
@@ -27,6 +55,16 @@ class ClassifierOutput(BaseModel):
     )
     history_wanted: bool = Field(description="True when the person asks about earlier, old, superseded or repealed law.")
     english: bool = Field(description="True when the message is written in English.")
+    style: Style = Field(
+        default="none",
+        description="How the person wants the answer written: shorter, simpler, more_detail or bullets. "
+        "none unless they ask.",
+    )
+    sources_named: list[str] = Field(
+        default_factory=list,
+        max_length=MAX_SOURCES,
+        description="Sources the person names to look in, such as WHO, ICH, GCC, EU, FDA. Empty unless named.",
+    )
 
 
 @dataclass(frozen=True)
@@ -38,6 +76,8 @@ class Labels:
     parts: tuple[str, ...]
     history_wanted: bool
     english: bool
+    style: Style = "none"
+    sources_named: tuple[str, ...] = ()
     fail_open: bool = False  # True when the model failed and code used the safe default
     model: str | None = None  # the model that answered, None on fail-open
 
@@ -63,3 +103,6 @@ class Route:
     preface: Literal["decision"] | None = None
     suggestions: tuple[str, ...] = field(default_factory=tuple)  # for "split": the first 3 rewritten parts
     has_history: bool = False  # the session already has turns ("greeting" then thanks instead of introducing itself)
+    style: Style = "none"  # how the person wants the answer written
+    sources_named: tuple[str, ...] = ()  # sources the person named to look in
+    search_all: bool = False  # search the whole library at once, not the home country first

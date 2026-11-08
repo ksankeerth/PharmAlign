@@ -275,3 +275,95 @@ def test_cooldown_seconds_comes_from_the_env_and_falls_back_to_60():
     assert seconds({"PHARMALIGN_KA_COOLDOWN_SECONDS": "0"}) == 0.0
     for bad in ("abc", "-5", "nan", "inf", ""):
         assert seconds({"PHARMALIGN_KA_COOLDOWN_SECONDS": bad}) == 60.0
+
+
+# ------------------------------------------------------------------ the turn deadline
+
+def slow_chain(delay1: float, delay2: float = 0.0, second: list | None = None, **kw):
+    kw.setdefault("retry_seconds", 0)
+    fakes = {
+        "m1": FakeModel(model="m1", script=[say("a")], delay_seconds=delay1),
+        "m2": FakeModel(model="m2", script=second if second is not None else [say("b")], delay_seconds=delay2),
+    }
+    return ModelChain("answer", ["m1", "m2"], llm_factory=lambda name: fakes[name], **kw), fakes["m1"], fakes["m2"]
+
+
+async def test_a_deadline_shorter_than_the_attempt_timeout_cuts_the_attempt_to_the_time_left(monkeypatch):
+    import time
+
+    monkeypatch.setattr(models, "MIN_ATTEMPT_SECONDS", 0.05)
+    chain, m1, m2 = slow_chain(3.0)
+    started = time.monotonic()
+    with pytest.raises(AllModelsBusy) as busy_error:
+        await chain.generate(system="s", prompt="p", timeout=10.0, deadline=started + 0.2)
+    assert time.monotonic() - started < 1.0
+    calls = busy_error.value.calls
+    assert [c.model for c in calls] == ["m1"] and "TimeoutError" in (calls[0].error or "")
+    assert m2.calls == 0  # no time left to start the fallback
+
+
+async def test_a_deadline_cut_timeout_does_not_cool_the_model_down(monkeypatch):
+    import time
+
+    monkeypatch.setattr(models, "MIN_ATTEMPT_SECONDS", 0.05)
+    chain, _, _ = slow_chain(3.0)
+    with pytest.raises(AllModelsBusy):
+        await chain.generate(system="s", prompt="p", timeout=10.0, deadline=time.monotonic() + 0.2)
+    assert "m1" not in models._COOLDOWNS
+    other, _, _ = slow_chain(0.0)  # the next turn may use m1 at once
+    result = await other.generate(system="s", prompt="p", timeout=10.0)
+    assert result.model == "m1"
+
+
+async def test_a_deadline_cut_timeout_with_no_attempt_timeout_does_not_cool_the_model_down(monkeypatch):
+    import time
+
+    monkeypatch.setattr(models, "MIN_ATTEMPT_SECONDS", 0.05)
+    chain, _, _ = slow_chain(3.0)
+    with pytest.raises(AllModelsBusy):
+        await chain.generate(system="s", prompt="p", deadline=time.monotonic() + 0.2)
+    assert "m1" not in models._COOLDOWNS
+
+
+async def test_a_timeout_at_the_full_attempt_timeout_still_cools_the_model_down_even_with_a_deadline():
+    import time
+
+    chain, _, _ = slow_chain(3.0)
+    result = await chain.generate(system="s", prompt="p", timeout=0.05, deadline=time.monotonic() + 30)
+    assert result.model == "m2"
+    assert "m1" in models._COOLDOWNS
+
+
+async def test_no_attempt_starts_with_less_than_a_second_left():
+    import time
+
+    chain, m1, m2 = slow_chain(0.0)
+    with pytest.raises(AllModelsBusy) as busy_error:
+        await chain.generate(system="s", prompt="p", timeout=5.0, deadline=time.monotonic() + 0.5)
+    assert busy_error.value.calls == [] and m1.calls == 0 and m2.calls == 0
+
+
+async def test_the_fallback_is_not_started_when_the_first_attempt_used_the_time(monkeypatch):
+    import time
+
+    monkeypatch.setattr(models, "MIN_ATTEMPT_SECONDS", 0.5)
+    chain, m1, m2 = slow_chain(3.0)
+    with pytest.raises(AllModelsBusy) as busy_error:
+        await chain.generate(system="s", prompt="p", timeout=10.0, deadline=time.monotonic() + 0.7)
+    assert [c.model for c in busy_error.value.calls] == ["m1"] and m2.calls == 0
+
+
+async def test_the_same_model_retry_after_a_429_is_skipped_when_it_would_pass_the_deadline():
+    import time
+
+    chain, m1, m2 = make([busy(), say("again")], [say("fallback")], retry_seconds=5.0)
+    result = await chain.generate(system="s", prompt="p", timeout=10.0, deadline=time.monotonic() + 3.0)
+    assert result.model == "m2" and m1.calls == 1  # no sleep of 5 s, no second call to m1
+
+
+async def test_a_deadline_far_away_changes_nothing():
+    import time
+
+    chain, m1, _ = make([say("a")], [])
+    result = await chain.generate(system="s", prompt="p", timeout=10.0, deadline=time.monotonic() + 100)
+    assert result.model == "m1"
