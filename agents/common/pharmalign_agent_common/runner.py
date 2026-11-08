@@ -24,7 +24,7 @@ from google.adk.sessions import InMemorySessionService
 from google.adk.tools.mcp_tool import McpToolset, StreamableHTTPConnectionParams
 from google.genai import types
 from pharmalign_contracts.common import ModelCall, ToolError, Usage
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from .errors import BudgetExceeded, OutputInvalid, OutputTruncated
 from .evidence import ToolLog
@@ -139,18 +139,19 @@ def build_agent(
     model: BaseLlm | None = None,
     tracker: RunTracker | None = None,
     instruction: str | None = None,
+    output_schema: type[BaseModel] | None = None,
 ) -> LlmAgent:
     """The ADK agent: model setting, instruction, output schema, MCP tools."""
     model = model or build_model(spec, settings)
     text = instruction or spec.instruction
     callbacks: dict[str, Any] = {}
     if tracker is not None:
-        callbacks = _callbacks(tracker, getattr(model, "model", ""))
+        callbacks = _callbacks(tracker, getattr(model, "model", ""), spec.repeat_answer)
     return LlmAgent(
         name=spec.adk_name,
         model=model,
         instruction=lambda _: text,  # a function, so ADK doesn't template the text
-        output_schema=spec.result_model,
+        output_schema=output_schema or spec.result_model,
         tools=[mcp_toolset(spec, settings, run_token)] if settings.mcp_url else [],
         **callbacks,
     )
@@ -170,7 +171,9 @@ def _error_code(tool_response: dict) -> Optional[str]:
     return body.get("code") if isinstance(body, dict) else None
 
 
-def _callbacks(tracker: RunTracker, model_name: str) -> dict[str, Any]:
+def _callbacks(tracker: RunTracker, model_name: str, repeat_answer: str | None = None) -> dict[str, Any]:
+    seen: set[tuple[str, str]] = set()
+
     def before_model(callback_context, llm_request):
         tracker.before_model()
 
@@ -178,8 +181,15 @@ def _callbacks(tracker: RunTracker, model_name: str) -> dict[str, Any]:
         tracker.after_model(model_name, llm_response)
 
     def before_tool(tool, args, tool_context):
-        if tool.name != "set_model_response":  # ADK's own tool for the final structured answer
-            tracker.before_tool()
+        if tool.name == "set_model_response":  # ADK's own tool for the final structured answer
+            return None
+        if repeat_answer is not None:
+            key = (tool.name, json.dumps(args, sort_keys=True, default=str))
+            if key in seen:
+                return {"repeated_call": True, "message": repeat_answer}  # a returned dict replaces the call: nothing is sent
+            seen.add(key)
+        tracker.before_tool()
+        return None
 
     def after_tool(tool, args, tool_context, tool_response):
         if tool.name == "set_model_response":
@@ -253,10 +263,11 @@ async def run_agent(
         raise scripted.ScriptedInLive(reason)
     if model is None and settings.model_mode == "scripted":
         model = scripted.model_for_run(spec.name, request)
-    tracker = RunTracker(request.budget.max_model_calls, request.budget.max_tool_calls)
+    model_calls = min(request.budget.max_model_calls, spec.max_model_calls or request.budget.max_model_calls)
+    tracker = RunTracker(model_calls, request.budget.max_tool_calls)
     agent = build_agent(
         spec, settings, run_token=request.run_token, model=model, tracker=tracker,
-        instruction=spec.instruction_for(request),
+        instruction=spec.instruction_for(request), output_schema=spec.output_schema_for(request),
     )
     sessions = InMemorySessionService()
     runner = Runner(app_name=spec.adk_name, agent=agent, session_service=sessions, auto_create_session=True)

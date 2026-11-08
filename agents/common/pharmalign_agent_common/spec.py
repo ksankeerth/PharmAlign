@@ -5,6 +5,10 @@ third argument gets the run's ToolLog, and may return a replacement result (or N
 
 `variants` are extra instruction texts, one picked per run by `pick_variant(request)` and added
 after `instruction`. The prompt hash covers all of them.
+
+`schema_for(request)` may give the model a narrower result schema for one run, such as a map's keys written out as fields.
+Gemini's structured output can't fill a map with open keys (it returns `{}`), so a run that knows the keys names them. The
+answer is still parsed and checked as `result_model`.
 """
 import hashlib
 import inspect
@@ -38,6 +42,15 @@ class AgentSpec:
     check_result: Callable[..., Any] = _no_rules  # (request, result[, log]); raise ValueError to reject
     variants: Mapping[str, str] = field(default_factory=dict)
     pick_variant: Callable[[Any], str] | None = None  # request -> variant name
+    schema_for: Callable[[Any], type[BaseModel]] | None = None  # request -> the model's result schema for this run
+    # When set, a tool call the same as an earlier one in the run (same tool, same arguments) is not sent again: the model gets
+    # this text instead. For an agent that re-reads tools in a loop. None: every call is sent, as before.
+    repeat_answer: str | None = None
+    # The agent's own ceiling on model calls, below the request's budget when that is higher. None: the request's budget only.
+    max_model_calls: int | None = None
+
+    def output_schema_for(self, request: Any) -> type[BaseModel]:
+        return self.schema_for(request) if self.schema_for else self.result_model
 
     @property
     def prompt_hash(self) -> str:
@@ -75,6 +88,9 @@ def agent_spec(
     check_result: Callable[..., Any] = _no_rules,
     variants: Mapping[str, str] | None = None,
     pick_variant: Callable[[Any], str] | None = None,
+    schema_for: Callable[[Any], type[BaseModel]] | None = None,
+    repeat_answer: str | None = None,
+    max_model_calls: int | None = None,
 ) -> AgentSpec:
     """Builds a spec, taking path, request, run model and tools from the shared contracts."""
     entry = next(a for a in RUN_AGENTS if a.name == name)
@@ -92,4 +108,7 @@ def agent_spec(
         check_result=check_result,
         variants=dict(variants or {}),
         pick_variant=pick_variant,
+        schema_for=schema_for,
+        repeat_answer=repeat_answer,
+        max_model_calls=max_model_calls,
     )
