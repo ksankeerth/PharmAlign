@@ -12,7 +12,7 @@
 - `app/knowledge/`: parsing, chunking, the quality gate, embedding, the ingestion worker and search. The routes are in `app/handlers/library.py`.
 - `app/connector/`: the adapter to a government system of record (`ConnectorAdapter`, and `HttpConnector` for the regulator records API).
 - `app/mock_regulator/`: a stand-in government system for simulation, mounted at `/mock`. It has its own tables and never reads the case tables.
-- Optional extras in `pyproject.toml`: `fast-pdf` (PyMuPDF), `docling` (the parser for Arabic pages) and `bge-m3` (the local embedding model). The server runs without them: text and HTML files parse with the standard library, and simulation uses a small deterministic embedder.
+- Optional extras in `pyproject.toml`: `fast-pdf` (PyMuPDF), `docling` (the parser for Arabic pages), `bge-m3` (the local embedding model) and `gemini` (Vertex AI embeddings and Google ID tokens). The server runs without them: text and HTML files parse with the standard library, and simulation uses a small deterministic embedder.
 
 ## Run and test
 
@@ -48,7 +48,7 @@ The agent, connector, mock regulator, watch and knowledge settings are listed in
 
 ## Container
 
-`server/Dockerfile` builds from the repo root (`docker build -f server/Dockerfile .`). The image runs `alembic upgrade head`, then uvicorn on port 8000, as a non-root user, with a healthcheck on `/health`. It has none of the optional extras unless built with `--build-arg EXTRAS=bge-m3` (`docker compose build --build-arg EXTRAS=bge-m3 server`), which also downloads the model at build time, so the container never fetches it at runtime. `compose.yaml` builds it as the `server` service.
+`server/Dockerfile` builds from the repo root, and also builds the web UI into `/app/web` (`PHARMALIGN_WEB_DIR`), which the server then serves from the same address, with `index.html` for client routes (`docker build -f server/Dockerfile .`). The image runs `alembic upgrade head`, then uvicorn on port 8000, as a non-root user, with a healthcheck on `/health`. It has none of the optional extras unless built with `--build-arg EXTRAS=bge-m3` (`docker compose build --build-arg EXTRAS=bge-m3 server`), which also downloads the model at build time, so the container never fetches it at runtime. `compose.yaml` builds it as the `server` service.
 
 ## Schema and seed
 
@@ -89,7 +89,7 @@ Both are for Platform Admin only, and simulation only: outside simulation they a
 - Parsers sit behind one interface (`app/knowledge/parsers.py`). Arabic pages need the Docling parser; without it the page fails with a clear message rather than being read by the fast parser.
 - Search filters first (tenant, snapshot, status, review and quality state, shelf, any document or topic limit), then ranks the survivors with pgvector. If nothing qualifies, or nothing is similar enough, the answer is `no_source_found` with the searches tried. Agents rank through the `agent_read` views (`agent_search`).
 - With `PHARMALIGN_RERANKER=bge-reranker-v2-m3`, a question in either language also runs keyword search over stemmed words (`chunk_terms`, BM25) and merges it with vector search, and then the reranker reads the best `PHARMALIGN_RERANK_CANDIDATES` (15) passages. `PHARMALIGN_RERANK_FLOOR` is the least reranker score that counts as a source. With the reranker off, questions use vector search alone. `scripts/dev.sh` turns the reranker on. It is about 1 GB and downloads on the first search.
-- `PHARMALIGN_EMBEDDER` is `auto` (bge-m3 if installed, else the deterministic embedder in simulation), `hash` or `bge-m3`. `PHARMALIGN_SIMILARITY_FLOOR` overrides the least similarity that counts as a source. `PHARMALIGN_EMBED_BATCH` is the chunks embedded per step.
+- `PHARMALIGN_EMBEDDER` is `auto` (bge-m3 if installed, else the deterministic embedder in simulation), `hash`, `bge-m3` or `gemini-embedding-001`. The last needs the `gemini` extra and Google credentials: it calls Vertex AI with Application Default Credentials (`GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`), makes 1536-number vectors and never uses the reranker. `scripts/embed_library.py` gives every chunk that has none a vector from the chosen embedder. `PHARMALIGN_SIMILARITY_FLOOR` overrides the least similarity that counts as a source. `PHARMALIGN_EMBED_BATCH` is the chunks embedded per step.
 - The server logs the embedder it uses at startup, and the readiness retrieval result names it. A weak lexical hit (such as "closure") can pass the similarity floor, so a no-source probe must be checked against the library: `uv run python -m scripts.probe_absent <term>...` prints how many chunks contain each term.
 - bge-m3: `uv sync --extra bge-m3` installs it; a plain `uv sync` removes it again. The demo uses bge-m3 with `--with-library`. Tests always use the deterministic embedder.
 
@@ -176,3 +176,17 @@ async def declare_conflict(req, ctx):
 Handlers are async and return a dict or the contract's model. The wrapper authenticates, runs `authz.can_act`, validates the request, applies `Idempotency-Key`, runs the handler, checks the result against the contract, writes audit, and commits. Any exception rolls all of it back. Don't commit in a handler.
 
 When a guard depends on a row you read, lock it: `await STORE.require(ctx, id, for_update=True)`.
+
+## Agents switched off
+
+`PHARMALIGN_AGENTS_OFF` is a comma-separated list of any of `challenger`, `sameness` and `reliance-watch`. The code stays, and removing a name turns the agent back on. A switched-off agent is never called, and a person does its work:
+
+- Challenger: a blocking check an agent found met, with every gate passed, goes to Person confirms with "No second check: a person confirms."
+- Sameness: its checks (stage `same_product`) wait for a person: "Waiting for a person to confirm."
+- Reliance Watch: the watch flow matches and explains notices in code and never calls it, so every match already waits for a person.
+
+The Agent health page and `/health/details` show it as `off` ("Off by configuration"), and neither readiness nor the server's status counts it as down.
+
+`PHARMALIGN_AGENT_AUTH=google_id_token` sends the agents a Google ID token for their address (private Cloud Run services) instead of the static `PHARMALIGN_AGENT_TOKEN`.
+
+`PHARMALIGN_DB_POOL_MAX` is the most database connections the server keeps open (the agent tool server uses about half as many more). Unset, SQLAlchemy's defaults apply (up to 15 each). Every connection plans each statement for its own values (`plan_cache_mode=force_custom_plan`), because Postgres's generic plan for the search query is several times slower.

@@ -1,0 +1,14 @@
+# Like the repository's .dockerignore, except that web/ is needed here to build the UI.
+.git
+.venv
+**/.venv
+**/__pycache__
+**/.pytest_cache
+agents
+infra
+knowledge
+**/node_modules
+web/dist
+web/test-results
+web/playwright-report
+web/e2e

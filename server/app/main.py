@@ -24,6 +24,7 @@ from .pipeline import runner as pipeline_runner
 from .pipeline.assistant import make_assistant_client
 from .pipeline.client import make_agent_client
 from .seed import seed_demo_people, set_resetting
+from .webui import mount_web
 
 
 log = logging.getLogger(__name__)
@@ -114,4 +115,6 @@ def create_app(settings: Optional[Settings] = None, identity: Optional[IdentityP
     if mock_regulator:
         app.mount("/mock", create_mock_app(app.state.rt))
     app.state.tools = mount_tools(app, app.state.rt) if tool_server else None
+    if settings.web_dir:
+        mount_web(app, settings.web_dir)  # last, so every route above wins over the page fallback
     return app
