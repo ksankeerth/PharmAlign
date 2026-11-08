@@ -7,10 +7,10 @@ from pharmalign_contracts.agents.run_agents import DossierReadRequest, DossierRe
 
 
 def build_message(request: DossierReadRequest) -> str:
-    """The run's input for the model. The request holds no document text: tools supply it."""
+    """The run's input for the model. The request holds no document text: tools supply it. The budget is included so it can plan."""
     task = request.model_dump(
         mode="json",
-        include={"language", "as_of", "documents", "changed_doc_ids", "modules", "fact_keys", "previous_rejection"},
+        include={"language", "as_of", "budget", "documents", "changed_doc_ids", "modules", "fact_keys", "previous_rejection"},
     )
     return json.dumps(task, ensure_ascii=False)
 

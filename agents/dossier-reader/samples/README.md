@@ -74,6 +74,17 @@ acts as the case officer: it waives SAFE-01 and re-checks SAME-01, which opens t
 NOTE saying so. With scripted agents (`PHARMALIGN_MODEL_MODE=scripted`) the answers are the recorded ones, so
 this proves the plumbing. Only a live model shows whether the Reader resists the attack in CASE-4003.
 
+### CASE-1042
+
+`answers/CASE-1042.json` is a key for the full demo case (fourteen files, six facts, a decoy reference approval that gives 24 months).
+`check_samples.py CASE-1042` checks it the same way. The Arabic leaflet's stored text is an English rendering, so a
+`language_mismatch` issue is allowed for it, and a key may list `allowed_kinds` that are allowed on any file.
+
+## Golden set
+
+`golden/` holds thirteen scenarios that run the Reader with a real model, several times each, against a fake tool server that
+behaves like the PharmAlign server's tools. It is run by hand, not by `pytest`. See `golden/README.md`.
+
 ## Postman
 
 Import `postman/dossier-reader.postman_collection.json` and `postman/local.postman_environment.json`.

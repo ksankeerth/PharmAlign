@@ -66,3 +66,8 @@ def test_the_message_carries_the_questions_but_not_the_token():
     message = build_message(REQUEST)
     assert "shelf_life_months" in message and "d-17" in message
     assert "run-token-for-tests" not in message
+
+
+def test_the_message_tells_the_model_its_budget_so_it_can_plan():
+    message = json.loads(build_message(REQUEST))
+    assert message["budget"] == REQUEST.budget.model_dump()

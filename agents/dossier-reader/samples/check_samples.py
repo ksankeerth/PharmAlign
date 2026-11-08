@@ -29,7 +29,7 @@ import uuid
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-CONTRACT = "1.5.0"  # the contract version the agent routes ask for in X-PharmAlign-Contract
+CONTRACT = "1.6.0"  # the contract version the agent routes ask for in X-PharmAlign-Contract
 TERMINAL = {"completed", "failed", "cancelled", "lost", "stopped_early"}
 FIRST_TYPED_CHECK = "SAME-01"  # the first check that needs the Reader: re-checking it opens the Reader once SAFE-01 is waived
 
@@ -267,7 +267,7 @@ def check_case(case: str, key: dict, files: dict, modules_now: dict, reader: dic
         name = by_id.get(issue["doc_id"], issue["doc_id"])
         if i in matched:
             continue
-        ok = any(name == a["file"] and issue["kind"] == a["kind"] for a in allowed)
+        ok = issue["kind"] in key["issues"].get("allowed_kinds", []) or any(name == a["file"] and issue["kind"] == a["kind"] for a in allowed)
         report.line(ok, case, "issue", f"{issue['kind']} {name}", "[reader] " + ("an allowed extra" if ok else f"not expected: {issue.get('detail', '')[:120]}"))
     if not key["issues"]["required"] and not issues:
         report.line(True, case, "issue", "none", "[reader] no issues, as expected")
