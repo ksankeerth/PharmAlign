@@ -46,6 +46,8 @@ class _Run:
 
 
 def _key(agent: str, request: Mapping[str, Any]) -> tuple[str, str]:
+    if "case" not in request:  # a run for the whole workspace, such as the Gap Analyst's
+        return request["tenant"], agent
     if agent == "challenger":
         return request["case"]["case_id"], "challenge-" + request["target"]["finding_id"]
     what = {"dossier-reader": "dossier-reader", "coordinator": "coordinator", "sameness": "sameness"}.get(agent)
