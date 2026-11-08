@@ -35,6 +35,19 @@ The request's `profile` picks the instruction for an agent check: `quality`, `sa
 | `verify_quote(anchor, quote)` | Whether the quote is at the anchor |
 | `compute(expression)` | Exact arithmetic |
 
+## How a run goes (the aim: few model calls, because each call sends the whole conversation again)
+
+The first message holds the check, `budget` (so the model can plan), `law_sources` (the only law the tools can read: where a person moved
+the check, that law and not `check.source`, then the supporting sources) and the known facts. The prompt asks for steps, not single calls:
+
+1. In one step, all the independent calls: `read_clause` for each law source, `get_facts`, and a `search_dossier` for each thing to find.
+2. In one step, whatever is still missing (a page no hit showed, a table, every `compute`).
+3. The answer. `verify_quote` only for a quote in doubt.
+
+A search hit holds the whole text of its page, and a clause holds its whole text, so neither is read again by anchor. Numbers keep the unit
+the quote uses ("2 years" is not turned into months). A typed check asks `get_facts` first: a value already in `facts` is used with its quote.
+The golden set in `samples/golden/` measures this on a real model (see its README).
+
 ## Result rules (`app/rules.py`, checked before a result leaves the agent)
 
 A broken rule sends the reason back to the model once. A second break fails the run.
@@ -48,6 +61,10 @@ A broken rule sends the reason back to the model once. A second break fails the 
 | Any status but `cannot_tell` needs evidence | No evidence, no claim |
 | `no_source` needs a law search in this run that found nothing; status `cannot_tell` | Contract, server's gap signal |
 | Numbers in `summary` appear in a cited quote (for `met`, quotes only) | Server's number check |
+| A law quote comes from a version in force (`legal_status`), never a superseded or draft one | Server: `not_in_force` |
+| No quote from a page with hidden text (`suspect`) | Server: `suspect_page` |
+| A quote is a full sentence of about eight words, or a number with its unit and what it measures | Server: `quote_too_short` |
+| A quote does not also stand on another page of the same file that this run read (once if short, twice if long) | Server: `quote_repeated` |
 | Typed: exactly the asked keys, each once; a found value appears in its own quote | Server's value check |
 
 ## Files
@@ -59,6 +76,7 @@ A broken rule sends the reason back to the model once. A second break fails the 
 | `app/assessor.py` | `assess()`: where a run meets the shared runner |
 | `app/fast_api_app.py` | ADK's routes with the contract routes in front, one `/health` |
 | `tests/` | Rules and whole runs, with the fake model and a fake MCP server with the server's tool shapes |
+| `samples/golden/` | 28 scenarios run on a real model against fake tools that behave like the server's, and a runner for a real server (not part of `pytest`) |
 
 ## Run it
 

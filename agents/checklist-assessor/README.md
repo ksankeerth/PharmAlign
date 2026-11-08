@@ -10,6 +10,7 @@ checklist-assessor/
 │   ├── assessor.py      # where a contract run meets the shared runner
 │   └── fast_api_app.py  # ADK routes plus the contract routes
 ├── tests/               # fake model, fake MCP server: no network, no keys
+├── samples/golden/      # 28 scenarios on a real model against fake tools like the server's (not part of pytest; see its README)
 └── Dockerfile           # builds from the repository root
 ```
 
