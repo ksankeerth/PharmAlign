@@ -1,0 +1,32 @@
+{
+ "id": "global-examples",
+ "title": "Global examples: quotes from the tools, from law in force, with the status named; never the draft or the superseded text",
+ "angles": [
+  4
+ ],
+ "signals": [
+  {
+   "id": "g-1",
+   "kind": "no_source",
+   "detail": "Re-review trigger after a foreign label change",
+   "count": 6
+  },
+  {
+   "id": "g-2",
+   "kind": "local_practice_rule",
+   "detail": "Which reference authorities the reliance route trusts is local practice with no published source",
+   "count": 3
+  }
+ ],
+ "law": [
+  "SYN-REL-01",
+  "SYN-NMA-LBL",
+  "SYN-RMC-RR"
+ ],
+ "expect": {
+  "candidates_min": 1,
+  "candidates_max": 2,
+  "all_signals_cited": true,
+  "examples_min": 1
+ }
+}

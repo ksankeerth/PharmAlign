@@ -1,0 +1,24 @@
+{
+ "id": "single-signal",
+ "title": "One signal: one candidate, no padding",
+ "angles": [
+  7
+ ],
+ "signals": [
+  {
+   "id": "o-1",
+   "kind": "repeated_override",
+   "detail": "PV-01 overridden to pass when the safety officer is named only in a cover letter",
+   "count": 4
+  }
+ ],
+ "law": [
+  "SYN-NMA-PV",
+  "SYN-REL-01"
+ ],
+ "expect": {
+  "candidates_min": 1,
+  "candidates_max": 1,
+  "all_signals_cited": true
+ }
+}

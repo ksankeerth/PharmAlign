@@ -1,0 +1,70 @@
+{
+ "id": "same-topic",
+ "title": "Three signals about cold-chain transport form one candidate; two unrelated ones stay apart",
+ "angles": [
+  1
+ ],
+ "signals": [
+  {
+   "id": "t-1",
+   "kind": "no_source",
+   "detail": "Temperature limits for vaccines during transport",
+   "count": 5
+  },
+  {
+   "id": "t-2",
+   "kind": "empty_slot",
+   "detail": "National guideline on cold-chain transport of medicines",
+   "count": 1
+  },
+  {
+   "id": "t-3",
+   "kind": "local_practice_rule",
+   "detail": "Cold-chain transport excursion limits are local practice with no published source",
+   "count": 2
+  },
+  {
+   "id": "t-4",
+   "kind": "repeated_override",
+   "detail": "PV-01 overridden to pass when the safety officer is named only in a cover letter",
+   "count": 3
+  },
+  {
+   "id": "t-5",
+   "kind": "no_source",
+   "detail": "Shelf-life rules after a manufacturing site transfer",
+   "count": 2
+  }
+ ],
+ "law": [
+  "SYN-RMC-CC",
+  "SYN-NMA-PV",
+  "SYN-REL-02"
+ ],
+ "expect": {
+  "candidates_min": 3,
+  "candidates_max": 3,
+  "all_signals_cited": true,
+  "together": [
+   [
+    "t-1",
+    "t-2",
+    "t-3"
+   ]
+  ],
+  "apart": [
+   [
+    "t-4",
+    "t-1"
+   ],
+   [
+    "t-4",
+    "t-5"
+   ],
+   [
+    "t-5",
+    "t-1"
+   ]
+  ]
+ }
+}

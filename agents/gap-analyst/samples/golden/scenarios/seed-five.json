@@ -1,0 +1,88 @@
+{
+ "id": "seed-five",
+ "title": "The seed's five signals: related ones grouped, unrelated ones kept apart",
+ "angles": [
+  1,
+  2,
+  8
+ ],
+ "signals": [
+  {
+   "id": "s-1",
+   "kind": "empty_slot",
+   "detail": "Executive regulations of the medicines law in force (current copy under review)",
+   "count": 1
+  },
+  {
+   "id": "s-2",
+   "kind": "no_source",
+   "detail": "Child-resistant closures for oral liquids",
+   "count": 1
+  },
+  {
+   "id": "s-3",
+   "kind": "local_practice_rule",
+   "detail": "Reliance route rules are local practice with no published source",
+   "count": 3
+  },
+  {
+   "id": "s-4",
+   "kind": "repeated_waiver",
+   "detail": "LBL-02 waived for punctuation-only leaflet differences",
+   "count": 4
+  },
+  {
+   "id": "s-5",
+   "kind": "no_source",
+   "detail": "Re-review trigger after a foreign label change",
+   "count": 6
+  }
+ ],
+ "law": [
+  "SYN-REL-01",
+  "SYN-NMA-LBL",
+  "SYN-RMC-CR",
+  "SYN-AE-ML",
+  "SYN-RMC-RR"
+ ],
+ "expect": {
+  "candidates_min": 3,
+  "candidates_max": 5,
+  "all_signals_cited": true,
+  "apart": [
+   [
+    "s-2",
+    "s-1"
+   ],
+   [
+    "s-2",
+    "s-3"
+   ],
+   [
+    "s-2",
+    "s-4"
+   ],
+   [
+    "s-2",
+    "s-5"
+   ],
+   [
+    "s-4",
+    "s-1"
+   ],
+   [
+    "s-4",
+    "s-3"
+   ]
+  ],
+  "by_signal": {
+   "s-4": {
+    "pack_rule": "LBL-02",
+    "kind": "policy"
+   },
+   "s-2": {
+    "kind": "standards"
+   }
+  }
+ }
+}

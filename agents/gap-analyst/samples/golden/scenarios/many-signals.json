@@ -1,0 +1,147 @@
+{
+ "id": "many-signals",
+ "title": "Sixteen signals over seven topics: finishes well within the server's budget",
+ "angles": [
+  6
+ ],
+ "signals": [
+  {
+   "id": "m-01",
+   "kind": "local_practice_rule",
+   "detail": "Reliance route rules are local practice with no published source",
+   "count": 9
+  },
+  {
+   "id": "m-02",
+   "kind": "no_source",
+   "detail": "Re-review trigger after a foreign label change",
+   "count": 6
+  },
+  {
+   "id": "m-03",
+   "kind": "local_practice_rule",
+   "detail": "The list of trusted reference authorities is local practice",
+   "count": 4
+  },
+  {
+   "id": "m-04",
+   "kind": "repeated_waiver",
+   "detail": "LBL-02 waived for punctuation-only leaflet differences",
+   "count": 8
+  },
+  {
+   "id": "m-05",
+   "kind": "repeated_override",
+   "detail": "LBL-02 moved from look to pass when only line breaks differ",
+   "count": 3
+  },
+  {
+   "id": "m-06",
+   "kind": "no_source",
+   "detail": "Child-resistant closures for oral liquids",
+   "count": 2
+  },
+  {
+   "id": "m-07",
+   "kind": "empty_slot",
+   "detail": "National standard for child-resistant packaging",
+   "count": 1
+  },
+  {
+   "id": "m-08",
+   "kind": "no_source",
+   "detail": "Temperature limits for vaccines during transport",
+   "count": 5
+  },
+  {
+   "id": "m-09",
+   "kind": "empty_slot",
+   "detail": "National guideline on cold-chain transport of medicines",
+   "count": 1
+  },
+  {
+   "id": "m-10",
+   "kind": "local_practice_rule",
+   "detail": "Cold-chain transport excursion limits are local practice",
+   "count": 2
+  },
+  {
+   "id": "m-11",
+   "kind": "repeated_override",
+   "detail": "PV-01 overridden to pass when the safety officer is named only in a cover letter",
+   "count": 3
+  },
+  {
+   "id": "m-12",
+   "kind": "no_source",
+   "detail": "Where the qualified person for pharmacovigilance must live",
+   "count": 2
+  },
+  {
+   "id": "m-13",
+   "kind": "local_practice_rule",
+   "detail": "Release of imported vaccine batches is local practice",
+   "count": 4
+  },
+  {
+   "id": "m-14",
+   "kind": "no_source",
+   "detail": "Shelf-life rules after a manufacturing site transfer",
+   "count": 2
+  },
+  {
+   "id": "m-15",
+   "kind": "repeated_waiver",
+   "detail": "SAME-01 waived when only the site address format differs",
+   "count": 5
+  },
+  {
+   "id": "m-16",
+   "kind": "empty_slot",
+   "detail": "Executive regulations of the medicines law in force",
+   "count": 1
+  }
+ ],
+ "law": [
+  "SYN-REL-01",
+  "SYN-NMA-LBL",
+  "SYN-RMC-CR",
+  "SYN-RMC-CC",
+  "SYN-RMC-RR",
+  "SYN-AE-ML",
+  "SYN-NMA-PV",
+  "SYN-NMA-BR",
+  "SYN-REL-02"
+ ],
+ "expect": {
+  "candidates_min": 6,
+  "candidates_max": 14,
+  "all_signals_cited": true,
+  "max_model_calls": 20,
+  "max_tool_calls": 40,
+  "apart": [
+   [
+    "m-04",
+    "m-06"
+   ],
+   [
+    "m-08",
+    "m-11"
+   ],
+   [
+    "m-06",
+    "m-13"
+   ],
+   [
+    "m-04",
+    "m-15"
+   ]
+  ],
+  "by_signal": {
+   "m-04": {
+    "pack_rule": "LBL-02",
+    "kind": "policy"
+   }
+  }
+ }
+}

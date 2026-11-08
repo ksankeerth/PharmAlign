@@ -1,0 +1,46 @@
+{
+ "id": "no-pack-rule",
+ "title": "An empty slot and no source on child-resistant packaging: standards, no pack rule, said only after looking",
+ "angles": [
+  3
+ ],
+ "signals": [
+  {
+   "id": "e-1",
+   "kind": "empty_slot",
+   "detail": "National standard for child-resistant packaging",
+   "count": 1
+  },
+  {
+   "id": "e-2",
+   "kind": "no_source",
+   "detail": "Child-resistant closures for oral liquids",
+   "count": 3
+  }
+ ],
+ "law": [
+  "SYN-RMC-CR",
+  "SYN-AE-ML"
+ ],
+ "expect": {
+  "candidates_min": 1,
+  "candidates_max": 1,
+  "all_signals_cited": true,
+  "together": [
+   [
+    "e-1",
+    "e-2"
+   ]
+  ],
+  "by_signal": {
+   "e-1": {
+    "kind": "standards",
+    "pack_rule": null
+   },
+   "e-2": {
+    "kind": "standards",
+    "pack_rule": null
+   }
+  }
+ }
+}

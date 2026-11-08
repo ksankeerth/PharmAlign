@@ -1,0 +1,62 @@
+{
+ "id": "lists-and-ids",
+ "title": "Cite only signals the request asks about and get_gap_signals returned; node and dimension only from the given lists",
+ "angles": [
+  8
+ ],
+ "signals": [
+  {
+   "id": "l-1",
+   "kind": "no_source",
+   "detail": "Language rules for the outer carton of imported medicines",
+   "count": 3
+  },
+  {
+   "id": "l-2",
+   "kind": "local_practice_rule",
+   "detail": "The minimum font size of the Arabic leaflet is local practice",
+   "count": 2
+  },
+  {
+   "id": "l-3",
+   "kind": "empty_slot",
+   "detail": "National list of pharmacopoeia monographs",
+   "count": 1
+  }
+ ],
+ "request": {
+  "signal_ids": [
+   "l-1",
+   "l-2"
+  ],
+  "extra_signals": [
+   {
+    "id": "l-9",
+    "kind": "no_source",
+    "detail": "Import permits for narcotic medicines",
+    "count": 2
+   }
+  ],
+  "pipeline_nodes": [
+   "source",
+   "policy"
+  ],
+  "readiness_dimensions": [
+   "Human interface",
+   "Data and model marketplace"
+  ]
+ },
+ "law": [
+  "SYN-NMA-LBL",
+  "SYN-VET-01"
+ ],
+ "expect": {
+  "candidates_min": 1,
+  "candidates_max": 2,
+  "cite_only": [
+   "l-1",
+   "l-2"
+  ],
+  "all_signals_cited": true
+ }
+}

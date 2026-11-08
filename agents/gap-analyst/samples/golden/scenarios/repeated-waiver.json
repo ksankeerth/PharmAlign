@@ -1,0 +1,43 @@
+{
+ "id": "repeated-waiver",
+ "title": "LBL-02 waived again and again: pack_rule LBL-02, policy, change the check or record why",
+ "angles": [
+  2
+ ],
+ "signals": [
+  {
+   "id": "w-1",
+   "kind": "repeated_waiver",
+   "detail": "LBL-02 waived for punctuation-only leaflet differences",
+   "count": 7
+  },
+  {
+   "id": "w-2",
+   "kind": "repeated_override",
+   "detail": "LBL-02 moved from look to pass when only line breaks differ between leaflet versions",
+   "count": 3
+  }
+ ],
+ "law": [
+  "SYN-NMA-LBL",
+  "SYN-REL-01"
+ ],
+ "expect": {
+  "candidates_min": 1,
+  "candidates_max": 2,
+  "all_signals_cited": true,
+  "together": [
+   [
+    "w-1",
+    "w-2"
+   ]
+  ],
+  "by_signal": {
+   "w-1": {
+    "pack_rule": "LBL-02",
+    "kind": "policy",
+    "next_step": "(?i)(chang|revis|amend|narrow|clarif|updat|adjust|refin|review).{0,60}(check|LBL-02|rule|wording|question)|(record|document|explain|state).{0,60}(why|reason|expected)"
+   }
+  }
+ }
+}

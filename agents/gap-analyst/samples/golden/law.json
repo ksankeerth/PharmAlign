@@ -1,0 +1,59 @@
+[
+ {"doc_id": "SYN-REL-01", "title": "Guideline on reliance in medicines regulation", "issuer": "Example International Health Body", "country": "XI",
+  "versions": [{"version": "v1", "legal_status": "in_force", "clauses": [
+   {"article": "2.1", "text": "A relying authority keeps full responsibility for its own decisions, even when it uses the assessment of a reference authority."},
+   {"article": "3.4", "text": "The relying authority should publish which reference authorities it trusts, the routes that use them, and the conditions each route requires."},
+   {"article": "5.2", "text": "When a reference authority changes the approved label or product information, the relying authority should decide within a set time whether to re-review its own approval."}
+  ]}]},
+ {"doc_id": "SYN-NMA-LBL", "title": "Changes to product information", "issuer": "Northland Medicines Agency", "country": "XN",
+  "versions": [
+   {"version": "v1", "legal_status": "superseded", "clauses": [
+    {"article": "4.1", "text": "Every change to the patient leaflet, however small, needs a full variation and a new assessment before it is used."}
+   ]},
+   {"version": "v2", "legal_status": "in_force", "clauses": [
+    {"article": "4.1", "text": "Editorial changes to the patient leaflet, such as punctuation or spacing, that do not alter the meaning may be notified within 30 days without a new assessment."},
+    {"article": "4.3", "text": "A change that alters a dose, a warning or a contraindication always needs a full variation before the new leaflet is used."},
+    {"article": "6.2", "text": "When the reference authority revises the approved leaflet, the holder must submit the same revision to the Agency within 90 days."}
+   ]}
+  ]},
+ {"doc_id": "SYN-RMC-CR", "title": "Child-resistant packaging of medicines", "issuer": "Regional Medicines Council", "country": "XR",
+  "versions": [{"version": "v1", "legal_status": "in_force", "clauses": [
+   {"article": "2.1", "text": "Oral liquids that contain iron, paracetamol or other substances harmful to young children must be supplied in child-resistant packaging."},
+   {"article": "2.3", "text": "Child-resistant closures must be tested to a recognised reopenable packaging standard, and the test report must be kept in the quality file."}
+  ]}]},
+ {"doc_id": "SYN-RMC-CC", "title": "Cold-chain transport of medicines", "issuer": "Regional Medicines Council", "country": "XR",
+  "versions": [
+   {"version": "v1", "legal_status": "in_force", "clauses": [
+    {"article": "3.1", "text": "Medicines that need storage between 2 °C and 8 °C must be transported with a temperature logger in each shipping container."},
+    {"article": "3.4", "text": "Any temperature excursion outside the labelled range during transport must be assessed by the qualified person before the batch is released for sale."}
+   ]},
+   {"version": "v2", "legal_status": "draft", "clauses": [
+    {"article": "3.5", "text": "A single transport excursion of up to 24 hours below 25 °C may be accepted for cold-chain medicines without a further assessment."}
+   ]}
+  ]},
+ {"doc_id": "SYN-RMC-RR", "title": "Re-review of relied-on approvals", "issuer": "Regional Medicines Council", "country": "XR",
+  "versions": [{"version": "v1", "legal_status": "draft", "clauses": [
+   {"article": "1.2", "text": "Member authorities should open a re-review within 60 days when a reference authority changes the approved label of a relied-on product."}
+  ]}]},
+ {"doc_id": "SYN-AE-ML", "title": "Medicines law", "issuer": "Example Ministry of Health", "country": "AE",
+  "versions": [{"version": "v1", "legal_status": "in_force", "clauses": [
+   {"article": "Article 12", "text": "A marketing authorisation holder must be a pharmaceutical establishment licensed under this law and its executive regulations."},
+   {"article": "Article 40", "text": "The executive regulations of this law set the procedures for registration, renewal and variation of medicines."}
+  ]}]},
+ {"doc_id": "SYN-NMA-PV", "title": "Pharmacovigilance duties of holders", "issuer": "Northland Medicines Agency", "country": "XN",
+  "versions": [{"version": "v1", "legal_status": "in_force", "clauses": [
+   {"article": "2.2", "text": "The holder must name a qualified person for pharmacovigilance in the application form, who lives in the country and can be reached at all times."}
+  ]}]},
+ {"doc_id": "SYN-NMA-BR", "title": "Release of imported vaccine batches", "issuer": "Northland Medicines Agency", "country": "XN",
+  "versions": [{"version": "v1", "legal_status": "in_force", "clauses": [
+   {"article": "3.1", "text": "Each imported vaccine batch must be released by the Agency's laboratory, or by an official control laboratory it recognises, before it is sold."}
+  ]}]},
+ {"doc_id": "SYN-REL-02", "title": "Post-approval changes to medicines", "issuer": "Example International Health Body", "country": "XI",
+  "versions": [{"version": "v1", "legal_status": "in_force", "clauses": [
+   {"article": "7.1", "text": "After a manufacturing site transfer, the existing shelf life may be kept only when stability data from the new site support it."}
+  ]}]},
+ {"doc_id": "SYN-VET-01", "title": "Labelling of veterinary feed additives", "issuer": "Example Farming Board", "country": "XF",
+  "versions": [{"version": "v1", "legal_status": "in_force", "clauses": [
+   {"article": "5", "text": "Feed additives for poultry must list every enzyme on the bag in the national language and give the inclusion rate per tonne."}
+  ]}]}
+]

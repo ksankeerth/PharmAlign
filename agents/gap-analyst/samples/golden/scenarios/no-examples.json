@@ -1,0 +1,25 @@
+{
+ "id": "no-examples",
+ "title": "The search finds nothing: no global example is invented, and the search stops",
+ "angles": [
+  4
+ ],
+ "signals": [
+  {
+   "id": "n-1",
+   "kind": "no_source",
+   "detail": "Rules for selling medicines through social media",
+   "count": 2
+  }
+ ],
+ "law": [
+  "SYN-VET-01"
+ ],
+ "expect": {
+  "candidates_min": 1,
+  "candidates_max": 1,
+  "all_signals_cited": true,
+  "examples_max": 0,
+  "max_search_kb": 2
+ }
+}
