@@ -26,6 +26,8 @@ from pydantic import ValidationError
 from sqlalchemy import func, select, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+
+from ..db import CONNECT_ARGUMENTS, pool_arguments
 from starlette.datastructures import Headers
 from starlette.requests import Request
 from starlette.responses import JSONResponse
@@ -79,10 +81,15 @@ def _error(tool: str, code: str, message: str, retryable: bool = False) -> dict:
     return ToolError(tool=tool if SLUG.match(tool) else "unknown", code=code, message=message[:500], retryable=retryable).model_dump()
 
 
+def agent_pool_share(pool_max: Optional[int]) -> Optional[int]:
+    """The tool server's own login gets about half the server's connection limit, and at least 2."""
+    return None if pool_max is None else max(2, pool_max // 2)
+
+
 class ToolServer:
     def __init__(self, rt: Runtime, agent_engine: Optional[AsyncEngine] = None):
         self.rt = rt
-        self.agent_engine = agent_engine or create_async_engine(agent_database_url(rt.settings), pool_pre_ping=True)
+        self.agent_engine = agent_engine or create_async_engine(agent_database_url(rt.settings), pool_pre_ping=True, connect_args=CONNECT_ARGUMENTS, **pool_arguments(agent_pool_share(rt.settings.db_pool_max)))
         self._embedder = None
         self.server = Server("pharmalign-tools")
         self.server.request_handlers[types.ListToolsRequest] = self._list

@@ -100,7 +100,7 @@ def create_app(settings: Optional[Settings] = None, identity: Optional[IdentityP
     mock_regulator = _check_mock_regulator(settings)
     tool_server = _check_tool_server(settings)
 
-    engine = make_engine(settings.database_url)
+    engine = make_engine(settings.database_url, settings.db_pool_max)
     sessions = make_sessions(engine)
     app = FastAPI(title="PharmAlign Server API", lifespan=_lifespan)
     app.state.rt = Runtime(
