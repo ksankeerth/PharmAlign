@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { CONTRACT_VERSION } from "../api";
-import { ErrorState, Icon, SkeletonLines } from "../components";
+import { ErrorState, Icon, OpenAccessNotice, SkeletonLines } from "../components";
 import { AssistantDock } from "./assistant/AssistantDock";
 import { useAssistant } from "./assistant/AssistantContext";
 import { NAVIGATION } from "./navigation";
@@ -103,6 +103,7 @@ export function Shell() {
         <SideNav open={navOpen} onNavigate={() => setNavOpen(false)} />
         {navOpen ? <div className="nav-scrim" onClick={() => setNavOpen(false)} aria-hidden="true" /> : null}
         <main id="main" className="main" tabIndex={-1}>
+          <OpenAccessNotice />
           {error ? (
             <ErrorState error={error} />
           ) : loading || switching ? (

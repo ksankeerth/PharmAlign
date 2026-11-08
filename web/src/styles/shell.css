@@ -382,3 +382,8 @@
   font-size: 13px;
   color: var(--ink-2);
 }
+
+/* The open-access notice sits above every page's own content. */
+.open-access-notice {
+  margin-bottom: var(--sp-4);
+}

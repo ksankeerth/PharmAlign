@@ -21,6 +21,7 @@ export { Skeleton, SkeletonLines, SkeletonBlock } from "./Skeleton";
 export { EmptyState } from "./EmptyState";
 export { ErrorState } from "./ErrorState";
 export { Panel, Callout, SyntheticTag } from "./Panel";
+export { OpenAccessNotice } from "./OpenAccessNotice";
 export { PrototypeNotice } from "./PrototypeNotice";
 export { Menu, MenuItem, MenuLabel, MenuDivider } from "./Menu";
 export { FillFromJson, type FillFromJsonProps } from "./FillFromJson";
