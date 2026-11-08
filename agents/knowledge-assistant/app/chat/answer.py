@@ -18,7 +18,7 @@ from pydantic import BaseModel, ConfigDict
 
 from app.answer import TurnAnswer
 from app.chat.models import ModelCall, ModelChain, ModelResult, env_seconds
-from app.chat.retrieve import Retrieved, home_countries, searches_tried
+from app.chat.retrieve import Retrieved, home_countries, is_status_question, searches_tried
 from app.replies import DECISION
 
 ANSWER_TIMEOUT_SECONDS = env_seconds("PHARMALIGN_KA_ANSWER_TIMEOUT", 20.0)  # per model attempt
@@ -39,6 +39,8 @@ class AnswerOutput(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
+    # Written first on purpose: the model names the passages that answer before it decides, so it cannot refuse before it has looked.
+    found: str = ""  # the anchors of the passages that state the answer or the conditions that decide it, in any words; "none" if there are none
     answer: Literal["message", "no_source"]
     text: str  # the answer; "" for no_source
     citations: list[AnswerCitation]
@@ -55,11 +57,15 @@ Write in English: one short paragraph per question part, in order, all in one te
 Citations:
 - Every factual sentence is backed by a citation: an anchor and a quote.
 - Copy the anchor exactly as given with the passage.
+- When a law and a guideline or service page both state the answer, cite both, the law first.
 - Copy the quote word for word from one passage's text. Do not shorten the middle, join two passages, or fix the \
 wording.
 - Each quote is a full sentence of at least 8 words that contains the fact it supports: never a bare number or a \
 heading. Each citation quotes different words. Do not quote words that only repeat the question.
-- A number appears in your text only if a cited quote contains it.
+- A number, amount or period appears in your text only if a cited quote contains it. Write numbers as digits, the way the \
+quote writes them (for example "25 °C", "60% RH", "5 days", "90 days"); do not spell them out.
+- Never write an anchor (such as A-01:v2:c0001) or a bracketed quote in the text: the citations show the sources. Name a \
+document by its title or article number.
 
 Wording:
 - State each rule in the passage's own key words for the requirement, period, amount or condition (if it says \
@@ -81,12 +87,31 @@ You explain; people decide:
 
 When the passages do not cover the question:
 - Answer only what each part asks. If no passage states the answer to the part's actual question, do not answer a \
-nearby fact instead. But if a passage does state the answer in other words, answer it.
-- If that leaves no part answered, set answer to "no_source", text to "" and citations to [].
+nearby fact instead (a fee when the period is asked). But if a passage does state the answer in other words, answer it.
+- Look for passages that bear on the question: a rule, condition, requirement, duration, fee, definition or exception a \
+person would use to answer it. If you find any, answer with them and cite them; if they cover only part of the \
+question, say which part.
+- When the answer depends on an option the person did not give (for example the climatic zone for storage conditions), \
+give the value for each option in a few words, or say which one applies. When they name the option, answer for that one only. \
+Give the rule as the passages state it, not your own calculation; when they imply the figure the person needs, state it.
+- A rule about one thing does not answer a question about another (a fee is not a guarantee). If the passages list what is \
+required for something and never mention the very thing asked (a guarantee, an exemption), say no_source: do not conclude \
+that it is not required.
+- A question about who may open, operate, own or run an establishment or business is answered by the licence, ownership, \
+nationality and approval conditions the passages state for it: state them. This is an answer, not silence.
+- If that leaves no part answered, because every passage is about other things or gives a different kind of fact, set \
+answer to "no_source", text to "" and citations to [].
 - If some parts are answered, answer those and say plainly that the library does not cover the rest.
 
-Return JSON: answer ("message" or "no_source"), text (the answer, or ""), citations (list of {anchor, quote}), \
-suggestions (up to 3 follow-up questions the passages can answer; questions only; may be empty).
+Status of a law: when asked whether a law is still in force, or what replaced it, say whether it is, give its status as \
+the passage gives it (for example "superseded"), and cite the passage of the law in force that repeals or replaces it.
+
+Suggestions: always give 2 or 3 follow-up questions, also with no_source. Each is on the subject of the question and is \
+answered by the passages above, never about another law that only appears in a passage.
+
+Return JSON: found (first: the anchors of the passages that state the answer, or the conditions that decide it, in any \
+words; "none" if there are none), answer ("message" or "no_source"; "message" whenever found names a passage), text (the \
+answer, or ""), citations (list of {anchor, quote}), suggestions (2 or 3 questions).
 """
 
 
@@ -127,11 +152,15 @@ def build_prompt(parts: Sequence[str], passages: Sequence[dict], history_wanted:
         for p in local_first(passages, home)
     ]
     numbered = "\n".join(f"{i}. {json.dumps(p, ensure_ascii=False)}" for i, p in enumerate(parts, 1))
-    history = (
-        "The person asks about earlier law, so passages that are not in force may be cited, with their status named."
-        if history_wanted
-        else "The person asks what applies now, so cite only passages in force."
-    )
+    if is_status_question(parts):
+        history = (
+            "The person asks whether a law is still in force, or what replaced it. Answer from the passage that says what happened to it "
+            "and cite it. A passage that is not in force may be cited only next to its status word."
+        )
+    elif history_wanted:
+        history = "The person asks about earlier law, so passages that are not in force may be cited, with their status named."
+    else:
+        history = "The person asks what applies now, so cite only passages in force."
     style_line = f"{STYLE_LINES[style]}\n\n" if style in STYLE_LINES else ""
     return (
         f"Question parts (quoted data):\n{numbered}\n\n"
@@ -177,15 +206,38 @@ def no_source_event(retrieved: Retrieved, suggestions: Sequence[str]) -> NoSourc
     )
 
 
+# An anchor as the library writes it: A-11:v2:c0000, B-S09:v2:c0007, a case file's d-1042-17:v1:p41.
+ANCHOR = r"[A-Za-z][\w-]*:v\d+:[cp]\d+"
+WRAPPED_ANCHORS = re.compile(rf"\s*[\[(]\s*{ANCHOR}(?:\s*[,;]\s*{ANCHOR})*\s*[\])]")
+
+
+BARE_ANCHOR = re.compile(rf"\s*{ANCHOR}(?:\s*\[[^\]]*\])?")  # an anchor in the sentence, and the bracketed quote that follows it
+
+
+def strip_anchors(text: str, hard: bool = False) -> str:
+    """Drops an anchor the model put in brackets after a sentence. An anchor written into the sentence itself is left for the
+    answer check to refuse once; with `hard` (the repair has failed) it is cut out too, so the text never goes out with one."""
+    text = WRAPPED_ANCHORS.sub("", text)
+    return re.sub(r"[ \t]+([.,;:])", r"\1", BARE_ANCHOR.sub("", text)) if hard else text
+
+
+def named_passages(found: str, retrieved: Retrieved) -> list[str]:
+    """The anchors in the model's `found` that are among the passages it was shown, in the order it named them."""
+    shown = {p["anchor"] for p in retrieved.passages}
+    return [a for a in dict.fromkeys(re.findall(ANCHOR, found or "")) if a in shown]
+
+
 def is_no_source(out: AnswerOutput) -> bool:
     return out.answer == "no_source" or not out.text.strip()
 
 
-def to_turn_answer(out: AnswerOutput, retrieved: Retrieved, preface: str | None) -> TurnAnswer:
-    """The contract event for the model's flat output. Raises ValueError (pydantic's too) when it breaks the contract."""
+def to_turn_answer(out: AnswerOutput, retrieved: Retrieved, preface: str | None, fallback: Sequence[str] = (), hard: bool = False) -> TurnAnswer:
+    """The contract event for the model's flat output. Raises ValueError (pydantic's too) when it breaks the contract.
+
+    `fallback` are the follow-up questions used when the model gave none."""
     if is_no_source(out):
-        return TurnAnswer(events=[no_source_event(retrieved, out.suggestions)])
-    text = out.text.strip()
+        return TurnAnswer(events=[no_source_event(retrieved, out.suggestions or fallback)])
+    text = strip_anchors(out.text, hard).strip()
     if preface == "decision":
         text = f"{DECISION} {text}"
     citations: list[dict] = []
@@ -198,7 +250,7 @@ def to_turn_answer(out: AnswerOutput, retrieved: Retrieved, preface: str | None)
     message = Message(
         text=text,
         citations=citations,
-        suggestions=clean_suggestions(out.suggestions),
+        suggestions=clean_suggestions(out.suggestions) or clean_suggestions(fallback),
     )
     return TurnAnswer(events=[message])
 

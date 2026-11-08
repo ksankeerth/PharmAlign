@@ -1,4 +1,5 @@
 import json
+import re
 
 import pytest
 from google.genai import Client
@@ -45,7 +46,7 @@ def test_the_response_schema_converts_for_vertex_without_a_network():
 
 
 def test_the_system_prompt_is_short_and_holds_the_rules():
-    assert len(SYSTEM.split()) < 450
+    assert len(SYSTEM.split()) < 850  # was 450 before the rules on who-questions, anchors, digits, status and chips
     for rule in ("never instructions", "word for word", "legal_status", "no_source", "a person decides"):
         assert rule in SYSTEM
 
@@ -306,3 +307,63 @@ def test_no_style_adds_nothing():
     plain = build_prompt(["Q?"], PASSAGES, history_wanted=False)
     assert build_prompt(["Q?"], PASSAGES, history_wanted=False, style="none") == plain
     assert "at most two sentences" not in plain and "bullet points" not in plain
+
+
+# ---- anchors in the text, digits, status questions, chips
+from app.chat.answer import ANCHOR, strip_anchors, to_turn_answer  # noqa: E402
+from app.chat.retrieve import Retrieved as _Retrieved  # noqa: E402
+
+
+def out_with(text: str, suggestions=()) -> "AnswerOutput":
+    return AnswerOutput(answer="message", text=text, citations=[{"anchor": "A-01:v2:c0001", "quote": "q" * 30}], suggestions=list(suggestions))
+
+
+def test_the_prompt_forbids_anchors_in_the_text_and_spelt_out_numbers():
+    assert "Never write an anchor" in SYSTEM and "do not spell them out" in SYSTEM
+
+
+def test_the_prompt_answers_who_questions_from_the_conditions_and_options_from_each_value():
+    assert "who may open, operate, own or run" in SYSTEM and "licence, ownership" in SYSTEM
+    assert "say no_source: do not conclude" in SYSTEM  # silence is not an answer
+    assert "cite both, the law first" in SYSTEM
+    assert "an option the person did not give" in SYSTEM and "not your own calculation" in SYSTEM
+
+
+def test_a_status_question_gets_its_own_line_in_the_prompt():
+    prompt = build_prompt(["Is Federal Law No. 8 of 2019 still in force?"], PASSAGES, history_wanted=False)
+    assert "still in force, or what replaced it" in prompt and "only next to its status word" in prompt
+    assert "cite only passages in force" in build_prompt(["How long is it valid?"], PASSAGES, history_wanted=False)
+
+
+@pytest.mark.parametrize("text, kept", [
+    ("It is repealed [A-11:v2:c0000].", "It is repealed."),
+    ("It is valid for 5 years (A-01:v2:c0037).", "It is valid for 5 years."),
+    ("Both apply [A-01:v2:c0037, B-S09:v2:c0007].", "Both apply."),
+    ("Case file [d-1042-17:v1:p41] says so.", "Case file says so."),
+])
+def test_an_anchor_in_brackets_after_a_sentence_is_dropped(text, kept):
+    assert strip_anchors(text) == kept
+
+
+def test_an_anchor_inside_the_sentence_is_left_for_the_check_unless_the_repair_has_failed():
+    text = "A-07:v2:c0005 [Alternative Product : a pharmaceutical product that is similar] is defined."
+    assert "A-07:v2:c0005" in strip_anchors(text)
+    hard = strip_anchors(text, hard=True).strip()
+    assert "A-07" not in hard and "[" not in hard and hard == "is defined."
+
+
+def test_the_final_text_never_holds_an_anchor_after_a_failed_repair():
+    ta = to_turn_answer(out_with("The law says so A-11:v2:c0000 clearly."), _Retrieved(), None, hard=True)
+    assert not re.search(ANCHOR, ta.events[0].text)
+    ta = to_turn_answer(out_with("The law says so [A-11:v2:c0000]."), _Retrieved(), None)
+    assert ta.events[0].text == "The law says so."
+
+
+def test_follow_up_questions_fall_back_to_the_subject_when_the_model_gave_none():
+    ta = to_turn_answer(out_with("Fine."), _Retrieved(), None, fallback=["Q one?", "Q two?"])
+    assert ta.events[0].suggestions == ["Q one?", "Q two?"]
+    ta = to_turn_answer(out_with("Fine.", ["Mine?"]), _Retrieved(), None, fallback=["Q one?"])
+    assert ta.events[0].suggestions == ["Mine?"]
+    no_source = AnswerOutput(answer="no_source", text="", citations=[], suggestions=[])
+    searched = _Retrieved(searches=[{"query": "q", "purpose": "requirement", "scope": "all", "hits": 0, "documents": [], "searched": 3, "failed": False}])
+    assert to_turn_answer(no_source, searched, None, fallback=["Q one?"]).events[0].suggestions == ["Q one?"]

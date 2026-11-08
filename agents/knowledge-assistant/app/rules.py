@@ -16,6 +16,10 @@ HISTORY = re.compile(
     re.IGNORECASE,
 )
 SEARCHES = ("search_kb", "lookup_term")
+# An anchor as the library writes it (A-11:v2:c0000, d-1042-17:v1:p41). The citations show where a sentence comes from; the text must not.
+ANCHOR_IN_TEXT = re.compile(r"[A-Za-z][\w-]*:v\d+:[cp]\d+")
+# Machine output in the text: JSON braces with a field name, or a file name. The text is for a person.
+RAW_OUTPUT_IN_TEXT = re.compile(r'"(?:answer|citations|anchor|quote|events|text)"\s*:|\b[\w-]+\.(?:pdf|docx?|jsonl?|csv)\b', re.IGNORECASE)
 
 
 def build_message(session: SessionCreate, request: TurnRequest) -> str:
@@ -69,18 +73,25 @@ def check_turn(turn: Turn, answer: TurnAnswer, log: ToolLog, *, history: bool | 
     traces = saved_trace_ids(log)
     for event in answer.events:
         if event.type == "message":
-            _check_message(event, history, traces, log)
+            _check_message(event, history, traces, log, plain=not turn.case_session)
         elif event.type == "no_source":
             _check_no_source(turn, event, log)
         elif event.type == "draft_comment" and not turn.case_session:
             raise ValueError("a draft comment needs a case. This session has none: answer not_available with reason out_of_scope")
 
 
-def _check_message(m: Message, history: bool, traces: set[str], log: ToolLog) -> None:
+def _check_message(m: Message, history: bool, traces: set[str], log: ToolLog, plain: bool = True) -> None:
     if not m.citations:
         raise ValueError(
             "a message needs at least one citation from a tool result. When no source answers, "
             "use a no_source event (or not_available if the question is outside what you do)"
+        )
+    if plain and (found := RAW_OUTPUT_IN_TEXT.search(m.text)):  # a case answer may name the case's own files
+        raise ValueError(f"the text contains '{found.group(0)}', which is machine output or a file name. Write plain words for a person")
+    if found := ANCHOR_IN_TEXT.search(m.text):
+        raise ValueError(
+            f"the text contains the anchor '{found.group(0)}'. Do not write anchors or bracketed quotes in the text: the citations "
+            "show the sources. Name the document by its title or article number instead"
         )
     for ev in m.citations:
         status = legal_status_of(log, ev.anchor)

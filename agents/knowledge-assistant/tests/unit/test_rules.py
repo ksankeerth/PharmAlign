@@ -96,3 +96,27 @@ def test_the_classifiers_history_flag_lets_old_law_through_when_the_message_has_
     check_turn(plain, answer(text="The superseded guideline asked for 6 months.", **cited), READ, history=True)
     with pytest.raises(ValueError, match="Say so"):  # the flag does not skip the rule to name the status
         check_turn(plain, answer(**cited), READ, history=True)
+
+
+@pytest.mark.parametrize("text, reason", [
+    ("The law is repealed A-11:v2:c0000 as stated.", "anchor"),
+    ("See d-1042-17:v1:p41 for the figure.", "anchor"),
+    ('{"answer": "message", "text": "x"}', "machine output"),
+    ("The details are in stability_report.pdf on page 4.", "machine output"),
+])
+def test_a_knowledge_answer_may_not_show_anchors_json_or_file_names(text, reason):
+    with pytest.raises(ValueError, match=reason):
+        check_turn(turn(), answer(text=text), READ)
+
+
+def test_a_case_answer_may_name_the_files_of_the_case_but_still_not_show_anchors():
+    on_case = turn(case_session=True)
+    check_turn(on_case, answer(text="The leaflet file leaflet_ar.pdf says 1000 mg."), READ)
+    with pytest.raises(ValueError, match="anchor"):
+        check_turn(on_case, answer(text="The leaflet says 1000 mg d-1042-23:v1:p3."), READ)
+
+
+def test_the_agent_asks_for_the_controls_a_looping_model_needs():
+    assert SPEC.keepalive_seconds and SPEC.keepalive_seconds <= 15  # the server gives up after 60 s of silence
+    assert SPEC.thinking_level == "low" and SPEC.soft_seconds and SPEC.soft_rounds and SPEC.repeat_answer
+    assert SPEC.turn_seconds <= 80 and SPEC.soft_seconds < SPEC.turn_seconds  # answers or fails inside the target, well under 90 s
