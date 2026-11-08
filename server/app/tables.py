@@ -316,8 +316,11 @@ ROW = {name: row_class(name, kind, cols, opts) for name, kind, cols, opts in SPE
 from .mock_regulator import tables as _mock_regulator_tables  # noqa: E402,F401  the mock regulator's own tables
 
 
-# Vector indexes, one per model, on a cast to that model's size. Migration 0007 creates the same.
-for _model, _dims in {"hash-256": 256, "bge-m3": 1024}.items():
+# The vector size of each embedding model that has an index.
+EMBEDDING_DIMS = {"hash-256": 256, "bge-m3": 1024, "gemini-embedding-001": 1536}
+
+# Vector indexes, one per model, on a cast to that model's size. Migrations 0007 and 0015 create the same.
+for _model, _dims in EMBEDDING_DIMS.items():
     Index(
         f"ix_chunk_embedding_{_model.replace('-', '_')}", text(f"(embedding::vector({_dims})) vector_cosine_ops"),
         _table=ROW["chunk_embedding"].__table__, postgresql_using="hnsw", postgresql_where=text(f"model = '{_model}'"),

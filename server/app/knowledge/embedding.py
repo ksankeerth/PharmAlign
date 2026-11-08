@@ -1,15 +1,20 @@
-"""Embedders. bge-m3 runs locally when the `bge-m3` extra is installed. Tests and simulation use a small deterministic one.
+"""Embedders. bge-m3 runs locally when the `bge-m3` extra is installed. gemini-embedding-001 runs on Vertex AI with the `gemini` extra.
+Tests and simulation use a small deterministic one.
 
 Vectors of different models are never mixed: each stored vector names its model, and a search uses one model.
 """
 from __future__ import annotations
 
 import hashlib
+import logging
 import math
 import re
+import threading
+import time
 import unicodedata
+from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
-from typing import Optional, Protocol, Sequence
+from typing import Callable, Optional, Protocol, Sequence
 
 from ..config import Settings
 
@@ -21,7 +26,11 @@ class Embedder(Protocol):
     max_chars: int  # longer text is split before it is embedded, never cut off
     min_score: float  # the similarity floor: below it a hit is not a source
 
-    def embed(self, texts: Sequence[str]) -> list[list[float]]: ...
+    def embed(self, texts: Sequence[str]) -> list[list[float]]:
+        """Vectors for passages that will be stored."""
+
+    def embed_query(self, texts: Sequence[str]) -> list[list[float]]:
+        """Vectors for questions. The same as `embed` unless the model treats questions and passages differently."""
 
 
 class EmbedderUnavailable(Exception):
@@ -75,6 +84,8 @@ class HashEmbedder:
     def embed(self, texts: Sequence[str]) -> list[list[float]]:
         return [self._one(t[: self.max_chars]) for t in texts]
 
+    embed_query = embed
+
     def _one(self, text: str) -> list[float]:
         counts: dict[str, int] = {}
         for w in terms(text):
@@ -108,6 +119,90 @@ class BgeM3Embedder:
         out = self._model.encode([t[: self.max_chars] for t in texts], normalize_embeddings=True, batch_size=16)
         return [list(map(float, row)) for row in out]
 
+    embed_query = embed
+
+
+log = logging.getLogger(__name__)
+GEMINI_MODEL = "gemini-embedding-001"
+RETRYABLE = frozenset({408, 429, 500, 502, 503, 504})
+
+
+class GeminiEmbedder:
+    """gemini-embedding-001 on Vertex AI. It signs in with Application Default Credentials: the developer's login on a laptop, the service account in the cloud.
+
+    Vectors are 1536 numbers, cut down from the model's 3072 and then scaled to length 1, because pgvector can index at most 2000 and a cut vector is no longer unit length.
+    Passages and questions are embedded for those two jobs (RETRIEVAL_DOCUMENT and RETRIEVAL_QUERY). Texts go in batches, a few batches at a time, each retried.
+    Every call blocks, so async code calls it through asyncio.to_thread. There is no reranker with this embedder.
+    """
+
+    reranker = None
+    name = GEMINI_MODEL
+    dims = 1536
+    max_chars = 4000  # the model reads 2048 tokens; chunks are split to this size, as for bge-m3, so one library serves both
+
+    def __init__(self, min_score: float = 0.65, project: Optional[str] = None, location: Optional[str] = None, batch: int = 32, workers: int = 4,
+                 retries: int = 5, backoff_seconds: float = 1.0, sleep: Callable[[float], None] = time.sleep, client=None):
+        self.min_score = min_score
+        self.batch = batch
+        self.workers = workers
+        self.retries = retries
+        self.backoff_seconds = backoff_seconds
+        self._sleep = sleep
+        self._project, self._location = project, location
+        self._client = client
+        self._lock = threading.Lock()
+
+    def _models(self):
+        with self._lock:  # threads share one client: a second one, built at the same moment and dropped, would close the first one's connection
+            if self._client is None:
+                try:
+                    from google import genai
+                except ImportError as e:
+                    raise EmbedderUnavailable("The Google client is not installed. Install the gemini extra.") from e
+                self._client = genai.Client(vertexai=True, project=self._project, location=self._location)
+            return self._client.models
+
+    def _call(self, texts: list[str], task: str) -> list[list[float]]:
+        from google.genai import errors, types
+
+        config = types.EmbedContentConfig(task_type=task, output_dimensionality=self.dims)
+        for attempt in range(self.retries + 1):
+            try:
+                response = self._models().embed_content(model=self.name, contents=texts, config=config)
+                vectors = [list(e.values) for e in response.embeddings]
+                if len(vectors) != len(texts):
+                    raise ValueError(f"{len(texts)} texts went in and {len(vectors)} vectors came back.")
+                return [_unit(v[: self.dims]) for v in vectors]  # the service already returns this size; cutting is only a guard, and a cut vector must be scaled again
+            except errors.APIError as e:
+                if e.code not in RETRYABLE or attempt == self.retries:
+                    raise EmbedderUnavailable(f"Vertex AI refused the embedding request ({e.code}): {str(e)[:200]}") from e
+            except (ConnectionError, TimeoutError, OSError):
+                if attempt == self.retries:
+                    raise
+            wait = self.backoff_seconds * 2 ** attempt
+            log.warning("embedding call failed, retrying in %.1fs (attempt %d of %d)", wait, attempt + 1, self.retries)
+            self._sleep(wait)
+        raise AssertionError("unreachable")
+
+    def _embed(self, texts: Sequence[str], task: str) -> list[list[float]]:
+        clipped = [t[: self.max_chars] or " " for t in texts]  # the model refuses an empty text
+        parts = [clipped[i:i + self.batch] for i in range(0, len(clipped), self.batch)]
+        if len(parts) <= 1 or self.workers <= 1:
+            return [v for part in parts for v in self._call(part, task)]
+        with ThreadPoolExecutor(max_workers=self.workers) as pool:
+            return [v for done in pool.map(lambda part: self._call(part, task), parts) for v in done]
+
+    def embed(self, texts: Sequence[str]) -> list[list[float]]:
+        return self._embed(texts, "RETRIEVAL_DOCUMENT")
+
+    def embed_query(self, texts: Sequence[str]) -> list[list[float]]:
+        return self._embed(texts, "RETRIEVAL_QUERY")
+
+
+def _unit(v: Sequence[float]) -> list[float]:
+    norm = math.sqrt(sum(x * x for x in v)) or 1.0
+    return [x / norm for x in v]
+
 
 def bge_installed() -> bool:
     import importlib.util
@@ -116,10 +211,13 @@ def bge_installed() -> bool:
 
 
 @lru_cache(maxsize=4)
-def _build(which: str, floor: Optional[float]) -> Embedder:
+def _build(which: str, floor: Optional[float], project: Optional[str] = None, location: Optional[str] = None) -> Embedder:
+    kw = {"min_score": floor} if floor is not None else {}
     if which == "bge-m3":
-        return BgeM3Embedder(**({"min_score": floor} if floor is not None else {}))
-    return HashEmbedder(**({"min_score": floor} if floor is not None else {}))
+        return BgeM3Embedder(**kw)
+    if which == GEMINI_MODEL:
+        return GeminiEmbedder(project=project, location=location, **kw)
+    return HashEmbedder(**kw)
 
 
 def get_embedder(settings: Settings) -> Embedder:
@@ -134,8 +232,8 @@ def get_embedder(settings: Settings) -> Embedder:
             raise EmbedderUnavailable("No embedding model is installed. Install the bge-m3 extra, or run in simulation.")
     from .rerank import get_reranker
 
-    embedder = _build(which, settings.similarity_floor)
-    embedder.reranker = get_reranker(settings)
+    embedder = _build(which, settings.similarity_floor, settings.google_cloud_project, settings.google_cloud_location)
+    embedder.reranker = None if which == GEMINI_MODEL else get_reranker(settings)  # the reranker is built for bge-m3; with Gemini, vector and keyword search stand alone
     return embedder
 
 

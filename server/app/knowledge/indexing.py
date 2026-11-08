@@ -1,6 +1,7 @@
 """Writing chunks and their vectors. Both are safe to repeat: a chunk or vector that is already there is left as it is."""
 from __future__ import annotations
 
+import asyncio
 from typing import Optional, Sequence
 
 from sqlalchemy import text
@@ -79,7 +80,7 @@ async def embed_missing(db: AsyncSession, embedder: Embedder, version_id: Option
     step = 64
     for i in range(0, len(rows), step):
         part = rows[i:i + step]
-        vectors = embedder.embed([embed_input(r["title"] or "", r["section_path"], r["text"], embedder.max_chars) for r in part])
+        vectors = await asyncio.to_thread(embedder.embed, [embed_input(r["title"] or "", r["section_path"], r["text"], embedder.max_chars) for r in part])
         await db.execute(
             text("INSERT INTO chunk_embedding (id, chunk_id, model, dims, embedding) "
                  "VALUES (:id, :chunk, :model, :dims, CAST(CAST(:emb AS text) AS vector)) ON CONFLICT DO NOTHING"),

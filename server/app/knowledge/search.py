@@ -146,7 +146,7 @@ def _hit(row: Any, score: float) -> m.KbHit:
 
 
 async def search(db: AsyncSession, scope: Scope, query: str, embedder: Embedder, top_k: int = 10) -> Found:
-    qvec = (await asyncio.to_thread(embedder.embed, [query]))[0]
+    qvec = (await asyncio.to_thread(embedder.embed_query, [query]))[0]
     query_terms = set(terms(query))
     query_arabic = is_arabic(query)
     requirement = scope.purpose == "requirement"
@@ -211,7 +211,7 @@ async def agent_search(conn, query: str, embedder: Embedder, top_k: int = 10, re
                        document_ids: Optional[Sequence[str]] = None, countries: Optional[Sequence[str]] = None) -> Found:
     """The same ranking for an agent, through the agent_read views only. The run's tenant and case are set on the connection by the tool server,
     and the views show nothing else: the pinned snapshot, approved versions that passed the gate."""
-    qvec = vector_text((await asyncio.to_thread(embedder.embed, [query]))[0])
+    qvec = vector_text((await asyncio.to_thread(embedder.embed_query, [query]))[0])
     view = "agent_read.kb_requirement_chunk" if requirement else "agent_read.kb_chunk"
     docs, where, scope = _agent_scope(document_ids, countries)
     sql = f"""

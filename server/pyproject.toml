@@ -17,10 +17,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Parsers and the local embedding model are optional. Nothing here is needed to run the server in simulation.
+# Parsers and the embedding models are optional. Nothing here is needed to run the server in simulation.
 fast-pdf = ["pymupdf>=1.24"]
 docling = ["docling>=2.0"]
 bge-m3 = ["sentence-transformers>=3.0"]
+gemini = ["google-genai>=1.0"]  # gemini-embedding-001 on Vertex AI
 
 [dependency-groups]
 dev = ["pytest>=8", "pytest-asyncio>=0.26", "pytest-timeout>=2.3", "pymupdf>=1.24"]
