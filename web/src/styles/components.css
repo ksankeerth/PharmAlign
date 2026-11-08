@@ -1101,3 +1101,17 @@
 .table code {
   white-space: nowrap;
 }
+
+/* The publisher's-text notice on knowledge pages: one quiet line. */
+.prototype-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+}
+.prototype-notice .icon {
+  flex: none;
+  margin-top: 2px;
+}
