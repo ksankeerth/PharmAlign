@@ -60,7 +60,8 @@ async def test_a_run_returns_a_contract_valid_result_citing_returned_signals(hea
     assert candidate.signal_ids == ["s-2"] and candidate.global_examples[0].anchor == CLAUSE_ANCHOR
     assert [c.name for c in mcp.calls] == ["get_gap_signals", "get_pack_rule", "read_clause"]
     assert {c.authorization for c in mcp.calls} == {"Bearer run-token-for-tests"}
-    assert set(model.requests[0].tools_dict) - {"set_model_response"} == set(TOOLS)
+    # Every contract tool but verify_quote: the agent is not given it (see app/agent.py).
+    assert set(model.requests[0].tools_dict) - {"set_model_response"} == set(TOOLS) - {"verify_quote"}
 
 
 async def test_an_invented_anchor_is_refused_retried_once_then_fails():
