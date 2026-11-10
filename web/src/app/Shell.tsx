@@ -1,6 +1,6 @@
 // The app shell: top bar, left navigation for the current view, and the page outlet.
 // In demo mode, `?as=<personId>` on any URL switches person once (handy for links and tests).
-import { Suspense, useEffect, useRef, useState } from "react";
+import { type RefCallback, Suspense, useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { CONTRACT_VERSION } from "../api";
 import { ErrorState, Icon, OpenAccessNotice, SkeletonLines } from "../components";
@@ -9,8 +9,9 @@ import { useAssistant } from "./assistant/AssistantContext";
 import { NAVIGATION } from "./navigation";
 import { useSession } from "./session";
 import { TopBar } from "./TopBar";
+import { hasSeenTour, LIBRARY_PATH, rememberTour, TOUR_STEPS, type TourAnchors, WorkspaceTour } from "./WorkspaceTour";
 
-function SideNav({ open, onNavigate }: { open: boolean; onNavigate: () => void }) {
+function SideNav({ open, onNavigate, libraryAnchor }: { open: boolean; onNavigate: (to: string) => void; libraryAnchor?: RefCallback<HTMLAnchorElement> }) {
   const { view } = useSession();
   const sections = view ? NAVIGATION[view] : [];
   return (
@@ -22,7 +23,8 @@ function SideNav({ open, onNavigate }: { open: boolean; onNavigate: () => void }
             <ul>
               {s.items.map((it) => (
                 <li key={it.to}>
-                  <NavLink to={it.to} end={it.end} className={({ isActive }) => `nav-link ${isActive ? "nav-link-active" : ""}`} onClick={onNavigate}>
+                  <NavLink to={it.to} end={it.end} ref={it.to === LIBRARY_PATH ? libraryAnchor : undefined}
+                    className={({ isActive }) => `nav-link ${isActive ? "nav-link-active" : ""}`} onClick={() => onNavigate(it.to)}>
                     <Icon name={it.icon} />
                     <span>{it.label}</span>
                   </NavLink>
@@ -54,6 +56,51 @@ export function Shell() {
   const navigate = useNavigate();
   const handledAs = useRef(false);
   const [switching, setSwitching] = useState(Boolean(params.get("as")));
+  const personId = !loading && !switching && !error ? me?.person_id : undefined;
+  const [tourFor, setTourFor] = useState<string | null>(null);
+  const [step, setStep] = useState(0);
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const returnFocus = useRef<HTMLElement | null>(null);
+  const touring = Boolean(personId && tourFor === personId);
+  const { target, path: tourPath } = TOUR_STEPS[step];
+  const firstStep = touring && target === "library";
+
+  useEffect(() => {
+    setStep(0);
+    returnFocus.current = null;
+    setTourFor(personId && !hasSeenTour(personId) ? personId : null);
+  }, [personId]);
+
+  function closeTour() {
+    if (personId) rememberTour(personId);
+    setTourFor(null);
+    const fallback = step > 0 ? anchor : document.getElementById("main");
+    (returnFocus.current ?? fallback)?.focus({ preventScroll: true });
+  }
+
+  function advanceTour() {
+    const next = TOUR_STEPS[step + 1];
+    if (!next) {
+      returnFocus.current = anchor;
+      return closeTour();
+    }
+    setStep(step + 1);
+    setNavOpen(false);
+    if (next.path && location.pathname !== next.path) {
+      navigate(next.path);
+    }
+  }
+
+  // A link or browser Back can leave the tour's route between steps.
+  const previousPath = useRef(location.pathname);
+  useEffect(() => {
+    const moved = previousPath.current !== location.pathname;
+    previousPath.current = location.pathname;
+    if (moved && tourPath && location.pathname !== tourPath && touring && personId) {
+      rememberTour(personId);
+      setTourFor(null);
+    }
+  }, [location.pathname, personId, touring, tourPath]);
 
   const assistant = useAssistant();
   useEffect(() => setNavOpen(false), [location.pathname]);
@@ -62,6 +109,7 @@ export function Shell() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || e.altKey || e.key.toLowerCase() !== "k") return;
+      if (document.activeElement?.closest('[aria-modal="true"]')) return;
       e.preventDefault();
       const inside = document.activeElement?.closest("#assistant-panel");
       assistant.setOpen(inside ? false : true);
@@ -73,11 +121,11 @@ export function Shell() {
 
   useEffect(() => {
     const as = params.get("as");
-    if (!as || handledAs.current) {
+    if (!as) {
       setSwitching(false);
       return;
     }
-    if (loading) return; // wait to learn whether the server runs demo identity
+    if (loading || handledAs.current) return; // wait for identity and any pending switch
     if (!canViewAs) {
       setSwitching(false);
       return;
@@ -98,10 +146,18 @@ export function Shell() {
       <a href="#main" className="skip-link">
         Skip to content
       </a>
-      <TopBar onToggleNav={() => setNavOpen((o) => !o)} />
+      <TopBar onToggleNav={() => firstStep ? closeTour() : setNavOpen((o) => !o)} onTakeTour={personId ? () => {
+        returnFocus.current = document.activeElement as HTMLElement;
+        setStep(0);
+        setTourFor(personId);
+      } : undefined} />
       <div className="shell-body">
-        <SideNav open={navOpen} onNavigate={() => setNavOpen(false)} />
-        {navOpen ? <div className="nav-scrim" onClick={() => setNavOpen(false)} aria-hidden="true" /> : null}
+        <SideNav open={navOpen || firstStep} libraryAnchor={firstStep ? setAnchor : undefined} onNavigate={(to) => {
+          setNavOpen(false);
+          if (firstStep && to === LIBRARY_PATH) setStep(1);
+          else if (touring) closeTour();
+        }} />
+        {navOpen || firstStep ? <div className="nav-scrim" onClick={() => { setNavOpen(false); if (firstStep) closeTour(); }} aria-hidden="true" /> : null}
         <main id="main" className="main" tabIndex={-1}>
           <OpenAccessNotice />
           {error ? (
@@ -110,12 +166,19 @@ export function Shell() {
             <SkeletonLines lines={6} />
           ) : (
             <Suspense fallback={<SkeletonLines lines={6} />}>
-              <Outlet />
+              <Outlet context={{
+                category: touring && target === "category" ? setAnchor : undefined,
+                status: touring && target === "status" ? setAnchor : undefined,
+                journey: touring && target === "journey" ? setAnchor : undefined,
+              } satisfies TourAnchors} />
             </Suspense>
           )}
         </main>
         <AssistantDock />
       </div>
+      {touring && anchor && (!tourPath || tourPath === location.pathname) ? (
+        <WorkspaceTour key={step} step={step} anchor={anchor} onClose={closeTour} onNext={advanceTour} />
+      ) : null}
     </div>
   );
 }

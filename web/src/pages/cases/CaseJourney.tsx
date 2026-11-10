@@ -2,6 +2,8 @@
 // Written for someone with no regulatory background: one short line per step, and who acts there.
 // Choosing a step filters the queue below. It uses only what the queue already loads, so no new API.
 import { Icon, type IconName } from "../../components";
+import { useOutletContext } from "react-router-dom";
+import type { TourAnchors } from "../../app/WorkspaceTour";
 
 export type JourneyState =
   | "intake"
@@ -79,13 +81,14 @@ function Box({ step, n, active, onPick, num }: { step: Step; n: number | null; a
 }
 
 export function CaseJourney({ cases, active, onPick }: Props) {
+  const tour = useOutletContext<TourAnchors | null>();
   const n = (s: JourneyState) => (cases ? cases.filter((c) => c.state === s).length : null);
   const pick = (s: JourneyState) => () => onPick(s);
   const after = AFTER.map((a) => ({ ...a, n: n(a.state) ?? 0 })).filter((a) => a.n > 0);
   const sending = n("recording") ?? 0;
 
   return (
-    <section className="cj" aria-labelledby="cj-heading">
+    <section className="cj" aria-labelledby="cj-heading" ref={tour?.journey} tabIndex={-1}>
       <header className="cj-head">
         <h2 id="cj-heading">How a medicine application moves</h2>
         <p>AI reads and checks. People decide and sign. Choose a step to see its cases.</p>

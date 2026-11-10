@@ -1,7 +1,7 @@
 // Document library: every public document, filtered by shelf, slot, review status,
 // legal status and due-for-check, with clear flags.
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { api } from "../../api";
 import { toProblem } from "../../api/errors";
 import type { Adoption, Document, LegalStatus, Slot } from "../../api/types";
@@ -13,7 +13,8 @@ import { humanize } from "../../lib/labels";
 import { pickFields, type FieldMap } from "../../lib/fillJson";
 import { DOC_TYPE_LABEL, LEGAL_LABEL, LegalPill, Metric, REVIEW_LABEL, ReviewPill } from "./shared";
 import { actsAs } from "../../lib/roles";
-import { LibraryOverview } from "./LibraryOverview";
+import { documentCategory, LibraryOverview } from "./LibraryOverview";
+import type { TourAnchors } from "../../app/WorkspaceTour";
 
 const REVIEW_STATUSES = ["unreviewed", "approved", "approved_with_notes", "rejected", "needs_update"] as const;
 const PAGE = 40;
@@ -252,11 +253,13 @@ async function loadAll(workspaceId: string): Promise<Row[]> {
 
 export default function LibraryPage() {
   const nav = useNavigate();
+  const tourAnchors = useOutletContext<TourAnchors>();
   const { workspace, view } = useSession();
   const canManage = actsAs(view, "platform_admin");
   const wsId = workspace?.id ?? "ws-ae";
   const { data, error, loading, reload } = useApi(() => loadAll(wsId), [wsId]);
   const [q, setQ] = useState("");
+  const [category, setCategory] = useState("");
   const [shelf, setShelf] = useState("");
   const [slot, setSlot] = useState("");
   const [review, setReview] = useState("");
@@ -277,6 +280,7 @@ export default function LibraryPage() {
     return (data ?? []).filter(
       (r) =>
         (!term || r.doc.id.toLowerCase().includes(term) || r.doc.title.toLowerCase().includes(term) || r.doc.issuer.toLowerCase().includes(term)) &&
+        (!category || documentCategory(r.doc.doc_type) === category) &&
         (!shelf || r.doc.shelf === shelf) &&
         (!slot || (slot === "any" ? r.slot !== null : r.slot?.id === slot)) &&
         (!review || r.review === review) &&
@@ -284,14 +288,15 @@ export default function LibraryPage() {
         (!due || r.due) &&
         (!flaggedOnly || r.flags.some((f) => f.tone !== "neutral")),
     );
-  }, [data, q, shelf, slot, review, legal, due, flaggedOnly]);
+  }, [data, q, category, shelf, slot, review, legal, due, flaggedOnly]);
 
   const pages = Math.max(1, Math.ceil(rows.length / PAGE));
   const cur = Math.min(page, pages - 1);
   const shown = rows.slice(cur * PAGE, cur * PAGE + PAGE);
-  const filtered = Boolean(q || shelf || slot || review || legal || due || flaggedOnly);
+  const filtered = Boolean(q || category || shelf || slot || review || legal || due || flaggedOnly);
   const clear = () => {
     setQ("");
+    setCategory("");
     setShelf("");
     setSlot("");
     setReview("");
@@ -320,7 +325,7 @@ export default function LibraryPage() {
         }
       />
       <RegisterDocumentModal open={registerOpen} onClose={() => setRegisterOpen(false)} />
-      <LibraryOverview items={data ?? null} />
+      <LibraryOverview items={data ?? null} category={category} onCategory={upd(setCategory)} categoryAnchor={tourAnchors.category} />
       <details className="lo-upkeep">
         <summary>Library upkeep: reviews, checks and rights</summary>
         <div className="adm-metrics">
@@ -353,6 +358,7 @@ export default function LibraryPage() {
           <Field label="Legal status">
             {(id) => (
               <Select
+                ref={tourAnchors.status}
                 id={id}
                 value={legal}
                 onChange={(e) => upd(setLegal)(e.target.value)}

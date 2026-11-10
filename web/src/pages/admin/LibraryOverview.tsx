@@ -1,6 +1,7 @@
 // What the agents know: the library at a glance, for someone with no regulatory background.
 // Built from the documents the library page already loads: kind, source, language and legal status.
 import type { Document } from "../../api/types";
+import type { RefCallback } from "react";
 import { Icon } from "../../components";
 
 interface Item {
@@ -25,7 +26,7 @@ function source(j: string): string {
   return "Other regulators (EU, US, UK and others)";
 }
 
-function kind(t: string): string {
+export function documentCategory(t: string): string {
   return KIND.find(([, test]) => test(t))?.[0] ?? OTHER_KIND;
 }
 
@@ -54,13 +55,19 @@ function Bars({ title, rows, total }: { title: string; rows: [string, number][];
   );
 }
 
-export function LibraryOverview({ items }: { items: Item[] | null }) {
+export function LibraryOverview({ items, category, onCategory, categoryAnchor }: {
+  items: Item[] | null;
+  category: string;
+  onCategory: (category: string) => void;
+  categoryAnchor?: RefCallback<HTMLElement>;
+}) {
   const docs = items ?? [];
   const total = docs.length;
   const inForce = docs.filter((r) => r.legal === "in_force").length;
   const history = docs.filter((r) => r.legal === "superseded" || r.legal === "repealed").length;
   const publishers = new Set(docs.map((r) => r.doc.issuer)).size;
   const arabic = docs.filter((r) => r.doc.language === "ar").length;
+  const categories = new Map(tally(docs.map((r) => documentCategory(r.doc.doc_type))));
   const n = (v: number) => (items ? v.toLocaleString() : "…");
 
   return (
@@ -89,12 +96,23 @@ export function LibraryOverview({ items }: { items: Item[] | null }) {
         </div>
       </div>
 
-      {items ? (
-        <div className="lo-split">
+      <div className="lo-split">
+        <section ref={categoryAnchor} className="lo-bars" tabIndex={-1} aria-labelledby="library-categories">
+          <h3 id="library-categories">Document categories</h3>
+          <div className="lo-categories">
+            {[...KIND.map(([label]) => label), OTHER_KIND].map((label) => (
+              <button type="button" key={label} aria-pressed={category === label}
+                disabled={!categories.has(label) && category !== label}
+                onClick={() => onCategory(category === label ? "" : label)}>
+                <span>{label}</span><span className="lo-n">{n(categories.get(label) ?? 0)}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+        {items ? (
           <Bars title="Where they come from" rows={tally(docs.map((r) => source(r.doc.jurisdiction)))} total={total} />
-          <Bars title="What kind they are" rows={tally(docs.map((r) => kind(r.doc.doc_type)))} total={total} />
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
       <p className="lo-how">
         <Icon name="shield" size={13} />
