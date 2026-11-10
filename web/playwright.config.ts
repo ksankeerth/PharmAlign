@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { PEOPLE } from "./e2e/helpers";
 
 // One config for all browser checks. They run against a server in simulation mode: the preview forwards
 // /api to it (PHARMALIGN_API, default http://localhost:8000). It builds once and serves the
@@ -16,7 +17,17 @@ export default defineConfig({
   fullyParallel: true,
   workers: process.env.CI ? 2 : 4,
   reporter: [["list"]],
-  use: { baseURL, ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } },
+  use: {
+    baseURL, ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 },
+    // Workflow checks start as returning visitors. The tour checks start with empty storage.
+    storageState: {
+      cookies: [],
+      origins: [{
+        origin: new URL(baseURL).origin,
+        localStorage: Object.values(PEOPLE).map((id) => ({ name: `pharmalign.tour.${id}`, value: "seen" })),
+      }],
+    },
+  },
   webServer: process.env.BASE_URL ? undefined : {
     command: "npm run build && npx vite preview --port 5181 --strictPort",
     url: "http://localhost:5181",

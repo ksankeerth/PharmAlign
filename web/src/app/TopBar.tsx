@@ -128,7 +128,7 @@ function AskButton() {
   );
 }
 
-export function TopBar({ onToggleNav }: { onToggleNav: () => void }) {
+export function TopBar({ onToggleNav, onTakeTour }: { onToggleNav: () => void; onTakeTour?: () => void }) {
   const { me, people, workspace, switchPerson } = useSession();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
@@ -244,6 +244,20 @@ export function TopBar({ onToggleNav }: { onToggleNav: () => void }) {
                 {t === "system" ? "Match system" : t === "light" ? "Light" : "Dark"}
               </MenuItem>
             ))}
+            {onTakeTour ? (
+              <>
+                <MenuDivider />
+                <MenuItem
+                  onSelect={() => {
+                    close();
+                    onTakeTour();
+                  }}
+                >
+                  <Icon name="book" />
+                  Take the tour
+                </MenuItem>
+              </>
+            ) : null}
             {actsAs(me?.view, "platform_admin") ? (
               <>
                 <MenuDivider />

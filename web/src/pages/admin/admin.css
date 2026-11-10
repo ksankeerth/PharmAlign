@@ -351,6 +351,31 @@
 .lo-label {
   color: var(--ink-2);
 }
+.lo-categories {
+  display: grid;
+  gap: var(--sp-1);
+}
+.lo-categories button {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.lo-categories button:hover:enabled,
+.lo-categories button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.lo-categories button:disabled {
+  color: var(--ink-3);
+  cursor: default;
+}
 .lo-track {
   height: 8px;
   border-radius: 999px;
